@@ -4,6 +4,7 @@ export interface User {
   email: string;
   role: "admin" | "member";
   course: string;
+  major: string;
   totalPoints: number;
   createdAt: Date;
 }
