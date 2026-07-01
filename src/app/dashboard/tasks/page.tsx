@@ -53,16 +53,21 @@ function statusLabel(status: string) {
 }
 
 export default function MemberTasksPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !userData) return;
+
+    const matchValues = [user.uid, "all"];
+    if (userData.team) {
+      matchValues.push(`team:${userData.team}`);
+    }
 
     const q = query(
       collection(db, "tasks"),
-      where("assignedTo", "array-contains", user.uid)
+      where("assignedTo", "array-contains-any", matchValues)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -72,7 +77,7 @@ export default function MemberTasksPage() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, userData]);
 
   if (authLoading || loading) {
     return (

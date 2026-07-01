@@ -6,6 +6,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { Team, TEAM_LABELS } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ export default function ProfilePage() {
   const { user, userData, loading } = useAuth();
   const [course, setCourse] = useState(userData?.course ?? "");
   const [major, setMajor] = useState(userData?.major ?? "");
+  const [team, setTeam] = useState<Team | "">(userData?.team ?? "");
   const [saving, setSaving] = useState(false);
 
   if (loading || !user || !userData) {

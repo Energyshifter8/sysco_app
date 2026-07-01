@@ -15,7 +15,7 @@ import {
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { User, Task } from "@/types";
+import { User, Task, Team, TEAM_LABELS } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +41,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 
 export default function AdminTasksPage() {
@@ -55,8 +62,9 @@ export default function AdminTasksPage() {
   const [points, setPoints] = useState(0);
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [assignAll, setAssignAll] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [assignmentTarget, setAssignmentTarget] = useState<"all" | "team" | "member">("all");
+  const [selectedTeam, setSelectedTeam] = useState<Team>("dev");
 
   useEffect(() => {
     async function fetchData() {
@@ -82,25 +90,23 @@ export default function AdminTasksPage() {
     );
   }
 
-  function toggleAssignAll() {
-    setAssignAll((prev) => {
-      if (!prev) {
-        setSelectedMembers(members.map((m) => m.uid));
-      } else {
-        setSelectedMembers([]);
-      }
-      return !prev;
-    });
-  }
-
   async function handleCreateTask(e: React.FormEvent) {
     e.preventDefault();
     if (!userData || !title || !dueDate) return;
     setSaving(true);
     try {
-      const assignedTo = assignAll
-        ? members.map((m) => m.uid)
-        : selectedMembers;
+      let assignedTo: string[];
+      switch (assignmentTarget) {
+        case "all":
+          assignedTo = ["all"];
+          break;
+        case "team":
+          assignedTo = [`team:${selectedTeam}`];
+          break;
+        case "member":
+          assignedTo = selectedMembers;
+          break;
+      }
       const taskData: Task = {
         id: "",
         title,
@@ -120,7 +126,8 @@ export default function AdminTasksPage() {
       setPoints(0);
       setDueDate(undefined);
       setSelectedMembers([]);
-      setAssignAll(false);
+      setAssignmentTarget("all");
+      setSelectedTeam("dev");
       toast.success("Task created successfully");
     } catch {
       toast.error("Failed to create task");
@@ -154,6 +161,16 @@ export default function AdminTasksPage() {
     } catch {
       toast.error("Failed to approve task");
     }
+  }
+
+  function resolveAssignedLabel(entry: string): string {
+    if (entry === "all") return "All Members";
+    if (entry.startsWith("team:")) {
+      const key = entry.slice(5) as Team;
+      return TEAM_LABELS[key] ?? entry;
+    }
+    const member = members.find((m) => m.uid === entry);
+    return member?.name ?? entry;
   }
 
   if (authLoading || loading) {
@@ -229,18 +246,40 @@ export default function AdminTasksPage() {
               </div>
             </div>
             <div className="grid gap-2">
-              <Label>Assign To</Label>
-              <div className="flex items-center gap-2 border-b pb-2">
-                <Checkbox
-                  id="assign-all"
-                  checked={assignAll}
-                  onCheckedChange={toggleAssignAll}
-                />
-                <label htmlFor="assign-all" className="text-sm font-medium">
-                  All Members
-                </label>
-              </div>
-              {!assignAll && (
+              <Label>Assignment Target</Label>
+              <Select
+                value={assignmentTarget}
+                onValueChange={(v) => setAssignmentTarget(v as "all" | "team" | "member")}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select target" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Members</SelectItem>
+                  <SelectItem value="team">Specific Team</SelectItem>
+                  <SelectItem value="member">Specific Member</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {assignmentTarget === "team" && (
+                <Select
+                  value={selectedTeam}
+                  onValueChange={(v) => setSelectedTeam(v as Team)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select team" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(TEAM_LABELS) as Team[]).map((key) => (
+                      <SelectItem key={key} value={key}>
+                        {TEAM_LABELS[key]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {assignmentTarget === "member" && (
                 <div className="flex flex-wrap gap-3 pt-1">
                   {members.map((member) => (
                     <div
@@ -292,25 +331,22 @@ export default function AdminTasksPage() {
                   {task.assignedTo.length === 0 ? (
                     <Badge variant="secondary">None</Badge>
                   ) : (
-                    task.assignedTo.map((uid) => {
-                      const member = members.find((m) => m.uid === uid);
-                      return (
-                        <Badge key={uid} variant="outline">
-                          {member?.name ?? uid}
-                        </Badge>
-                      );
-                    })
+                    task.assignedTo.map((entry) => (
+                      <Badge key={entry} variant="outline">
+                        {resolveAssignedLabel(entry)}
+                      </Badge>
+                    ))
                   )}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
                     {task.points} pts
                   </span>
-                  {task.assignedTo.length > 0 && (
+                  {task.assignedTo.some((id) => id !== "all" && !id.startsWith("team:")) && (
                     <div className="flex flex-wrap gap-1">
-                      {task.assignedTo.map((uid) => {
-                        const member = members.find((m) => m.uid === uid);
-                        return (
+                      {task.assignedTo
+                        .filter((id) => id !== "all" && !id.startsWith("team:"))
+                        .map((uid) => (
                           <Button
                             key={uid}
                             size="sm"
@@ -318,10 +354,9 @@ export default function AdminTasksPage() {
                             onClick={() => handleApproveTask(task, uid)}
                           >
                             <CheckCircle2 className="mr-1 size-3" />
-                            {member?.name ?? uid}
+                            {resolveAssignedLabel(uid)}
                           </Button>
-                        );
-                      })}
+                        ))}
                     </div>
                   )}
                 </div>
@@ -352,16 +387,11 @@ export default function AdminTasksPage() {
                         <Badge variant="secondary">None</Badge>
                       ) : (
                         <div className="flex flex-wrap gap-1">
-                          {task.assignedTo.map((uid) => {
-                            const member = members.find(
-                              (m) => m.uid === uid
-                            );
-                            return (
-                              <Badge key={uid} variant="outline">
-                                {member?.name ?? uid}
-                              </Badge>
-                            );
-                          })}
+                          {task.assignedTo.map((entry) => (
+                            <Badge key={entry} variant="outline">
+                              {resolveAssignedLabel(entry)}
+                            </Badge>
+                          ))}
                         </div>
                       )}
                     </TableCell>
@@ -378,13 +408,11 @@ export default function AdminTasksPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {task.assignedTo.length > 0 && (
+                      {task.assignedTo.some((id) => id !== "all" && !id.startsWith("team:")) && (
                         <div className="flex flex-wrap justify-end gap-1">
-                          {task.assignedTo.map((uid) => {
-                            const member = members.find(
-                              (m) => m.uid === uid
-                            );
-                            return (
+                          {task.assignedTo
+                            .filter((id) => id !== "all" && !id.startsWith("team:"))
+                            .map((uid) => (
                               <Button
                                 key={uid}
                                 size="sm"
@@ -394,10 +422,9 @@ export default function AdminTasksPage() {
                                 }
                               >
                                 <CheckCircle2 className="mr-1 size-3" />
-                                {member?.name ?? uid}
+                                {resolveAssignedLabel(uid)}
                               </Button>
-                            );
-                          })}
+                            ))}
                         </div>
                       )}
                     </TableCell>

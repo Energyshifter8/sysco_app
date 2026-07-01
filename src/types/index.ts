@@ -1,3 +1,12 @@
+export type Team = "dev" | "ops" | "design" | "social";
+
+export const TEAM_LABELS: Record<Team, string> = {
+  dev: "Development Team",
+  ops: "Internal Operations Team",
+  design: "Design Team",
+  social: "Social/Marketing Team",
+};
+
 export interface User {
   uid: string;
   name: string;
@@ -5,6 +14,7 @@ export interface User {
   role: "admin" | "member";
   course: string;
   major: string;
+  team?: Team;
   totalPoints: number;
   createdAt: Date;
 }
