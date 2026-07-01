@@ -32,8 +32,6 @@ const COURSE_OPTIONS = [
   "2nd Year",
   "3rd Year",
   "4th Year",
-  "5th Year",
-  "Graduate",
 ];
 
 export default function ProfilePage() {
