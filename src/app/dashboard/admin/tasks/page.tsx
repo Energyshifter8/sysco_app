@@ -119,14 +119,14 @@ export default function AdminTasksPage() {
       }
       console.log("Creating task with assignedTo:", assignedTo);
       const taskData = {
-        title,
-        description,
-        points,
-        assignedTo,
-        status: "assigned",
-        createdBy: userData.uid,
+        title: title,
+        description: description,
+        points: Number(points),
+        dueDate: dueDate,
         createdAt: new Date(),
-        dueDate,
+        createdBy: userData.uid,
+        assignedTo: assignedTo,
+        status: "assigned",
       };
       const docRef = await addDoc(collection(db, "tasks"), taskData);
       await updateDoc(docRef, { id: docRef.id });
