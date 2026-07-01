@@ -60,11 +60,13 @@ export default function MemberTasksPage() {
   useEffect(() => {
     if (!user || !userData) return;
 
-    const queryTargets = [user.uid, "all"];
+    const queryTargets: string[] = [user.uid, "all"];
     const team = userData.team;
-    if (team && team.trim() !== "") {
+    if (typeof team === "string" && team.trim() !== "") {
       queryTargets.push(`team:${team}`);
     }
+
+    console.log("Querying with array:", queryTargets);
 
     const q = query(
       collection(db, "tasks"),
@@ -76,12 +78,13 @@ export default function MemberTasksPage() {
         ...doc.data(),
         id: doc.id,
       })) as Task[];
+      console.log("Fetched tasks:", fetched.length);
       setTasks(fetched);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, userData]);
+  }, [user?.uid, userData?.team]);
 
   if (authLoading || loading) {
     return (
