@@ -60,14 +60,15 @@ export default function MemberTasksPage() {
   useEffect(() => {
     if (!user || !userData) return;
 
-    const matchValues = [user.uid, "all"];
-    if (userData.team) {
-      matchValues.push(`team:${userData.team}`);
+    const queryTargets = [user.uid, "all"];
+    const team = userData.team;
+    if (team && team.trim() !== "") {
+      queryTargets.push(`team:${team}`);
     }
 
     const q = query(
       collection(db, "tasks"),
-      where("assignedTo", "array-contains-any", matchValues)
+      where("assignedTo", "array-contains-any", queryTargets)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
