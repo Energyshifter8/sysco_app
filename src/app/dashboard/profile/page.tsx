@@ -73,8 +73,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Profile</h1>
+    <div className="mx-auto max-w-2xl space-y-5 sm:space-y-6">
+      <h1 className="text-xl font-bold sm:text-2xl">Profile</h1>
 
       <Card>
         <CardHeader>
@@ -90,13 +90,15 @@ export default function ProfilePage() {
             <Label>Email</Label>
             <Input value={user.email ?? ""} disabled />
           </div>
-          <div className="grid gap-2">
-            <Label>Role</Label>
-            <Input value={userData.role} disabled className="capitalize" />
-          </div>
-          <div className="grid gap-2">
-            <Label>Total Points</Label>
-            <Input value={userData.totalPoints} disabled />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label>Role</Label>
+              <Input value={userData.role} disabled className="capitalize" />
+            </div>
+            <div className="grid gap-2">
+              <Label>Total Points</Label>
+              <Input value={userData.totalPoints} disabled />
+            </div>
           </div>
         </CardContent>
       </Card>

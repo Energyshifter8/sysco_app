@@ -168,10 +168,10 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Attendance</h1>
-        <Button onClick={handleSave} disabled={saving}>
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold sm:text-2xl">Attendance</h1>
+        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
           {saving ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
           ) : null}
@@ -181,11 +181,11 @@ export default function AttendancePage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-4">
-            <CardTitle>Select Date</CardTitle>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <CardTitle className="text-base sm:text-lg">Select Date</CardTitle>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <CalendarIcon className="mr-2 size-4" />
                   {date.toLocaleDateString("en-US", {
                     weekday: "long",
@@ -211,50 +211,88 @@ export default function AttendancePage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-40">Status</TableHead>
-                <TableHead>Note</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.map((member) => (
-                <TableRow key={member.uid}>
-                  <TableCell className="font-medium">
-                    {member.name}
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={member.status}
-                      onValueChange={(v) =>
-                        updateMember(member.uid, "status", v)
-                      }
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="present">Present</SelectItem>
-                        <SelectItem value="absent">Absent</SelectItem>
-                        <SelectItem value="late">Late</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      placeholder="Optional note"
-                      value={member.note}
-                      onChange={(e) =>
-                        updateMember(member.uid, "note", e.target.value)
-                      }
-                    />
-                  </TableCell>
+          {/* Mobile card view */}
+          <div className="space-y-3 sm:hidden">
+            {members.map((member) => (
+              <div key={member.uid} className="rounded-lg border p-3 space-y-2">
+                <p className="font-medium text-sm">{member.name}</p>
+                <div className="flex gap-2">
+                  <Select
+                    value={member.status}
+                    onValueChange={(v) =>
+                      updateMember(member.uid, "status", v)
+                    }
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="present">Present</SelectItem>
+                      <SelectItem value="absent">Absent</SelectItem>
+                      <SelectItem value="late">Late</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Note"
+                    className="flex-1"
+                    value={member.note}
+                    onChange={(e) =>
+                      updateMember(member.uid, "note", e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="w-36 md:w-40">Status</TableHead>
+                  <TableHead>Note</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {members.map((member) => (
+                  <TableRow key={member.uid}>
+                    <TableCell className="font-medium">
+                      {member.name}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={member.status}
+                        onValueChange={(v) =>
+                          updateMember(member.uid, "status", v)
+                        }
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="present">Present</SelectItem>
+                          <SelectItem value="absent">Absent</SelectItem>
+                          <SelectItem value="late">Late</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        placeholder="Optional note"
+                        value={member.note}
+                        onChange={(e) =>
+                          updateMember(member.uid, "note", e.target.value)
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
           {members.length === 0 && (
             <p className="py-8 text-center text-muted-foreground">
               No members found

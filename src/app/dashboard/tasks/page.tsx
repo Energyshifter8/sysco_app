@@ -88,16 +88,16 @@ export default function MemberTasksPage() {
   const completedTasks = tasks.filter((t) => t.status === "completed");
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">My Tasks</h1>
+    <div className="space-y-5 sm:space-y-6">
+      <h1 className="text-xl font-bold sm:text-2xl">My Tasks</h1>
 
       <Tabs defaultValue="active">
-        <TabsList>
-          <TabsTrigger value="active">
-            Active Tasks ({activeTasks.length})
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="active" className="flex-1 sm:flex-none">
+            Active ({activeTasks.length})
           </TabsTrigger>
-          <TabsTrigger value="history">
-            Task History ({completedTasks.length})
+          <TabsTrigger value="history" className="flex-1 sm:flex-none">
+            History ({completedTasks.length})
           </TabsTrigger>
         </TabsList>
 
@@ -106,11 +106,11 @@ export default function MemberTasksPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <CalendarClock className="mb-3 size-10 opacity-40" />
-                <p>No active tasks assigned to you.</p>
+                <p className="text-center">No active tasks assigned to you.</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               {activeTasks.map((task) => {
                 const dueDate = task.dueDate
                   ? new Date(task.dueDate)
@@ -121,10 +121,10 @@ export default function MemberTasksPage() {
                   <Card key={task.id} className="relative overflow-hidden">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-base">
+                        <CardTitle className="text-sm sm:text-base">
                           {task.title}
                         </CardTitle>
-                        <Badge variant={statusBadgeVariant(task.status)}>
+                        <Badge variant={statusBadgeVariant(task.status)} className="shrink-0">
                           {statusLabel(task.status)}
                         </Badge>
                       </div>
@@ -175,19 +175,19 @@ export default function MemberTasksPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <CalendarClock className="mb-3 size-10 opacity-40" />
-                <p>No completed tasks yet.</p>
+                <p className="text-center">No completed tasks yet.</p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               {completedTasks.map((task) => (
                 <Card key={task.id} className="opacity-80">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base">
+                      <CardTitle className="text-sm sm:text-base">
                         {task.title}
                       </CardTitle>
-                      <Badge variant={statusBadgeVariant(task.status)}>
+                      <Badge variant={statusBadgeVariant(task.status)} className="shrink-0">
                         {statusLabel(task.status)}
                       </Badge>
                     </div>

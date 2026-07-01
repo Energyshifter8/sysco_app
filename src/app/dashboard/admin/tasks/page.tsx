@@ -165,12 +165,12 @@ export default function AdminTasksPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Manage Tasks</h1>
+    <div className="space-y-5 sm:space-y-6">
+      <h1 className="text-xl font-bold sm:text-2xl">Manage Tasks</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Plus className="size-4" />
             Create Task
           </CardTitle>
@@ -194,7 +194,7 @@ export default function AdminTasksPage() {
                 placeholder="Task description"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label>Points</Label>
                 <Input
@@ -208,7 +208,7 @@ export default function AdminTasksPage() {
                 <Label>Due Date</Label>
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" type="button">
+                    <Button variant="outline" type="button" className="w-full justify-start">
                       <CalendarIcon className="mr-2 size-4" />
                       {dueDate
                         ? dueDate.toLocaleDateString()
@@ -263,7 +263,7 @@ export default function AdminTasksPage() {
                 </div>
               )}
             </div>
-            <Button type="submit" disabled={saving} className="w-fit">
+            <Button type="submit" disabled={saving} className="w-full sm:w-fit">
               {saving ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : null}
@@ -275,83 +275,138 @@ export default function AdminTasksPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Existing Tasks</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Existing Tasks</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Task</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Points</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasks.map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell className="font-medium">
-                    {task.title}
-                  </TableCell>
-                  <TableCell>
-                    {task.assignedTo.length === 0 ? (
-                      <Badge variant="secondary">None</Badge>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {task.assignedTo.map((uid) => {
-                          const member = members.find(
-                            (m) => m.uid === uid
-                          );
-                          return (
-                            <Badge key={uid} variant="outline">
-                              {member?.name ?? uid}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>{task.points}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        task.status === "completed"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {task.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {task.assignedTo.length > 0 && (
-                      <div className="flex flex-wrap justify-end gap-1">
-                        {task.assignedTo.map((uid) => {
-                          const member = members.find(
-                            (m) => m.uid === uid
-                          );
-                          return (
-                            <Button
-                              key={uid}
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleApproveTask(task, uid)
-                              }
-                            >
-                              <CheckCircle2 className="mr-1 size-3" />
-                              {member?.name ?? uid}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </TableCell>
+          {/* Mobile card view */}
+          <div className="space-y-3 sm:hidden">
+            {tasks.map((task) => (
+              <div key={task.id} className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium text-sm">{task.title}</p>
+                  <Badge variant={task.status === "completed" ? "default" : "secondary"}>
+                    {task.status}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {task.assignedTo.length === 0 ? (
+                    <Badge variant="secondary">None</Badge>
+                  ) : (
+                    task.assignedTo.map((uid) => {
+                      const member = members.find((m) => m.uid === uid);
+                      return (
+                        <Badge key={uid} variant="outline">
+                          {member?.name ?? uid}
+                        </Badge>
+                      );
+                    })
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {task.points} pts
+                  </span>
+                  {task.assignedTo.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {task.assignedTo.map((uid) => {
+                        const member = members.find((m) => m.uid === uid);
+                        return (
+                          <Button
+                            key={uid}
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleApproveTask(task, uid)}
+                          >
+                            <CheckCircle2 className="mr-1 size-3" />
+                            {member?.name ?? uid}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Task</TableHead>
+                  <TableHead>Assigned To</TableHead>
+                  <TableHead>Points</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {tasks.map((task) => (
+                  <TableRow key={task.id}>
+                    <TableCell className="font-medium">
+                      {task.title}
+                    </TableCell>
+                    <TableCell>
+                      {task.assignedTo.length === 0 ? (
+                        <Badge variant="secondary">None</Badge>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {task.assignedTo.map((uid) => {
+                            const member = members.find(
+                              (m) => m.uid === uid
+                            );
+                            return (
+                              <Badge key={uid} variant="outline">
+                                {member?.name ?? uid}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>{task.points}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          task.status === "completed"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {task.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {task.assignedTo.length > 0 && (
+                        <div className="flex flex-wrap justify-end gap-1">
+                          {task.assignedTo.map((uid) => {
+                            const member = members.find(
+                              (m) => m.uid === uid
+                            );
+                            return (
+                              <Button
+                                key={uid}
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  handleApproveTask(task, uid)
+                                }
+                              >
+                                <CheckCircle2 className="mr-1 size-3" />
+                                {member?.name ?? uid}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
           {tasks.length === 0 && (
             <p className="py-8 text-center text-muted-foreground">
               No tasks yet
