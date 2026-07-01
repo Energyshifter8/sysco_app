@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Loader2, LayoutDashboard, CheckSquare, User, Trophy } from "lucide-react";
+import {
+  Loader2,
+  LayoutDashboard,
+  CheckSquare,
+  User,
+  Trophy,
+  ClipboardCheck,
+  ListTodo,
+  Users,
+  Shield,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +20,12 @@ const navLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/dashboard/profile", label: "Profile", icon: User },
+];
+
+const adminLinks = [
+  { href: "/dashboard/admin/attendance", label: "Attendance", icon: ClipboardCheck },
+  { href: "/dashboard/admin/tasks", label: "Manage Tasks", icon: ListTodo },
+  { href: "/dashboard/admin/members", label: "Members", icon: Users },
 ];
 
 export default function DashboardLayout({
