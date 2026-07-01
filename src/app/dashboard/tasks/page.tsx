@@ -21,7 +21,7 @@ function isOverdue(dueDate: Date): boolean {
 }
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("mn-MN", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -42,11 +42,11 @@ function statusBadgeVariant(status: string) {
 function statusLabel(status: string) {
   switch (status) {
     case "assigned":
-      return "New";
+      return "Шинэ";
     case "in_progress":
-      return "In Progress";
+      return "Биелүүлж байна";
     case "completed":
-      return "Completed";
+      return "Дууссан";
     default:
       return status;
   }
@@ -94,15 +94,15 @@ export default function MemberTasksPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <h1 className="text-xl font-bold sm:text-2xl">My Tasks</h1>
+      <h1 className="text-xl font-bold sm:text-2xl">Миний даалгаврууд</h1>
 
       <Tabs defaultValue="active">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="active" className="flex-1 sm:flex-none">
-            Active ({activeTasks.length})
+            Идэвхтэй ({activeTasks.length})
           </TabsTrigger>
           <TabsTrigger value="history" className="flex-1 sm:flex-none">
-            History ({completedTasks.length})
+            Түүх ({completedTasks.length})
           </TabsTrigger>
         </TabsList>
 
@@ -111,7 +111,7 @@ export default function MemberTasksPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <CalendarClock className="mb-3 size-10 opacity-40" />
-                <p className="text-center">No active tasks assigned to you.</p>
+                <p className="text-center">Танд одоогоор идэвхтэй даалгавар байхгүй байна.</p>
               </CardContent>
             </Card>
           ) : (
@@ -146,7 +146,7 @@ export default function MemberTasksPage() {
                           <span className="font-medium text-foreground">
                             {task.points}
                           </span>{" "}
-                          pts
+                          оноо
                         </div>
                         {dueDate && (
                           <div
@@ -162,7 +162,7 @@ export default function MemberTasksPage() {
                             <span
                               className={`text-xs ${overdue ? "font-medium" : ""}`}
                             >
-                              Due {formatDate(dueDate)}
+                              Дуусах: {formatDate(dueDate)}
                             </span>
                           </div>
                         )}
@@ -180,7 +180,7 @@ export default function MemberTasksPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <CalendarClock className="mb-3 size-10 opacity-40" />
-                <p className="text-center">No completed tasks yet.</p>
+                <p className="text-center">Одоогоор дууссан даалгавар байхгүй байна.</p>
               </CardContent>
             </Card>
           ) : (
@@ -208,7 +208,7 @@ export default function MemberTasksPage() {
                       <span className="font-medium text-foreground">
                         {task.points}
                       </span>{" "}
-                      pts earned
+                      оноо авсан
                     </div>
                   </CardContent>
                 </Card>

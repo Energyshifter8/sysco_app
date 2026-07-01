@@ -29,7 +29,7 @@ export default function SignupPage() {
     e.preventDefault();
     try {
       await signup(email, password, name);
-      toast.success("Account created successfully");
+      toast.success("Бүртгэл амжилттай үүсгэгдлээ");
       router.push("/dashboard");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Signup failed";
@@ -41,15 +41,15 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Create Account</CardTitle>
+          <CardTitle>Бүртгүүлэх</CardTitle>
           <CardDescription>
-            Enter your details to get started
+            Эхлэхийн тулд мэдээллээ оруулна уу
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Бүтэн нэр</Label>
               <Input
                 id="name"
                 type="text"
@@ -60,7 +60,7 @@ export default function SignupPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Имэйл</Label>
               <Input
                 id="email"
                 type="email"
@@ -71,7 +71,7 @@ export default function SignupPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Нууц үг</Label>
               <Input
                 id="password"
                 type="password"
@@ -88,12 +88,12 @@ export default function SignupPage() {
               {loading ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : null}
-              {loading ? "Creating account..." : "Create Account"}
+              {loading ? "Бүртгэж байна..." : "Бүртгүүлэх"}
             </Button>
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
+              Бүртгэл байна уу?{" "}
               <Link href="/login" className="text-primary underline-offset-4 hover:underline">
-                Sign in
+                Нэвтрэх
               </Link>
             </p>
           </CardFooter>

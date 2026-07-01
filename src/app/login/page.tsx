@@ -28,7 +28,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await login(email, password);
-      toast.success("Logged in successfully");
+      toast.success("Амжилттай нэвтрэгдлээ");
       router.push("/dashboard");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
@@ -40,15 +40,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
+          <CardTitle>Нэвтрэх</CardTitle>
           <CardDescription>
-            Enter your email and password to continue
+            Нэвтрэхийн тулд имэйл болон нууц үгээ оруулна уу
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Имэйл</Label>
               <Input
                 id="email"
                 type="email"
@@ -59,7 +59,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Нууц үг</Label>
               <Input
                 id="password"
                 type="password"
@@ -75,12 +75,12 @@ export default function LoginPage() {
               {loading ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : null}
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Нэвтрэж байна..." : "Нэвтрэх"}
             </Button>
             <p className="text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
+              Бүртгэл байхгүй юу?{" "}
               <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
-                Sign up
+                Бүртгүүлэх
               </Link>
             </p>
           </CardFooter>

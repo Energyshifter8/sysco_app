@@ -267,7 +267,7 @@ export default function AdminTasksPage() {
                   onValueChange={(v) => setSelectedTeam(v as Team)}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select team" />
+                    <SelectValue placeholder="Баг сонгох" />
                   </SelectTrigger>
                   <SelectContent>
                     {(Object.keys(TEAM_LABELS) as Team[]).map((key) => (
@@ -306,7 +306,7 @@ export default function AdminTasksPage() {
               {saving ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : null}
-              Create Task
+              Үүсгэх
             </Button>
           </form>
         </CardContent>
@@ -314,7 +314,7 @@ export default function AdminTasksPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Existing Tasks</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Байгаа даалгаврууд</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Mobile card view */}
@@ -369,11 +369,11 @@ export default function AdminTasksPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Task</TableHead>
-                  <TableHead>Assigned To</TableHead>
-                  <TableHead>Points</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead>Даалгавар</TableHead>
+                  <TableHead>Хэнд</TableHead>
+                  <TableHead>Оноо</TableHead>
+                  <TableHead>Төлөв</TableHead>
+                  <TableHead className="text-right">Үйлдэл</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -384,7 +384,7 @@ export default function AdminTasksPage() {
                     </TableCell>
                     <TableCell>
                       {task.assignedTo.length === 0 ? (
-                        <Badge variant="secondary">None</Badge>
+                    <Badge variant="secondary">Хоосон</Badge>
                       ) : (
                         <div className="flex flex-wrap gap-1">
                           {task.assignedTo.map((entry) => (
@@ -436,7 +436,7 @@ export default function AdminTasksPage() {
 
           {tasks.length === 0 && (
             <p className="py-8 text-center text-muted-foreground">
-              No tasks yet
+              Одоогоор даалгавар байхгүй байна
             </p>
           )}
         </CardContent>

@@ -66,9 +66,9 @@ export default function ProfilePage() {
     try {
       const ref = doc(db, "users", user.uid);
       await updateDoc(ref, { course, major, team: team || null });
-      toast.success("Profile updated successfully");
+      toast.success("Профайл амжилттай шинэчлэгдлээ");
     } catch {
-      toast.error("Failed to update profile");
+      toast.error("Профайлыг шинэчлэхэд алдаа гарлаа");
     } finally {
       setSaving(false);
     }
@@ -76,16 +76,16 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5 sm:space-y-6">
-      <h1 className="text-xl font-bold sm:text-2xl">Profile</h1>
+      <h1 className="text-xl font-bold sm:text-2xl">Профайл</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Account Details</CardTitle>
-          <CardDescription>Your account information</CardDescription>
+          <CardTitle>Бүртгэлийн мэдээлэл</CardTitle>
+          <CardDescription>Таны бүртгэлийн мэдээлэл</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label>Name</Label>
+            <Label>Нэр</Label>
             <Input value={userData.name} disabled />
           </div>
           <div className="grid gap-2">
@@ -94,11 +94,11 @@ export default function ProfilePage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label>Role</Label>
+              <Label>Үүрэг</Label>
               <Input value={userData.role} disabled className="capitalize" />
             </div>
             <div className="grid gap-2">
-              <Label>Total Points</Label>
+              <Label>Нийт оноо</Label>
               <Input value={userData.totalPoints} disabled />
             </div>
           </div>
@@ -107,15 +107,15 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Edit Profile</CardTitle>
-          <CardDescription>Customize your academic details</CardDescription>
+          <CardTitle>Профайл засах</CardTitle>
+          <CardDescription>Сургалтын мэдээллээ өөрчлөх</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label>Course / Level</Label>
+            <Label>Суралцах жил / Түвшин</Label>
             <Select value={course} onValueChange={setCourse}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select your course" />
+                <SelectValue placeholder="Суралцах жилээ сонгоно уу" />
               </SelectTrigger>
               <SelectContent>
                 {COURSE_OPTIONS.map((opt) => (
@@ -127,10 +127,10 @@ export default function ProfilePage() {
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Major / Track</Label>
+            <Label>Мэргэжил / Чиглэл</Label>
             <Select value={major} onValueChange={setMajor}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select your major" />
+                <SelectValue placeholder="Мэргэжлээ сонгоно уу" />
               </SelectTrigger>
               <SelectContent>
                 {MAJOR_OPTIONS.map((opt) => (
@@ -142,10 +142,10 @@ export default function ProfilePage() {
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Team</Label>
+            <Label>Баг</Label>
             <Select value={team} onValueChange={(v) => setTeam(v as Team | "")}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select your team" />
+                <SelectValue placeholder="Багаа сонгоно уу" />
               </SelectTrigger>
               <SelectContent>
                 {(Object.keys(TEAM_LABELS) as Team[]).map((key) => (
@@ -164,7 +164,7 @@ export default function ProfilePage() {
             ) : (
               <Save className="mr-2 size-4" />
             )}
-            {saving ? "Saving..." : "Save Profile"}
+            {saving ? "Хадгалж байна..." : "Хадгалах"}
           </Button>
         </CardFooter>
       </Card>

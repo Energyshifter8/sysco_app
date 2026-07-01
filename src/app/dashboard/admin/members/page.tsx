@@ -83,7 +83,7 @@ export default function MembersPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <h1 className="text-xl font-bold sm:text-2xl">Members</h1>
+      <h1 className="text-xl font-bold sm:text-2xl">Гишүүдийн жагсаалт</h1>
 
       <Card>
         <CardContent className="p-0">
@@ -102,7 +102,7 @@ export default function MembersPage() {
                     <span>{member.major || "-"}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {member.totalPoints} pts
+                    {member.totalPoints} оноо
                   </p>
                 </div>
                 <Button
@@ -111,7 +111,7 @@ export default function MembersPage() {
                   onClick={() => handleViewMember(member)}
                 >
                   <Eye className="mr-1 size-3" />
-                  View
+                  Харах
                 </Button>
               </div>
             ))}
@@ -122,11 +122,11 @@ export default function MembersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Major</TableHead>
-                  <TableHead className="text-right">Points</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead>Нэр</TableHead>
+                  <TableHead>Суралцах жил</TableHead>
+                  <TableHead>Мэргэжил</TableHead>
+                  <TableHead className="text-right">Оноо</TableHead>
+                  <TableHead className="text-right">Үйлдэл</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -145,7 +145,7 @@ export default function MembersPage() {
                         onClick={() => handleViewMember(member)}
                       >
                         <Eye className="mr-1 size-3" />
-                        View
+                        Харах
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -156,7 +156,7 @@ export default function MembersPage() {
 
           {members.length === 0 && (
             <p className="py-8 text-center text-muted-foreground">
-              No members found
+              Гишүүд олдсонгүй
             </p>
           )}
         </CardContent>
@@ -180,23 +180,23 @@ export default function MembersPage() {
           <div className="space-y-5 sm:space-y-6">
             <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
               <div>
-                <p className="text-muted-foreground">Email</p>
+                <p className="text-muted-foreground">Имэйл</p>
                 <p className="font-medium">{selectedMember?.email}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Course</p>
+                <p className="text-muted-foreground">Суралцах жил</p>
                 <p className="font-medium">
                   {selectedMember?.course || "-"}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Major</p>
+                <p className="text-muted-foreground">Мэргэжил</p>
                 <p className="font-medium">
                   {selectedMember?.major || "-"}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Total Points</p>
+                <p className="text-muted-foreground">Нийт оноо</p>
                 <p className="font-medium">
                   {selectedMember?.totalPoints}
                 </p>
@@ -204,17 +204,17 @@ export default function MembersPage() {
             </div>
 
             <div>
-              <h3 className="mb-2 font-medium">Task History</h3>
+              <h3 className="mb-2 font-medium">Даалгаврын түүх</h3>
               {memberTasks.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tasks</p>
+                <p className="text-sm text-muted-foreground">Даалгавар байхгүй</p>
               ) : (
                 <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
                   <Table className="min-w-[300px]">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Task</TableHead>
-                        <TableHead>Points</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>Даалгавар</TableHead>
+                        <TableHead>Оноо</TableHead>
+                        <TableHead>Төлөв</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -242,19 +242,19 @@ export default function MembersPage() {
             </div>
 
             <div>
-              <h3 className="mb-2 font-medium">Attendance History</h3>
+              <h3 className="mb-2 font-medium">Ирцийн түүх</h3>
               {memberAttendance.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No attendance records
+                  Ирцийн бүртгэл байхгүй
                 </p>
               ) : (
                 <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
                   <Table className="min-w-[350px]">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Note</TableHead>
+                        <TableHead>Огноо</TableHead>
+                        <TableHead>Төлөв</TableHead>
+                        <TableHead>Тэмдэглэл</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

@@ -34,13 +34,13 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
+      <h1 className="text-xl font-bold sm:text-2xl">Хянах самбар</h1>
 
       <div className="grid gap-3 sm:gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Your Points
+              Таны оноо
             </CardTitle>
             <Trophy className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -51,7 +51,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Rank
+              Байр
             </CardTitle>
             <Medal className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -68,7 +68,7 @@ export default function DashboardPage() {
         <Card className="sm:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Completed Tasks
+              Дуусгасан даалгавар
             </CardTitle>
             <CheckSquare className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -80,7 +80,7 @@ export default function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Live Leaderboard</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Шууд чансаа</CardTitle>
         </CardHeader>
         <CardContent>
           {leaderboardLoading ? (
@@ -89,7 +89,7 @@ export default function DashboardPage() {
             </div>
           ) : entries.length === 0 ? (
             <p className="py-8 text-center text-muted-foreground">
-              No users found
+              Хэрэглэгч олдсонгүй
             </p>
           ) : (
             <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -97,9 +97,9 @@ export default function DashboardPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12 sm:w-16">#</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden sm:table-cell">Course</TableHead>
-                    <TableHead className="text-right">Points</TableHead>
+                    <TableHead>Нэр</TableHead>
+                    <TableHead className="hidden sm:table-cell">Суралцах жил</TableHead>
+                    <TableHead className="text-right">Оноо</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -115,7 +115,7 @@ export default function DashboardPage() {
                         {entry.name}
                         {entry.uid === user.uid && (
                           <span className="ml-1.5 text-xs text-muted-foreground">
-                            (You)
+                            (Та)
                           </span>
                         )}
                       </TableCell>

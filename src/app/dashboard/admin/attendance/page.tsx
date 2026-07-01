@@ -151,9 +151,9 @@ export default function AttendancePage() {
       }
 
       await batch.commit();
-      toast.success("Attendance saved successfully");
+      toast.success("Ирц амжилттай хадгалагдлаа");
     } catch {
-      toast.error("Failed to save attendance");
+      toast.error("Ирцыг хадгалахад алдаа гарлаа");
     } finally {
       setSaving(false);
     }
@@ -170,24 +170,24 @@ export default function AttendancePage() {
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold sm:text-2xl">Attendance</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">Ирц бүртгэл</h1>
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
           {saving ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
           ) : null}
-          {saving ? "Saving..." : "Save Attendance"}
+          {saving ? "Хадгалж байна..." : "Ирц хадгалах"}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <CardTitle className="text-base sm:text-lg">Select Date</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Огноо сонгох</CardTitle>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <CalendarIcon className="mr-2 size-4" />
-                  {date.toLocaleDateString("en-US", {
+                  {date.toLocaleDateString("mn-MN", {
                     weekday: "long",
                     year: "numeric",
                     month: "long",
@@ -224,16 +224,16 @@ export default function AttendancePage() {
                     }
                   >
                     <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Select" />
+                      <SelectValue placeholder="Сонгох" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="present">Present</SelectItem>
-                      <SelectItem value="absent">Absent</SelectItem>
-                      <SelectItem value="late">Late</SelectItem>
+                      <SelectItem value="present">Ирсэн</SelectItem>
+                      <SelectItem value="absent">Тасалсан</SelectItem>
+                      <SelectItem value="late">Хоцорсон</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input
-                    placeholder="Note"
+                    placeholder="Тэмдэглэл"
                     className="flex-1"
                     value={member.note}
                     onChange={(e) =>
@@ -250,9 +250,9 @@ export default function AttendancePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="w-36 md:w-40">Status</TableHead>
-                  <TableHead>Note</TableHead>
+                  <TableHead>Нэр</TableHead>
+                  <TableHead className="w-36 md:w-40">Төлөв</TableHead>
+                  <TableHead>Тэмдэглэл</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -269,18 +269,18 @@ export default function AttendancePage() {
                         }
                       >
                         <SelectTrigger className="w-32">
-                          <SelectValue placeholder="Select" />
+                          <SelectValue placeholder="Сонгох" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="present">Present</SelectItem>
-                          <SelectItem value="absent">Absent</SelectItem>
-                          <SelectItem value="late">Late</SelectItem>
+                          <SelectItem value="present">Ирсэн</SelectItem>
+                          <SelectItem value="absent">Тасалсан</SelectItem>
+                          <SelectItem value="late">Хоцорсон</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
                     <TableCell>
                       <Input
-                        placeholder="Optional note"
+                        placeholder="Нэмэлт тэмдэглэл"
                         value={member.note}
                         onChange={(e) =>
                           updateMember(member.uid, "note", e.target.value)
@@ -295,7 +295,7 @@ export default function AttendancePage() {
 
           {members.length === 0 && (
             <p className="py-8 text-center text-muted-foreground">
-              No members found
+              Гишүүд олдсонгүй
             </p>
           )}
         </CardContent>

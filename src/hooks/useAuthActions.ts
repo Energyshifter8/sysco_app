@@ -20,7 +20,7 @@ export function useAuthActions() {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? mapFirebaseError(err.message) : "Login failed";
+        err instanceof Error ? mapFirebaseError(err.message) : "Нэвтрэхэд алдаа гарлаа";
       setError(message);
       throw new Error(message);
     } finally {
@@ -46,7 +46,7 @@ export function useAuthActions() {
       const message =
         err instanceof Error
           ? mapFirebaseError(err.message)
-          : "Signup failed";
+          : "Бүртгүүлэхэд алдаа гарлаа";
       setError(message);
       throw new Error(message);
     } finally {
@@ -61,7 +61,7 @@ export function useAuthActions() {
       await signOut(auth);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "Logout failed";
+        err instanceof Error ? err.message : "Гарахад алдаа гарлаа";
       setError(message);
       throw new Error(message);
     } finally {
@@ -74,16 +74,16 @@ export function useAuthActions() {
 
 function mapFirebaseError(message: string): string {
   if (message.includes("invalid-credential") || message.includes("wrong-password") || message.includes("user-not-found")) {
-    return "Invalid email or password";
+    return "Имэйл эсвэл нууц үг буруу байна";
   }
   if (message.includes("email-already-in-use")) {
-    return "Email already in use";
+    return "Имэйл аль хэдийн бүртгэгдсэн байна";
   }
   if (message.includes("weak-password")) {
-    return "Password must be at least 6 characters";
+    return "Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой";
   }
   if (message.includes("invalid-email")) {
-    return "Invalid email address";
+    return "Имэйл хаяг буруу байна";
   }
   return message;
 }
