@@ -76,7 +76,6 @@ export default function MemberTasksPage() {
         ...doc.data(),
         id: doc.id,
       })) as Task[];
-      console.log("[TasksPage] fetched", fetched.length, "tasks", fetched.map((t) => ({ id: t.id, status: t.status, assignedTo: t.assignedTo })));
       setTasks(fetched);
       setLoading(false);
     });
@@ -95,7 +94,7 @@ export default function MemberTasksPage() {
   const activeTasks = tasks.filter(
     (t) => t.status !== "completed" && t.status !== "approved"
   );
-  const completedTasks = tasks.filter(
+  const historyTasks = tasks.filter(
     (t) => t.status === "completed" || t.status === "approved"
   );
 
@@ -109,7 +108,7 @@ export default function MemberTasksPage() {
             Идэвхтэй ({activeTasks.length})
           </TabsTrigger>
           <TabsTrigger value="history" className="flex-1 sm:flex-none">
-            Түүх ({completedTasks.length})
+            Түүх ({historyTasks.length})
           </TabsTrigger>
         </TabsList>
 
@@ -183,7 +182,7 @@ export default function MemberTasksPage() {
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
-          {completedTasks.length === 0 ? (
+          {historyTasks.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <CalendarClock className="mb-3 size-10 opacity-40" />
@@ -192,7 +191,7 @@ export default function MemberTasksPage() {
             </Card>
           ) : (
             <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              {completedTasks.map((task) => (
+              {historyTasks.map((task) => (
                 <Card key={task.id} className="opacity-80">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
