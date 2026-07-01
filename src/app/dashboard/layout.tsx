@@ -52,6 +52,7 @@ function SidebarContent({
           <button
             onClick={onLinkClick}
             className="rounded-md p-1 text-muted-foreground hover:text-foreground md:hidden"
+            aria-label="Хаах"
           >
             <X className="size-5" />
           </button>
@@ -180,6 +181,7 @@ export default function DashboardLayout({
           <button
             onClick={() => setMobileOpen(true)}
             className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+            aria-label="Цэс нээх"
           >
             <Menu className="size-5" />
           </button>
