@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -138,11 +138,6 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { userData, loading } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Close mobile sidebar on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   return (
     <div className="flex min-h-screen">
