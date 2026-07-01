@@ -33,10 +33,10 @@ export default function DashboardPage() {
   const userRank = entries.find((e) => e.uid === user.uid)?.rank ?? "-";
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+    <div className="space-y-6 sm:space-y-8">
+      <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -45,7 +45,7 @@ export default function DashboardPage() {
             <Trophy className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{userData.totalPoints}</div>
+            <div className="text-2xl font-bold sm:text-3xl">{userData.totalPoints}</div>
           </CardContent>
         </Card>
         <Card>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
             <Medal className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-2xl font-bold sm:text-3xl">
               {leaderboardLoading ? (
                 <Loader2 className="size-6 animate-spin" />
               ) : (
@@ -65,7 +65,7 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="sm:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Completed Tasks
@@ -73,14 +73,14 @@ export default function DashboardPage() {
             <CheckSquare className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">0</div>
+            <div className="text-2xl font-bold sm:text-3xl">0</div>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Live Leaderboard</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Live Leaderboard</CardTitle>
         </CardHeader>
         <CardContent>
           {leaderboardLoading ? (
@@ -92,40 +92,44 @@ export default function DashboardPage() {
               No users found
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Rank</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead className="text-right">Points</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entries.map((entry) => (
-                  <TableRow
-                    key={entry.uid}
-                    className={
-                      entry.uid === user.uid ? "bg-accent font-medium" : ""
-                    }
-                  >
-                    <TableCell>#{entry.rank}</TableCell>
-                    <TableCell>
-                      {entry.name}
-                      {entry.uid === user.uid && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          (You)
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{entry.course || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      {entry.totalPoints}
-                    </TableCell>
+            <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+              <Table className="min-w-[400px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12 sm:w-16">#</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="hidden sm:table-cell">Course</TableHead>
+                    <TableHead className="text-right">Points</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {entries.map((entry) => (
+                    <TableRow
+                      key={entry.uid}
+                      className={
+                        entry.uid === user.uid ? "bg-accent font-medium" : ""
+                      }
+                    >
+                      <TableCell>#{entry.rank}</TableCell>
+                      <TableCell>
+                        {entry.name}
+                        {entry.uid === user.uid && (
+                          <span className="ml-1.5 text-xs text-muted-foreground">
+                            (You)
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {entry.course || "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {entry.totalPoints}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
