@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { Team, TEAM_LABELS } from "@/types";
+import { MAJORS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,16 +34,6 @@ const COURSE_OPTIONS = [
   "4th Year",
   "5th Year",
   "Graduate",
-];
-
-const MAJOR_OPTIONS = [
-  "Software Engineering",
-  "Data Science",
-  "Cybersecurity",
-  "AI & Machine Learning",
-  "Cloud Computing",
-  "Networking",
-  "Other",
 ];
 
 export default function ProfilePage() {
@@ -133,9 +124,9 @@ export default function ProfilePage() {
                 <SelectValue placeholder="Мэргэжлээ сонгоно уу" />
               </SelectTrigger>
               <SelectContent>
-                {MAJOR_OPTIONS.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
+                {MAJORS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
                   </SelectItem>
                 ))}
               </SelectContent>

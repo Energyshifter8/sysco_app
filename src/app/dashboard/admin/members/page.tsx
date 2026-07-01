@@ -5,6 +5,7 @@ import { Loader2, Eye } from "lucide-react";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { User, Task, AttendanceRecord } from "@/types";
+import { getMajorLabel } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -99,7 +100,7 @@ export default function MembersPage() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{member.course || "-"}</span>
                     <span>-</span>
-                    <span>{member.major || "-"}</span>
+                    <span>{getMajorLabel(member.major) || "-"}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {member.totalPoints} оноо
@@ -134,7 +135,7 @@ export default function MembersPage() {
                   <TableRow key={member.uid}>
                     <TableCell className="font-medium">{member.name}</TableCell>
                     <TableCell>{member.course || "-"}</TableCell>
-                    <TableCell>{member.major || "-"}</TableCell>
+                    <TableCell>{getMajorLabel(member.major) || "-"}</TableCell>
                     <TableCell className="text-right">
                       {member.totalPoints}
                     </TableCell>
@@ -192,7 +193,7 @@ export default function MembersPage() {
               <div>
                 <p className="text-muted-foreground">Мэргэжил</p>
                 <p className="font-medium">
-                  {selectedMember?.major || "-"}
+                  {getMajorLabel(selectedMember?.major || "") || "-"}
                 </p>
               </div>
               <div>
