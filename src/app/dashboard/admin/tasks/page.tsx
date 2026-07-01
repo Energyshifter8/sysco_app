@@ -128,9 +128,9 @@ export default function AdminTasksPage() {
       setSelectedMembers([]);
       setAssignmentTarget("all");
       setSelectedTeam("dev");
-      toast.success("Task created successfully");
+      toast.success("Даалгавар амжилттай үүсгэгдлээ");
     } catch {
-      toast.error("Failed to create task");
+      toast.error("Даалгавар үүсгэхэд алдаа гарлаа");
     } finally {
       setSaving(false);
     }
@@ -157,14 +157,14 @@ export default function AdminTasksPage() {
             : t
         )
       );
-      toast.success("Task approved, points awarded");
+      toast.success("Даалгавар баталгаажуулагдлаа, оноо нэмэгдлээ");
     } catch {
-      toast.error("Failed to approve task");
+      toast.error("Даалгавар баталгаажуулахад алдаа гарлаа");
     }
   }
 
   function resolveAssignedLabel(entry: string): string {
-    if (entry === "all") return "All Members";
+    if (entry === "all") return "Бүх гишүүд";
     if (entry.startsWith("team:")) {
       const key = entry.slice(5) as Team;
       return TEAM_LABELS[key] ?? entry;
@@ -183,37 +183,37 @@ export default function AdminTasksPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <h1 className="text-xl font-bold sm:text-2xl">Manage Tasks</h1>
+      <h1 className="text-xl font-bold sm:text-2xl">Даалгавар удирдах</h1>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Plus className="size-4" />
-            Create Task
+            Даалгавар үүсгэх
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreateTask} className="grid gap-4">
             <div className="grid gap-2">
-              <Label>Title</Label>
+              <Label>Гарчиг</Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Task title"
+                placeholder="Даалгаврын гарчиг"
                 required
               />
             </div>
             <div className="grid gap-2">
-              <Label>Description</Label>
+              <Label>Тайлбар</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Task description"
+                placeholder="Даалгаврын тайлбар"
               />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label>Points</Label>
+                <Label>Оноо</Label>
                 <Input
                   type="number"
                   min={0}
@@ -222,14 +222,14 @@ export default function AdminTasksPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Due Date</Label>
+                <Label>Дуусах хугацаа</Label>
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" type="button" className="w-full justify-start">
                       <CalendarIcon className="mr-2 size-4" />
                       {dueDate
                         ? dueDate.toLocaleDateString()
-                        : "Pick a date"}
+                        : "Огноо сонгох"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -246,18 +246,18 @@ export default function AdminTasksPage() {
               </div>
             </div>
             <div className="grid gap-2">
-              <Label>Assignment Target</Label>
+              <Label>Хэнд хамааруулах</Label>
               <Select
                 value={assignmentTarget}
                 onValueChange={(v) => setAssignmentTarget(v as "all" | "team" | "member")}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select target" />
+                  <SelectValue placeholder="Зорилтот бүлэг сонгох" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Members</SelectItem>
-                  <SelectItem value="team">Specific Team</SelectItem>
-                  <SelectItem value="member">Specific Member</SelectItem>
+                  <SelectItem value="all">Бүх гишүүд</SelectItem>
+                  <SelectItem value="team">Тодорхой баг</SelectItem>
+                  <SelectItem value="member">Тодорхой гишүүн</SelectItem>
                 </SelectContent>
               </Select>
 

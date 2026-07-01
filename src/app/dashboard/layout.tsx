@@ -19,15 +19,15 @@ import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/dashboard/profile", label: "Profile", icon: User },
+  { href: "/dashboard", label: "Хянах самбар", icon: LayoutDashboard },
+  { href: "/dashboard/tasks", label: "Даалгавар", icon: CheckSquare },
+  { href: "/dashboard/profile", label: "Профайл", icon: User },
 ];
 
 const adminLinks = [
-  { href: "/dashboard/admin/attendance", label: "Attendance", icon: ClipboardCheck },
-  { href: "/dashboard/admin/tasks", label: "Manage Tasks", icon: ListTodo },
-  { href: "/dashboard/admin/members", label: "Members", icon: Users },
+  { href: "/dashboard/admin/attendance", label: "Ирц бүртгэл", icon: ClipboardCheck },
+  { href: "/dashboard/admin/tasks", label: "Даалгавар удирдах", icon: ListTodo },
+  { href: "/dashboard/admin/members", label: "Гишүүд", icon: Users },
 ];
 
 function SidebarContent({
@@ -86,7 +86,7 @@ function SidebarContent({
           <>
             <div className="my-2 border-t" />
             <p className="px-3 py-1 text-xs font-medium text-muted-foreground">
-              Admin
+              Захиргаа
             </p>
             {adminLinks.map((link) => {
               const isActive = pathname.startsWith(link.href);
@@ -117,11 +117,11 @@ function SidebarContent({
         ) : (
           <div className="space-y-1">
             <p className="text-sm font-medium truncate">
-              {userData?.name ?? "User"}
+              {userData?.name ?? "Хэрэглэгч"}
             </p>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Trophy className="size-3" />
-              <span>{userData?.totalPoints ?? 0} pts</span>
+              <span>{userData?.totalPoints ?? 0} оноо</span>
             </div>
           </div>
         )}
@@ -190,7 +190,7 @@ export default function DashboardLayout({
           {!loading && (
             <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
               <Trophy className="size-3" />
-              <span>{userData?.totalPoints ?? 0} pts</span>
+              <span>{userData?.totalPoints ?? 0} оноо</span>
             </div>
           )}
         </header>

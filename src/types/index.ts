@@ -1,10 +1,10 @@
 export type Team = "dev" | "ops" | "design" | "social";
 
 export const TEAM_LABELS: Record<Team, string> = {
-  dev: "Development Team",
-  ops: "Internal Operations Team",
-  design: "Design Team",
-  social: "Social/Marketing Team",
+  dev: "Хөгжүүлэлтийн баг",
+  ops: "Дотоод үйл ажиллагааны баг",
+  design: "Дизайн баг",
+  social: "Сошиал баг",
 };
 
 export interface User {
