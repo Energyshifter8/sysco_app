@@ -72,7 +72,11 @@ export default function MemberTasksPage() {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetched = snapshot.docs.map((doc) => doc.data() as Task);
+      const fetched = snapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as Task[];
+      console.log("[TasksPage] fetched", fetched.length, "tasks", fetched.map((t) => ({ id: t.id, status: t.status, assignedTo: t.assignedTo })));
       setTasks(fetched);
       setLoading(false);
     });
@@ -89,9 +93,11 @@ export default function MemberTasksPage() {
   }
 
   const activeTasks = tasks.filter(
-    (t) => t.status === "assigned" || t.status === "in_progress"
+    (t) => t.status !== "completed" && t.status !== "approved"
   );
-  const completedTasks = tasks.filter((t) => t.status === "completed");
+  const completedTasks = tasks.filter(
+    (t) => t.status === "completed" || t.status === "approved"
+  );
 
   return (
     <div className="space-y-5 sm:space-y-6">
