@@ -65,7 +65,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       const ref = doc(db, "users", user.uid);
-      await updateDoc(ref, { course, major });
+      await updateDoc(ref, { course, major, team: team || null });
       toast.success("Profile updated successfully");
     } catch {
       toast.error("Failed to update profile");
@@ -136,6 +136,21 @@ export default function ProfilePage() {
                 {MAJOR_OPTIONS.map((opt) => (
                   <SelectItem key={opt} value={opt}>
                     {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label>Team</Label>
+            <Select value={team} onValueChange={(v) => setTeam(v as Team | "")}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select your team" />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(TEAM_LABELS) as Team[]).map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {TEAM_LABELS[key]}
                   </SelectItem>
                 ))}
               </SelectContent>
