@@ -93,6 +93,10 @@ export default function AdminTasksPage() {
   async function handleCreateTask(e: React.FormEvent) {
     e.preventDefault();
     if (!userData || !title || !dueDate) return;
+    if (assignmentTarget === "member" && selectedMembers.length === 0) {
+      toast.error("Нэг эсвэл түбээс олон гишүүн сонгоно уу");
+      return;
+    }
     setSaving(true);
     try {
       let assignedTo: string[];
@@ -104,11 +108,17 @@ export default function AdminTasksPage() {
           assignedTo = [`team:${selectedTeam}`];
           break;
         case "member":
-          assignedTo = selectedMembers;
+          assignedTo = [...selectedMembers];
           break;
+        default:
+          assignedTo = ["all"];
       }
-      const taskData: Task = {
-        id: "",
+      if (!Array.isArray(assignedTo) || assignedTo.length === 0) {
+        toast.error("Даалгавар хүлээн авагч сонгоно уу");
+        return;
+      }
+      console.log("Creating task with assignedTo:", assignedTo);
+      const taskData = {
         title,
         description,
         points,
@@ -120,7 +130,7 @@ export default function AdminTasksPage() {
       };
       const docRef = await addDoc(collection(db, "tasks"), taskData);
       await updateDoc(docRef, { id: docRef.id });
-      setTasks((prev) => [...prev, { ...taskData, id: docRef.id }]);
+      setTasks((prev) => [...prev, { ...taskData, id: docRef.id } as Task]);
       setTitle("");
       setDescription("");
       setPoints(0);
