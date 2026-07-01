@@ -11,7 +11,6 @@ import {
   ClipboardCheck,
   ListTodo,
   Users,
-  Shield,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -20,12 +19,6 @@ const navLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/dashboard/profile", label: "Profile", icon: User },
-];
-
-const adminLinks = [
-  { href: "/dashboard/admin/attendance", label: "Attendance", icon: ClipboardCheck },
-  { href: "/dashboard/admin/tasks", label: "Manage Tasks", icon: ListTodo },
-  { href: "/dashboard/admin/members", label: "Members", icon: Users },
 ];
 
 export default function DashboardLayout({
@@ -66,6 +59,37 @@ export default function DashboardLayout({
               </Link>
             );
           })}
+
+          {!loading && userData?.role === "admin" && (
+            <>
+              <div className="my-2 border-t" />
+              <p className="px-3 py-1 text-xs font-medium text-muted-foreground">
+                Admin
+              </p>
+              {[
+                { href: "/dashboard/admin/attendance", label: "Attendance", icon: ClipboardCheck },
+                { href: "/dashboard/admin/tasks", label: "Manage Tasks", icon: ListTodo },
+                { href: "/dashboard/admin/members", label: "Members", icon: Users },
+              ].map((link) => {
+                const isActive = pathname.startsWith(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                      isActive
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <link.icon className="size-4" />
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </nav>
 
         <div className="border-t px-6 py-4">
