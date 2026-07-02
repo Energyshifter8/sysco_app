@@ -1,8 +1,8 @@
 "use client";
 
-import { SyscoLogo } from "@/components/sysco-logo";
 import { useAuthActions } from "@/hooks/useAuthActions";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -34,30 +34,42 @@ export default function LoginPage() {
       <div className="w-full max-w-sm px-4">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="mb-4 flex justify-center">
-            <SyscoLogo size={72} className="drop-shadow-[0_0_12px_rgba(139,92,246,0.3)]" />
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex items-center justify-center rounded-xl bg-[#111111] border border-white/10 p-3">
+              <Image
+                src="/sysco-logo.png"
+                alt="Sysco Logo"
+                width={56}
+                height={56}
+                quality={100}
+                priority
+                className="rounded-lg"
+              />
+            </div>
+            <div className="flex flex-col text-left leading-tight">
+              <span
+                style={{
+                  fontFamily: "var(--font-jetbrains)",
+                  fontWeight: 800,
+                  fontSize: "1.6rem",
+                  color: "#E8E8E8",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                SYSCO&TECH
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.7rem",
+                  color: "#6B7280",
+                  letterSpacing: "0.12em",
+                }}
+              >
+                APP v1.0
+              </span>
+            </div>
           </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "1.6rem",
-              fontWeight: 800,
-              color: "#E8E8E8",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            SYSCO&TECH APP
-          </h1>
-          <p
-            style={{
-              color: "#6B7280",
-              fontSize: "0.8rem",
-              marginTop: "4px",
-              letterSpacing: "0.08em",
-            }}
-          >
-            CLUB MANAGEMENT SYSTEM
-          </p>
         </div>
 
         {/* Card */}

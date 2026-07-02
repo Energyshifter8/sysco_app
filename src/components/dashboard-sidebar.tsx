@@ -1,6 +1,5 @@
 "use client";
 
-import { SyscoLogo } from "@/components/sysco-logo";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { getInitials } from "@/lib/utils";
@@ -17,6 +16,7 @@ import {
   User,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -105,28 +105,40 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
           gap: "10px",
         }}
       >
-        <SyscoLogo size={48} className="drop-shadow-[0_0_8px_rgba(139,92,246,0.25)]" />
-        <div>
-          <div
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontWeight: 800,
-              fontSize: "0.85rem",
-              color: "#E8E8E8",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            SYSCO&TECH
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center rounded-xl bg-[#111111] border border-white/10 p-1.5">
+            <Image
+              src="/sysco-logo.png"
+              alt="Sysco Logo"
+              width={32}
+              height={32}
+              quality={100}
+              priority
+              className="rounded-lg"
+            />
           </div>
-          <div
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.55rem",
-              color: "#6B7280",
-              letterSpacing: "0.1em",
-            }}
-          >
-            APP v1.0
+          <div className="flex flex-col leading-tight">
+            <span
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontWeight: 800,
+                fontSize: "0.85rem",
+                color: "#E8E8E8",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              SYSCO&TECH
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.55rem",
+                color: "#6B7280",
+                letterSpacing: "0.1em",
+              }}
+            >
+              APP v1.0
+            </span>
           </div>
         </div>
       </div>
