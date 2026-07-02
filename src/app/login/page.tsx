@@ -34,13 +34,20 @@ export default function LoginPage() {
       <div className="w-full max-w-sm px-4">
         {/* Logo */}
         <div className="text-center mb-10">
-          <Image
-            src="/sysco-logo.png"
-            alt="Sysco Logo"
-            width={56}
-            height={56}
-            className="rounded mb-4 mx-auto"
-          />
+          <div
+            className="relative inline-flex items-center justify-center mb-4"
+            style={{ filter: "drop-shadow(0 0 12px rgba(139, 92, 246, 0.3))" }}
+          >
+            <Image
+              src="/sysco-logo.png"
+              alt="Sysco Logo"
+              width={72}
+              height={72}
+              quality={100}
+              priority
+              className="rounded-lg"
+            />
+          </div>
           <h1
             style={{
               fontFamily: "var(--font-jetbrains)",

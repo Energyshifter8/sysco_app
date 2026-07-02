@@ -105,7 +105,20 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
           gap: "10px",
         }}
       >
-        <Image src="/sysco-logo.png" alt="Sysco Logo" width={32} height={32} className="rounded" />
+        <div
+          className="relative flex items-center justify-center"
+          style={{ filter: "drop-shadow(0 0 8px rgba(139, 92, 246, 0.25))" }}
+        >
+          <Image
+            src="/sysco-logo.png"
+            alt="Sysco Logo"
+            width={48}
+            height={48}
+            quality={100}
+            priority
+            className="rounded-lg"
+          />
+        </div>
         <div>
           <div
             style={{
