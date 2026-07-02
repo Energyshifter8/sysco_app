@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -165,6 +166,26 @@ export default function LoginPage() {
               ) : null}
               {loading ? "НЭВТРЭЖ БАЙНА..." : "НЭВТРЭХ →"}
             </button>
+            <p
+              style={{
+                textAlign: "center",
+                color: "#6B7280",
+                fontSize: "0.8rem",
+                marginTop: "16px",
+                fontFamily: "var(--font-barlow)",
+              }}
+            >
+              Бүртгэл байхгүй юу?{" "}
+              <Link
+                href="/signup"
+                style={{
+                  color: "#8B5CF6",
+                  textDecoration: "none",
+                }}
+              >
+                Бүртгүүлэх
+              </Link>
+            </p>
           </form>
         </div>
 
