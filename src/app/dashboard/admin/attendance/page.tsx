@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, CalendarIcon } from "lucide-react";
+import { Loader2, Check, X, Minus } from "lucide-react";
 import {
   collection,
   getDocs,
@@ -15,35 +15,6 @@ import {
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 
 type AttendanceStatus = "present" | "absent" | "late" | "";
 
@@ -58,13 +29,21 @@ function formatDateKey(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export default function AttendancePage() {
   const { userData, loading: authLoading } = useAuth();
   const [date, setDate] = useState<Date>(new Date());
   const [members, setMembers] = useState<MemberAttendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
     async function fetchMembers() {
@@ -167,139 +146,286 @@ export default function AttendancePage() {
     );
   }
 
+  const counts = {
+    present: members.filter((m) => m.status === "present").length,
+    late: members.filter((m) => m.status === "late").length,
+    absent: members.filter((m) => m.status === "absent").length,
+  };
+
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold sm:text-2xl">Ирц бүртгэл</h1>
-        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
-          {saving ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : null}
-          {saving ? "Хадгалж байна..." : "Ирц хадгалах"}
-        </Button>
+    <div style={{ maxWidth: "720px" }}>
+      <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
+        <div>
+          <h1
+            style={{
+              fontFamily: "var(--font-jetbrains)",
+              fontSize: "1.3rem",
+              fontWeight: 800,
+              color: "#E8E8E8",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            ИРЦИЙН БҮРТГЭЛ
+          </h1>
+          <p
+            style={{
+              color: "#6B7280",
+              fontSize: "0.75rem",
+              fontFamily: "var(--font-jetbrains)",
+              marginTop: "4px",
+            }}
+          >
+            {date.toLocaleDateString("mn-MN", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              weekday: "long",
+            })}
+          </p>
+        </div>
+        <div className="flex gap-4">
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-barlow-condensed)",
+                fontWeight: 800,
+                fontSize: "1.5rem",
+                color: "#22C55E",
+              }}
+            >
+              {counts.present}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.55rem",
+                color: "#22C55E",
+                letterSpacing: "0.08em",
+              }}
+            >
+              ИРСЭН
+            </div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-barlow-condensed)",
+                fontWeight: 800,
+                fontSize: "1.5rem",
+                color: "#FBBF24",
+              }}
+            >
+              {counts.late}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.55rem",
+                color: "#FBBF24",
+                letterSpacing: "0.08em",
+              }}
+            >
+              ХОЦОРСОН
+            </div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-barlow-condensed)",
+                fontWeight: 800,
+                fontSize: "1.5rem",
+                color: "#EF4444",
+              }}
+            >
+              {counts.absent}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.55rem",
+                color: "#EF4444",
+                letterSpacing: "0.08em",
+              }}
+            >
+              ИРЭЭГҮЙ
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <CardTitle className="text-base sm:text-lg">Огноо сонгох</CardTitle>
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                  <CalendarIcon className="mr-2 size-4" />
-                  {date.toLocaleDateString("mn-MN", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => {
-                    if (d) {
-                      setDate(d);
-                      setCalendarOpen(false);
-                    }
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Mobile card view */}
-          <div className="space-y-3 sm:hidden">
-            {members.map((member) => (
-              <div key={member.uid} className="rounded-lg border p-3 space-y-2">
-                <p className="font-medium text-sm">{member.name}</p>
-                <div className="flex gap-2">
-                  <Select
-                    value={member.status}
-                    onValueChange={(v) =>
-                      updateMember(member.uid, "status", v)
-                    }
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Сонгох" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="present">Ирсэн</SelectItem>
-                      <SelectItem value="absent">Тасалсан</SelectItem>
-                      <SelectItem value="late">Хоцорсон</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    placeholder="Тэмдэглэл"
-                    className="flex-1"
-                    value={member.note}
-                    onChange={(e) =>
-                      updateMember(member.uid, "note", e.target.value)
-                    }
-                  />
-                </div>
+      {/* Date picker */}
+      <div className="mb-6">
+        <input
+          type="date"
+          value={formatDateKey(date)}
+          onChange={(e) => setDate(new Date(e.target.value + "T00:00:00"))}
+          style={{
+            background: "#1A1A1A",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: "3px",
+            padding: "8px 12px",
+            color: "#E8E8E8",
+            fontFamily: "var(--font-jetbrains)",
+            fontSize: "0.8rem",
+            outline: "none",
+          }}
+        />
+      </div>
+
+      {/* Members list */}
+      <div
+        className="border"
+        style={{
+          background: "#141414",
+          borderColor: "rgba(255, 255, 255, 0.07)",
+          borderRadius: "4px",
+          overflow: "hidden",
+          marginBottom: "16px",
+        }}
+      >
+        {members.map((m, i) => {
+          const status = m.status;
+          return (
+            <div
+              key={m.uid}
+              className="flex items-center gap-4 px-4 py-3"
+              style={{
+                borderBottom:
+                  i < members.length - 1
+                    ? "1px solid rgba(255, 255, 255, 0.05)"
+                    : "none",
+                borderLeft: `3px solid ${status === "present" ? "#22C55E" : status === "absent" ? "#EF4444" : status === "late" ? "#FBBF24" : "transparent"}`,
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+            >
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  background: "rgba(139, 92, 246, 0.08)",
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.6rem",
+                  color: "#8B5CF6",
+                }}
+              >
+                {getInitials(m.name)}
               </div>
-            ))}
-          </div>
+              <div className="flex-1">
+                <p
+                  style={{
+                    color: "#E8E8E8",
+                    fontWeight: 600,
+                    fontSize: "0.88rem",
+                    fontFamily: "var(--font-barlow)",
+                  }}
+                >
+                  {m.name}
+                </p>
+              </div>
 
-          {/* Desktop table view */}
-          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 hidden sm:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Нэр</TableHead>
-                  <TableHead className="w-36 md:w-40">Төлөв</TableHead>
-                  <TableHead>Тэмдэглэл</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.uid}>
-                    <TableCell className="font-medium">
-                      {member.name}
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={member.status}
-                        onValueChange={(v) =>
-                          updateMember(member.uid, "status", v)
-                        }
+              <div className="flex gap-1">
+                {(["present", "late", "absent"] as AttendanceStatus[]).map(
+                  (s) => {
+                    const colors: Record<
+                      string,
+                      { bg: string; icon: React.ReactNode }
+                    > = {
+                      present: { bg: "#22C55E", icon: <Check size={12} /> },
+                      late: { bg: "#FBBF24", icon: <Minus size={12} /> },
+                      absent: { bg: "#EF4444", icon: <X size={12} /> },
+                    };
+                    const c = colors[s];
+                    const active = status === s;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => updateMember(m.uid, "status", s)}
+                        title={s}
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "3px",
+                          border: `1px solid ${active ? c.bg : "rgba(255, 255, 255, 0.1)"}`,
+                          background: active ? `${c.bg}25` : "transparent",
+                          color: active ? c.bg : "#374151",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transition: "all 0.15s",
+                        }}
                       >
-                        <SelectTrigger className="w-32">
-                          <SelectValue placeholder="Сонгох" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="present">Ирсэн</SelectItem>
-                          <SelectItem value="absent">Тасалсан</SelectItem>
-                          <SelectItem value="late">Хоцорсон</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        placeholder="Нэмэлт тэмдэглэл"
-                        value={member.note}
-                        onChange={(e) =>
-                          updateMember(member.uid, "note", e.target.value)
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                        {c.icon}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
 
-          {members.length === 0 && (
-            <p className="py-8 text-center text-muted-foreground">
-              Гишүүд олдсонгүй
-            </p>
-          )}
-        </CardContent>
-      </Card>
+              <span
+                style={{
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.6rem",
+                  letterSpacing: "0.06em",
+                  color:
+                    status === "present"
+                      ? "#22C55E"
+                      : status === "absent"
+                        ? "#EF4444"
+                        : status === "late"
+                          ? "#FBBF24"
+                          : "#374151",
+                  width: "72px",
+                  textAlign: "right",
+                }}
+              >
+                {status === "present"
+                  ? "ИРСЭН"
+                  : status === "absent"
+                    ? "ИРЭЭГҮЙ"
+                    : status === "late"
+                      ? "ХОЦОРСОН"
+                      : ""}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        style={{
+          background: saving ? "#22C55E" : "#8B5CF6",
+          color: "#fff",
+          border: "none",
+          borderRadius: "3px",
+          padding: "11px 24px",
+          fontFamily: "var(--font-jetbrains)",
+          fontWeight: 700,
+          fontSize: "0.8rem",
+          letterSpacing: "0.08em",
+          cursor: saving ? "not-allowed" : "pointer",
+          transition: "background 0.2s",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        }}
+      >
+        {saving ? (
+          <Loader2 size={14} className="animate-spin" />
+        ) : (
+          <Check size={14} />
+        )}
+        {saving ? "ХАДГАЛЖ БАЙНА..." : "ИРЦИЙГ ХАДГАЛАХ →"}
+      </button>
     </div>
   );
 }

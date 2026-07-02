@@ -41,15 +41,18 @@ function NavItemButton({
   label,
   icon: Icon,
   active,
+  onClick,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ size?: number }>;
   active: boolean;
+  onClick?: () => void;
 }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded transition-all duration-150 text-sm"
       style={{
         fontFamily: "var(--font-barlow)",
@@ -164,6 +167,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
             label={label}
             icon={icon}
             active={isActive(href)}
+            onClick={onLinkClick}
           />
         ))}
 
@@ -187,6 +191,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
                 label={label}
                 icon={icon}
                 active={isActive(href)}
+                onClick={onLinkClick}
               />
             ))}
           </>

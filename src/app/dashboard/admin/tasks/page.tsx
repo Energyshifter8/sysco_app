@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Plus, CheckCircle2, CalendarIcon } from "lucide-react";
+import { Loader2, Check, X, CheckCircle2 } from "lucide-react";
 import {
   collection,
   getDocs,
@@ -16,39 +16,25 @@ import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { User, Task, Team, TEAM_LABELS } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function resolveAssignedLabel(entry: string, members: User[]): string {
+  if (entry === "all") return "Бүх гишүүд";
+  if (entry.startsWith("team:")) {
+    const key = entry.slice(5) as Team;
+    return TEAM_LABELS[key] ?? entry;
+  }
+  const member = members.find((m) => m.uid === entry);
+  return member?.name ?? entry;
+}
 
 export default function AdminTasksPage() {
   const { userData, loading: authLoading } = useAuth();
@@ -59,12 +45,8 @@ export default function AdminTasksPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [points, setPoints] = useState(0);
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [points, setPoints] = useState("100");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [assignmentTarget, setAssignmentTarget] = useState<"all" | "team" | "member">("all");
-  const [selectedTeam, setSelectedTeam] = useState<Team>("dev");
 
   useEffect(() => {
     async function fetchData() {
@@ -73,9 +55,7 @@ export default function AdminTasksPage() {
         getDocs(query(collection(db, "users"), where("role", "!=", "admin"))),
         getDocs(collection(db, "tasks")),
       ]);
-      setMembers(
-        membersSnap.docs.map((d) => d.data() as User)
-      );
+      setMembers(membersSnap.docs.map((d) => d.data() as User));
       setTasks(tasksSnap.docs.map((d) => d.data() as Task));
       setLoading(false);
     }
@@ -84,48 +64,31 @@ export default function AdminTasksPage() {
 
   function toggleMember(uid: string) {
     setSelectedMembers((prev) =>
-      prev.includes(uid)
-        ? prev.filter((id) => id !== uid)
-        : [...prev, uid]
+      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
     );
   }
 
   async function handleCreateTask(e: React.FormEvent) {
     e.preventDefault();
-    if (!userData || !title || !dueDate) return;
-    if (assignmentTarget === "member" && selectedMembers.length === 0) {
+    if (!userData || !title) return;
+    if (selectedMembers.length === 0) {
       toast.error("Нэг эсвэл түбээс олон гишүүн сонгоно уу");
       return;
     }
     setSaving(true);
     try {
-      let assignedTo: string[];
-      switch (assignmentTarget) {
-        case "all":
-          assignedTo = ["all"];
-          break;
-        case "team":
-          assignedTo = [`team:${selectedTeam}`];
-          break;
-        case "member":
-          assignedTo = [...selectedMembers];
-          break;
-        default:
-          assignedTo = ["all"];
-      }
-      if (!Array.isArray(assignedTo) || assignedTo.length === 0) {
-        toast.error("Даалгавар хүлээн авагч сонгоно уу");
-        return;
-      }
-      console.log("Creating task with assignedTo:", assignedTo);
+      const assignedTo =
+        selectedMembers.length === members.length
+          ? ["all"]
+          : [...selectedMembers];
       const taskData = {
-        title: title,
-        description: description,
+        title,
+        description,
         points: Number(points),
-        dueDate: dueDate,
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         createdAt: new Date(),
         createdBy: userData.uid,
-        assignedTo: assignedTo,
+        assignedTo,
         status: "assigned",
       };
       const docRef = await addDoc(collection(db, "tasks"), taskData);
@@ -133,11 +96,8 @@ export default function AdminTasksPage() {
       setTasks((prev) => [...prev, { ...taskData, id: docRef.id } as Task]);
       setTitle("");
       setDescription("");
-      setPoints(0);
-      setDueDate(undefined);
+      setPoints("100");
       setSelectedMembers([]);
-      setAssignmentTarget("all");
-      setSelectedTeam("dev");
       toast.success("Даалгавар амжилттай үүсгэгдлээ");
     } catch {
       toast.error("Даалгавар үүсгэхэд алдаа гарлаа");
@@ -173,16 +133,6 @@ export default function AdminTasksPage() {
     }
   }
 
-  function resolveAssignedLabel(entry: string): string {
-    if (entry === "all") return "Бүх гишүүд";
-    if (entry.startsWith("team:")) {
-      const key = entry.slice(5) as Team;
-      return TEAM_LABELS[key] ?? entry;
-    }
-    const member = members.find((m) => m.uid === entry);
-    return member?.name ?? entry;
-  }
-
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -192,265 +142,396 @@ export default function AdminTasksPage() {
   }
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <h1 className="text-xl font-bold sm:text-2xl">Даалгавар удирдах</h1>
+    <div style={{ maxWidth: "900px" }}>
+      <div className="mb-8">
+        <h1
+          style={{
+            fontFamily: "var(--font-jetbrains)",
+            fontSize: "1.3rem",
+            fontWeight: 800,
+            color: "#E8E8E8",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          ДААЛГАВАР ҮҮСГЭХ
+        </h1>
+        <p
+          style={{
+            color: "#6B7280",
+            fontSize: "0.75rem",
+            fontFamily: "var(--font-jetbrains)",
+            marginTop: "4px",
+          }}
+        >
+          ADMIN PANEL
+        </p>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Plus className="size-4" />
-            Даалгавар үүсгэх
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleCreateTask} className="grid gap-4">
-            <div className="grid gap-2">
-              <Label>Гарчиг</Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Даалгаврын гарчиг"
-                required
+      <div
+        className="border"
+        style={{
+          background: "#141414",
+          borderColor: "rgba(255, 255, 255, 0.07)",
+          borderRadius: "4px",
+          padding: "28px",
+          marginBottom: "32px",
+        }}
+      >
+        <form onSubmit={handleCreateTask} className="flex flex-col gap-5">
+          {/* Title */}
+          <div>
+            <label
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.65rem",
+                color: "#6B7280",
+                letterSpacing: "0.1em",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              ГАРЧИГ *
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Даалгаврын гарчиг..."
+              required
+              style={{
+                width: "100%",
+                background: "#1A1A1A",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "3px",
+                padding: "10px 12px",
+                color: "#E8E8E8",
+                fontFamily: "var(--font-barlow)",
+                fontSize: "0.9rem",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.65rem",
+                color: "#6B7280",
+                letterSpacing: "0.1em",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              ТАЙЛБАР
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              placeholder="Даалгаврын дэлгэрэнгүй тайлбар..."
+              style={{
+                width: "100%",
+                background: "#1A1A1A",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "3px",
+                padding: "10px 12px",
+                color: "#E8E8E8",
+                fontFamily: "var(--font-barlow)",
+                fontSize: "0.9rem",
+                outline: "none",
+                resize: "vertical",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          {/* Points */}
+          <div style={{ maxWidth: "160px" }}>
+            <label
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.65rem",
+                color: "#6B7280",
+                letterSpacing: "0.1em",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              ОНШ *
+            </label>
+            <div style={{ position: "relative" }}>
+              <input
+                type="number"
+                value={points}
+                onChange={(e) => setPoints(e.target.value)}
+                style={{
+                  width: "100%",
+                  background: "#1A1A1A",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "3px",
+                  padding: "10px 36px 10px 12px",
+                  color: "#22C55E",
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label>Тайлбар</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Даалгаврын тайлбар"
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label>Оноо</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={points}
-                  onChange={(e) => setPoints(Number(e.target.value))}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Дуусах хугацаа</Label>
-                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" type="button" className="w-full justify-start">
-                      <CalendarIcon className="mr-2 size-4" />
-                      {dueDate
-                        ? dueDate.toLocaleDateString()
-                        : "Огноо сонгох"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={dueDate}
-                      onSelect={(d) => {
-                        setDueDate(d);
-                        setCalendarOpen(false);
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label>Хэнд хамааруулах</Label>
-              <Select
-                value={assignmentTarget}
-                onValueChange={(v) => setAssignmentTarget(v as "all" | "team" | "member")}
+              <span
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#22C55E",
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.7rem",
+                }}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Зорилтот бүлэг сонгох" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Бүх гишүүд</SelectItem>
-                  <SelectItem value="team">Тодорхой баг</SelectItem>
-                  <SelectItem value="member">Тодорхой гишүүн</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {assignmentTarget === "team" && (
-                <Select
-                  value={selectedTeam}
-                  onValueChange={(v) => setSelectedTeam(v as Team)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Баг сонгох" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(TEAM_LABELS) as Team[]).map((key) => (
-                      <SelectItem key={key} value={key}>
-                        {TEAM_LABELS[key]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {assignmentTarget === "member" && (
-                <div className="flex flex-wrap gap-3 pt-1">
-                  {members.map((member) => (
-                    <div
-                      key={member.uid}
-                      className="flex items-center gap-2"
-                    >
-                      <Checkbox
-                        id={member.uid}
-                        checked={selectedMembers.includes(member.uid)}
-                        onCheckedChange={() => toggleMember(member.uid)}
-                      />
-                      <label
-                        htmlFor={member.uid}
-                        className="text-sm"
-                      >
-                        {member.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
+                pts
+              </span>
             </div>
-            <Button type="submit" disabled={saving} className="w-full sm:w-fit">
-              {saving ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : null}
-              Үүсгэх
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Байгаа даалгаврууд</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Mobile card view */}
-          <div className="space-y-3 sm:hidden">
-            {tasks.map((task) => (
-              <div key={task.id} className="rounded-lg border p-3 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-medium text-sm">{task.title}</p>
-                  <Badge variant={task.status === "completed" ? "default" : "secondary"}>
-                    {task.status}
-                  </Badge>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {task.assignedTo.length === 0 ? (
-                    <Badge variant="secondary">None</Badge>
-                  ) : (
-                    task.assignedTo.map((entry) => (
-                      <Badge key={entry} variant="outline">
-                        {resolveAssignedLabel(entry)}
-                      </Badge>
-                    ))
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {task.points} pts
+          {/* Member select */}
+          <div>
+            <label
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.65rem",
+                color: "#6B7280",
+                letterSpacing: "0.1em",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              ГИШҮҮД СОНГОХ ({selectedMembers.length} СОНГОГДСОН)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {members.map((m) => {
+                const sel = selectedMembers.includes(m.uid);
+                return (
+                  <button
+                    key={m.uid}
+                    type="button"
+                    onClick={() => toggleMember(m.uid)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "5px 12px",
+                      borderRadius: "20px",
+                      border: `1px solid ${sel ? "#8B5CF6" : "rgba(255, 255, 255, 0.1)"}`,
+                      background: sel ? "rgba(139, 92, 246, 0.125)" : "transparent",
+                      color: sel ? "#8B5CF6" : "#9CA3AF",
+                      cursor: "pointer",
+                      fontFamily: "var(--font-barlow)",
+                      fontSize: "0.8rem",
+                      fontWeight: 600,
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--font-jetbrains)",
+                        fontSize: "0.6rem",
+                      }}
+                    >
+                      {getInitials(m.name)}
+                    </span>
+                    {m.name}
+                    {sel && <X size={10} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                background: saving ? "#22C55E" : "#8B5CF6",
+                color: "#fff",
+                border: "none",
+                borderRadius: "3px",
+                padding: "11px 24px",
+                fontFamily: "var(--font-jetbrains)",
+                fontWeight: 700,
+                fontSize: "0.8rem",
+                letterSpacing: "0.08em",
+                cursor: saving ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              {saving ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Check size={14} />
+              )}
+              {saving ? "ҮҮСГЭЖ БАЙНА..." : "ДААЛГАВАР ҮҮСГЭХ →"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTitle("");
+                setDescription("");
+                setPoints("100");
+                setSelectedMembers([]);
+              }}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "3px",
+                padding: "11px 16px",
+                color: "#6B7280",
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.75rem",
+                cursor: "pointer",
+              }}
+            >
+              ЦЭВЭРЛЭХ
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Task list */}
+      <h2
+        style={{
+          fontFamily: "var(--font-jetbrains)",
+          fontSize: "0.75rem",
+          fontWeight: 700,
+          color: "#6B7280",
+          letterSpacing: "0.1em",
+          marginBottom: "16px",
+        }}
+      >
+        БАЙГАА ДААЛГАВРУУД
+      </h2>
+      <div className="flex flex-col gap-2">
+        {tasks.map((task) => (
+          <div
+            key={task.id}
+            className="border"
+            style={{
+              background: "#141414",
+              borderColor: "rgba(255, 255, 255, 0.07)",
+              borderRadius: "4px",
+              padding: "14px 16px",
+              borderLeft: `3px solid ${task.status === "completed" ? "#22C55E" : "#FBBF24"}`,
+            }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p
+                  style={{
+                    fontFamily: "var(--font-barlow)",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    color: "#E8E8E8",
+                    marginBottom: "6px",
+                  }}
+                >
+                  {task.title}
+                </p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains)",
+                      fontSize: "0.65rem",
+                      color: task.status === "completed" ? "#22C55E" : "#FBBF24",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    {task.status === "completed" ? "Дууссан" : "Хүлээгдэж буй"}
                   </span>
-                  {task.assignedTo.some((id) => id !== "all" && !id.startsWith("team:")) && (
-                    <div className="flex flex-wrap gap-1">
-                      {task.assignedTo
-                        .filter((id) => id !== "all" && !id.startsWith("team:"))
-                        .map((uid) => (
-                          <Button
-                            key={uid}
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleApproveTask(task, uid)}
-                          >
-                            <CheckCircle2 className="mr-1 size-3" />
-                            {resolveAssignedLabel(uid)}
-                          </Button>
-                        ))}
-                    </div>
-                  )}
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains)",
+                      fontSize: "0.65rem",
+                      color: "#6B7280",
+                    }}
+                  >
+                    {task.assignedTo.map((a) => resolveAssignedLabel(a, members)).join(", ")}
+                  </span>
                 </div>
               </div>
-            ))}
+              <div className="flex items-center gap-2">
+                <div
+                  style={{
+                    background: "rgba(34, 197, 94, 0.094)",
+                    border: "1px solid rgba(34, 197, 94, 0.25)",
+                    borderRadius: "3px",
+                    padding: "4px 8px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains)",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      color: "#22C55E",
+                    }}
+                  >
+                    +{task.points}
+                  </span>
+                </div>
+                {task.assignedTo.some(
+                  (id) => id !== "all" && !id.startsWith("team:")
+                ) && (
+                  <div className="flex flex-wrap gap-1">
+                    {task.assignedTo
+                      .filter((id) => id !== "all" && !id.startsWith("team:"))
+                      .map((uid) => (
+                        <button
+                          key={uid}
+                          onClick={() => handleApproveTask(task, uid)}
+                          style={{
+                            background: "rgba(34, 197, 94, 0.125)",
+                            color: "#22C55E",
+                            border: "1px solid rgba(34, 197, 94, 0.25)",
+                            borderRadius: "3px",
+                            padding: "4px 8px",
+                            cursor: "pointer",
+                            fontFamily: "var(--font-jetbrains)",
+                            fontSize: "0.65rem",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <CheckCircle2 size={12} />
+                          {resolveAssignedLabel(uid, members)}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-
-          {/* Desktop table view */}
-          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 hidden sm:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Даалгавар</TableHead>
-                  <TableHead>Хэнд</TableHead>
-                  <TableHead>Оноо</TableHead>
-                  <TableHead>Төлөв</TableHead>
-                  <TableHead className="text-right">Үйлдэл</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell className="font-medium">
-                      {task.title}
-                    </TableCell>
-                    <TableCell>
-                      {task.assignedTo.length === 0 ? (
-                    <Badge variant="secondary">Хоосон</Badge>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {task.assignedTo.map((entry) => (
-                            <Badge key={entry} variant="outline">
-                              {resolveAssignedLabel(entry)}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>{task.points}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          task.status === "completed"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {task.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {task.assignedTo.some((id) => id !== "all" && !id.startsWith("team:")) && (
-                        <div className="flex flex-wrap justify-end gap-1">
-                          {task.assignedTo
-                            .filter((id) => id !== "all" && !id.startsWith("team:"))
-                            .map((uid) => (
-                              <Button
-                                key={uid}
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  handleApproveTask(task, uid)
-                                }
-                              >
-                                <CheckCircle2 className="mr-1 size-3" />
-                                {resolveAssignedLabel(uid)}
-                              </Button>
-                            ))}
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        ))}
+        {tasks.length === 0 && (
+          <div
+            className="text-center py-12"
+            style={{
+              color: "#374151",
+              fontFamily: "var(--font-jetbrains)",
+              fontSize: "0.8rem",
+            }}
+          >
+            ДААЛГАВАР ОЛДСОНГҮЙ
           </div>
-
-          {tasks.length === 0 && (
-            <p className="py-8 text-center text-muted-foreground">
-              Одоогоор даалгавар байхгүй байна
-            </p>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </div>
   );
 }

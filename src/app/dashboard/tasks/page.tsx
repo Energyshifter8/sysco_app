@@ -1,92 +1,146 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, CalendarClock, Trophy, AlertTriangle } from "lucide-react";
-import { isPast } from "date-fns";
+import { useState } from "react";
+import { Loader2, Clock, CheckCircle2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { isPast } from "date-fns";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { Task } from "@/types";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-function isOverdue(dueDate: Date): boolean {
-  return isPast(dueDate);
-}
+type FilterStatus = "all" | "pending" | "done" | "overdue";
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("mn-MN", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+function TaskCard({ task }: { task: Task }) {
+  const isOverdue = task.dueDate ? isPast(new Date(task.dueDate)) : false;
+  const statusColor =
+    task.status === "completed" || task.status === "approved"
+      ? "#22C55E"
+      : isOverdue
+        ? "#EF4444"
+        : "#FBBF24";
+  const statusLabel =
+    task.status === "completed" || task.status === "approved"
+      ? "Дууссан"
+      : isOverdue
+        ? "Хоцорсон"
+        : "Хүлээгдэж буй";
+  const StatusIcon =
+    task.status === "completed" || task.status === "approved"
+      ? CheckCircle2
+      : Clock;
 
-function statusBadgeVariant(status: string) {
-  switch (status) {
-    case "completed":
-      return "default" as const;
-    case "in_progress":
-      return "secondary" as const;
-    default:
-      return "outline" as const;
-  }
-}
-
-function statusLabel(status: string) {
-  switch (status) {
-    case "assigned":
-      return "Шинэ";
-    case "in_progress":
-      return "Биелүүлж байна";
-    case "completed":
-      return "Дууссан";
-    default:
-      return status;
-  }
+  return (
+    <div
+      className="border"
+      style={{
+        background: "#141414",
+        borderColor: "rgba(255, 255, 255, 0.07)",
+        borderRadius: "4px",
+        padding: "14px 16px",
+        borderLeft: `3px solid ${statusColor}`,
+        transition: "background 0.15s",
+      }}
+      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")}
+      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#141414")}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p
+            style={{
+              fontFamily: "var(--font-barlow)",
+              fontWeight: 700,
+              fontSize: "0.9rem",
+              color: "#E8E8E8",
+              marginBottom: "6px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {task.title}
+          </p>
+          <div className="flex items-center gap-3">
+            <span
+              className="inline-flex items-center gap-1"
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.65rem",
+                color: statusColor,
+                letterSpacing: "0.06em",
+              }}
+            >
+              <StatusIcon size={12} />
+              {statusLabel}
+            </span>
+            <span
+              style={{
+                color: "#374151",
+                fontSize: "0.65rem",
+                fontFamily: "var(--font-jetbrains)",
+              }}
+            >
+              {task.dueDate
+                ? new Date(task.dueDate).toLocaleDateString("mn-MN")
+                : "-"}
+            </span>
+          </div>
+        </div>
+        <div
+          className="shrink-0"
+          style={{
+            background: "rgba(34, 197, 94, 0.094)",
+            border: "1px solid rgba(34, 197, 94, 0.25)",
+            borderRadius: "3px",
+            padding: "4px 8px",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-jetbrains)",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              color: "#22C55E",
+            }}
+          >
+            +{task.points}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function MemberTasksPage() {
   const { user, userData, loading: authLoading } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"current" | "history">("current");
+  const [filter, setFilter] = useState<FilterStatus>("all");
 
-  useEffect(() => {
-    if (!user || !userData) return;
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ["userTasks", user?.uid, userData?.team],
+    queryFn: () =>
+      new Promise<Task[]>((resolve) => {
+        if (!user || !userData) {
+          resolve([]);
+          return;
+        }
+        const targets: string[] = [user.uid, "all"];
+        if (userData.team) targets.push(`team:${userData.team}`);
+        const q = query(
+          collection(db, "tasks"),
+          where("assignedTo", "array-contains-any", targets)
+        );
+        const unsub = onSnapshot(q, (snap) => {
+          resolve(
+            snap.docs.map((d) => ({ ...d.data(), id: d.id })) as Task[]
+          );
+        });
+        return unsub;
+      }),
+    enabled: !!user?.uid,
+  });
 
-    const queryTargets: string[] = [user.uid, "all"];
-    const team = userData.team;
-    if (typeof team === "string" && team.trim() !== "") {
-      queryTargets.push(`team:${team}`);
-    }
-
-    console.log("Querying with array:", queryTargets);
-
-    const q = query(
-      collection(db, "tasks"),
-      where("assignedTo", "array-contains-any", queryTargets)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetched = snapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      })) as Task[];
-      console.log("Fetched tasks:", fetched.length);
-      setTasks(fetched);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user?.uid, userData?.team]);
-
-  if (authLoading || loading) {
+  if (authLoading || tasksLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -101,131 +155,131 @@ export default function MemberTasksPage() {
     (t) => t.status === "completed" || t.status === "approved"
   );
 
+  const currentTasks = tab === "current" ? activeTasks : historyTasks;
+  const filtered =
+    filter === "all"
+      ? currentTasks
+      : currentTasks.filter((t) => {
+          if (filter === "done") return t.status === "completed" || t.status === "approved";
+          if (filter === "pending") return t.status !== "completed" && t.status !== "approved" && !(t.dueDate && isPast(new Date(t.dueDate)));
+          if (filter === "overdue") return t.status !== "completed" && t.status !== "approved" && t.dueDate && isPast(new Date(t.dueDate));
+          return true;
+        });
+
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <h1 className="text-xl font-bold sm:text-2xl">Миний даалгаврууд</h1>
+    <div style={{ maxWidth: "800px" }}>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1
+            style={{
+              fontFamily: "var(--font-jetbrains)",
+              fontSize: "1.3rem",
+              fontWeight: 800,
+              color: "#E8E8E8",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            ДААЛГАВРЫН ЖАГСААЛТ
+          </h1>
+          <p
+            style={{
+              color: "#6B7280",
+              fontSize: "0.75rem",
+              fontFamily: "var(--font-jetbrains)",
+              marginTop: "4px",
+            }}
+          >
+            {filtered.length} ДААЛГАВАР
+          </p>
+        </div>
+      </div>
 
-      <Tabs defaultValue="active">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="active" className="flex-1 sm:flex-none">
-            Идэвхтэй ({activeTasks.length})
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex-1 sm:flex-none">
-            Түүх ({historyTasks.length})
-          </TabsTrigger>
-        </TabsList>
+      {/* Tabs */}
+      <div
+        className="flex mb-6"
+        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}
+      >
+        {[
+          { key: "current", label: "Одоогийн" },
+          { key: "history", label: "Түүх" },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => {
+              setTab(key as "current" | "history");
+              setFilter("all");
+            }}
+            style={{
+              fontFamily: "var(--font-jetbrains)",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              padding: "10px 20px",
+              background: "none",
+              border: "none",
+              borderBottom:
+                tab === key ? "2px solid #8B5CF6" : "2px solid transparent",
+              color: tab === key ? "#8B5CF6" : "#6B7280",
+              cursor: "pointer",
+              marginBottom: "-1px",
+              transition: "all 0.15s",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        <TabsContent value="active" className="mt-4">
-          {activeTasks.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <CalendarClock className="mb-3 size-10 opacity-40" />
-                <p className="text-center">Танд одоогоор идэвхтэй даалгавар байхгүй байна.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              {activeTasks.map((task) => {
-                const dueDate = task.dueDate
-                  ? new Date(task.dueDate)
-                  : null;
-                const overdue = dueDate ? isOverdue(dueDate) : false;
-
-                return (
-                  <Card key={task.id} className="relative overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-sm sm:text-base">
-                          {task.title}
-                        </CardTitle>
-                        <Badge variant={statusBadgeVariant(task.status)} className="shrink-0">
-                          {statusLabel(task.status)}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {task.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {task.description}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                          <Trophy className="size-3.5" />
-                          <span className="font-medium text-foreground">
-                            {task.points}
-                          </span>{" "}
-                          оноо
-                        </div>
-                        {dueDate && (
-                          <div
-                            className={`flex items-center gap-1.5 ${
-                              overdue
-                                ? "text-destructive"
-                                : "text-muted-foreground"
-                            }`}
-                          >
-                            {overdue && (
-                              <AlertTriangle className="size-3.5" />
-                            )}
-                            <span
-                              className={`text-xs ${overdue ? "font-medium" : ""}`}
-                            >
-                              Дуусах: {formatDate(dueDate)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+      {/* Filters */}
+      {tab === "current" && (
+        <div className="flex gap-2 mb-5 flex-wrap">
+          {([
+            { key: "all", label: "Бүгд", color: "#6B7280" },
+            { key: "pending", label: "Хүлээгдэж буй", color: "#FBBF24" },
+            { key: "done", label: "Дууссан", color: "#22C55E" },
+            { key: "overdue", label: "Хоцорсон", color: "#EF4444" },
+          ] as { key: FilterStatus; label: string; color: string }[]).map(
+            ({ key, label, color }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                style={{
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.06em",
+                  padding: "5px 12px",
+                  borderRadius: "3px",
+                  border: `1px solid ${filter === key ? color : "rgba(255,255,255,0.1)"}`,
+                  background: filter === key ? `${color}18` : "transparent",
+                  color: filter === key ? color : "#6B7280",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+              >
+                {label}
+              </button>
+            )
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="history" className="mt-4">
-          {historyTasks.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <CalendarClock className="mb-3 size-10 opacity-40" />
-                <p className="text-center">Одоогоор дууссан даалгавар байхгүй байна.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              {historyTasks.map((task) => (
-                <Card key={task.id} className="opacity-80">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-sm sm:text-base">
-                        {task.title}
-                      </CardTitle>
-                      <Badge variant={statusBadgeVariant(task.status)} className="shrink-0">
-                        {statusLabel(task.status)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Trophy className="size-3.5" />
-                      <span className="font-medium text-foreground">
-                        {task.points}
-                      </span>{" "}
-                      оноо авсан
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      <div className="flex flex-col gap-2">
+        {filtered.map((t) => (
+          <TaskCard key={t.id} task={t} />
+        ))}
+        {filtered.length === 0 && (
+          <div
+            className="text-center py-12"
+            style={{
+              color: "#374151",
+              fontFamily: "var(--font-jetbrains)",
+              fontSize: "0.8rem",
+            }}
+          >
+            ДААЛГАВАР ОЛДСОНГҮЙ
+          </div>
+        )}
+      </div>
     </div>
   );
 }
