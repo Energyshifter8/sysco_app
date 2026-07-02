@@ -58,6 +58,24 @@
       "trailingCommas": "none"
     }
   },
+  "overrides": [
+    {
+      "include": ["*.ts", "*.tsx"],
+      "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 2,
+        "lineWidth": 100
+      },
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "warn",
+            "noUnusedVariables": "warn"
+          }
+        }
+      }
+    }
+  ],
   "files": {
     "ignore": [
       "node_modules",
