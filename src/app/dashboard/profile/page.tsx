@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Check, X, Star, Trophy } from "lucide-react";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { Team, TEAM_LABELS } from "@/types";
 import { MAJORS } from "@/lib/constants";
+import { db } from "@/lib/firebase";
 import { getInitials } from "@/lib/utils";
+import { TEAM_LABELS, Team } from "@/types";
+import { doc, updateDoc } from "firebase/firestore";
+import { Check, Loader2, Star, Trophy, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 function StatCard({
   label,
@@ -173,7 +173,8 @@ export default function ProfilePage() {
           <div
             className="w-16 h-16 rounded flex items-center justify-center text-xl font-black"
             style={{
-              background: "linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.125))",
+              background:
+                "linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(139, 92, 246, 0.125))",
               border: "2px solid rgba(139, 92, 246, 0.375)",
               fontFamily: "var(--font-jetbrains)",
               color: "#8B5CF6",
@@ -240,13 +241,15 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div
-          className="grid gap-4"
-          style={{ gridTemplateColumns: "1fr 1fr" }}
-        >
+        <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
           {[
             { label: "И-МЭЙЛ", value: user.email ?? "-" },
-            { label: "ЭЛССЭН ОГНОО", value: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString("mn-MN") : "-" },
+            {
+              label: "ЭЛССЭН ОГНОО",
+              value: userData.createdAt
+                ? new Date(userData.createdAt).toLocaleDateString("mn-MN")
+                : "-",
+            },
           ].map(({ label, value }) => (
             <div key={label}>
               <p
@@ -435,7 +438,11 @@ export default function ProfilePage() {
                     alignItems: "center",
                   }}
                 >
-                  {teamSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  {teamSaving ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Check size={14} />
+                  )}
                 </button>
                 <button
                   onClick={() => {
@@ -548,7 +555,11 @@ export default function ProfilePage() {
                     alignItems: "center",
                   }}
                 >
-                  {courseSaving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  {courseSaving ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Check size={14} />
+                  )}
                 </button>
                 <button
                   onClick={() => {
@@ -579,7 +590,9 @@ export default function ProfilePage() {
                     fontWeight: 600,
                   }}
                 >
-                  {course ? COURSE_OPTIONS.find((c) => c.value === course)?.label || `${course}-р курс` : "Сонгоогүй"}
+                  {course
+                    ? COURSE_OPTIONS.find((c) => c.value === course)?.label || `${course}-р курс`
+                    : "Сонгоогүй"}
                 </p>
                 <button
                   onClick={() => setCourseEditing(true)}
@@ -615,7 +628,12 @@ export default function ProfilePage() {
 
       {/* Stats */}
       <div className="flex gap-4 mb-6 flex-wrap">
-        <StatCard label="НИЙТ ОНШ" value={userData.totalPoints.toLocaleString()} accent="#8B5CF6" icon={<Star size={14} />} />
+        <StatCard
+          label="НИЙТ ОНШ"
+          value={userData.totalPoints.toLocaleString()}
+          accent="#8B5CF6"
+          icon={<Star size={14} />}
+        />
         <StatCard label="ЭРЭМБЭ" value="-" accent="#FBBF24" icon={<Trophy size={14} />} />
       </div>
     </div>

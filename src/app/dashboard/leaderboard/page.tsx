@@ -1,8 +1,8 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { getInitials } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 function rankMedal(i: number) {
   if (i === 0) return { color: "#FBBF24", label: "#1" };
@@ -189,11 +189,14 @@ export default function LeaderboardPage() {
                 gridTemplateColumns: "40px 1fr 120px 100px 80px",
                 padding: "12px 16px",
                 alignItems: "center",
-                borderBottom: i < entries.length - 1 ? "1px solid rgba(255, 255, 255, 0.04)" : "none",
+                borderBottom:
+                  i < entries.length - 1 ? "1px solid rgba(255, 255, 255, 0.04)" : "none",
                 transition: "background 0.1s",
               }}
               onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.background = "transparent")
+              }
             >
               <span
                 style={{

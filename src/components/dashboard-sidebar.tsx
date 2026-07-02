@@ -1,25 +1,25 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { auth } from "@/lib/firebase";
+import { getInitials } from "@/lib/utils";
+import { signOut } from "firebase/auth";
 import {
-  LayoutDashboard,
+  CalendarCheck,
+  ChevronRight,
   ClipboardList,
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  PlusSquare,
   Trophy,
   User,
-  PlusSquare,
-  CalendarCheck,
   Users,
-  LogOut,
-  ChevronRight,
   Zap,
-  Loader2,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { getInitials } from "@/lib/utils";
 
 interface NavItem {
   href: string;
@@ -64,7 +64,9 @@ function NavItemButton({
         borderLeft: `2px solid ${active ? "#8B5CF6" : "transparent"}`,
       }}
     >
-      <span className="shrink-0"><Icon size={18} /></span>
+      <span className="shrink-0">
+        <Icon size={18} />
+      </span>
       <span>{label}</span>
       {active && <ChevronRight size={12} className="ml-auto" />}
     </Link>

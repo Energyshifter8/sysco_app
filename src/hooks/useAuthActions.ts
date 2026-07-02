@@ -1,13 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { useState } from "react";
 
 export function useAuthActions() {
   const [loading, setLoading] = useState(false);
@@ -44,9 +40,7 @@ export function useAuthActions() {
       });
     } catch (err: unknown) {
       const message =
-        err instanceof Error
-          ? mapFirebaseError(err.message)
-          : "Бүртгүүлэхэд алдаа гарлаа";
+        err instanceof Error ? mapFirebaseError(err.message) : "Бүртгүүлэхэд алдаа гарлаа";
       setError(message);
       throw new Error(message);
     } finally {
@@ -60,8 +54,7 @@ export function useAuthActions() {
     try {
       await signOut(auth);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Гарахад алдаа гарлаа";
+      const message = err instanceof Error ? err.message : "Гарахад алдаа гарлаа";
       setError(message);
       throw new Error(message);
     } finally {
@@ -73,7 +66,11 @@ export function useAuthActions() {
 }
 
 function mapFirebaseError(message: string): string {
-  if (message.includes("invalid-credential") || message.includes("wrong-password") || message.includes("user-not-found")) {
+  if (
+    message.includes("invalid-credential") ||
+    message.includes("wrong-password") ||
+    message.includes("user-not-found")
+  ) {
     return "Имэйл эсвэл нууц үг буруу байна";
   }
   if (message.includes("email-already-in-use")) {

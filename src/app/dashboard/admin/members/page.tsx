@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, Search, Users, Star } from "lucide-react";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { User, Task, AttendanceRecord } from "@/types";
 import { getMajorLabel } from "@/lib/constants";
+import { db } from "@/lib/firebase";
 import { getInitials } from "@/lib/utils";
+import { AttendanceRecord, Task, User } from "@/types";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import { Loader2, Search, Star, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 function StatCard({
   label,
@@ -69,17 +63,13 @@ export default function MembersPage() {
   const [search, setSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
   const [memberTasks, setMemberTasks] = useState<Task[]>([]);
-  const [memberAttendance, setMemberAttendance] = useState<
-    AttendanceRecord[]
-  >([]);
+  const [memberAttendance, setMemberAttendance] = useState<AttendanceRecord[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     async function fetchMembers() {
       setLoading(true);
-      const snap = await getDocs(
-        query(collection(db, "users"), where("role", "!=", "admin"))
-      );
+      const snap = await getDocs(query(collection(db, "users"), where("role", "!=", "admin")));
       setMembers(snap.docs.map((d) => d.data() as User));
       setLoading(false);
     }
@@ -89,31 +79,24 @@ export default function MembersPage() {
   const filtered = members.filter(
     (m) =>
       m.name.toLowerCase().includes(search.toLowerCase()) ||
-      getMajorLabel(m.major).toLowerCase().includes(search.toLowerCase())
+      getMajorLabel(m.major).toLowerCase().includes(search.toLowerCase()),
   );
 
   async function handleViewMember(member: User) {
     setSelectedMember(member);
     setDetailLoading(true);
     const [tasksSnap, attSnap] = await Promise.all([
-      getDocs(
-        query(
-          collection(db, "tasks"),
-          where("assignedTo", "array-contains", member.uid)
-        )
-      ),
+      getDocs(query(collection(db, "tasks"), where("assignedTo", "array-contains", member.uid))),
       getDocs(
         query(
           collection(db, "attendance"),
           where("uid", "==", member.uid),
-          orderBy("date", "desc")
-        )
+          orderBy("date", "desc"),
+        ),
       ),
     ]);
     setMemberTasks(tasksSnap.docs.map((d) => d.data() as Task));
-    setMemberAttendance(
-      attSnap.docs.map((d) => d.data() as AttendanceRecord)
-    );
+    setMemberAttendance(attSnap.docs.map((d) => d.data() as AttendanceRecord));
     setDetailLoading(false);
   }
 
@@ -186,8 +169,18 @@ export default function MembersPage() {
 
       {/* Summary cards */}
       <div className="flex gap-4 mb-6 flex-wrap">
-        <StatCard label="НИЙТ ГИШҮҮН" value={members.length} accent="#8B5CF6" icon={<Users size={14} />} />
-        <StatCard label="НИЙТ ОНШ" value={totalPoints.toLocaleString()} accent="#22C55E" icon={<Star size={14} />} />
+        <StatCard
+          label="НИЙТ ГИШҮҮН"
+          value={members.length}
+          accent="#8B5CF6"
+          icon={<Users size={14} />}
+        />
+        <StatCard
+          label="НИЙТ ОНШ"
+          value={totalPoints.toLocaleString()}
+          accent="#22C55E"
+          icon={<Star size={14} />}
+        />
       </div>
 
       {/* Table */}
@@ -232,15 +225,15 @@ export default function MembersPage() {
               padding: "12px 20px",
               alignItems: "center",
               borderBottom:
-                i < filtered.length - 1
-                  ? "1px solid rgba(255, 255, 255, 0.04)"
-                  : "none",
+                i < filtered.length - 1 ? "1px solid rgba(255, 255, 255, 0.04)" : "none",
               transition: "background 0.1s",
               cursor: "pointer",
             }}
             onClick={() => handleViewMember(m)}
             onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "transparent")
+            }
           >
             <span
               style={{
@@ -393,10 +386,7 @@ export default function MembersPage() {
               </div>
             ) : (
               <div className="space-y-5">
-                <div
-                  className="grid gap-4"
-                  style={{ gridTemplateColumns: "1fr 1fr" }}
-                >
+                <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
                   {[
                     { label: "ИМЭЙЛ", value: selectedMember.email },
                     { label: "СУРАЛЦАХ ЖИЛ", value: selectedMember.course || "-" },

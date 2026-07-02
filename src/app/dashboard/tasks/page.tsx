@@ -1,37 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Clock, CheckCircle2, Check } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  doc,
-  runTransaction,
-  increment,
-  serverTimestamp,
-} from "firebase/firestore";
-import { isPast } from "date-fns";
-import { toast } from "sonner";
-import { db } from "@/lib/firebase";
-import { useAuth } from "@/context/AuthContext";
-import { Task } from "@/types";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { Task } from "@/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { isPast } from "date-fns";
+import {
+  collection,
+  doc,
+  increment,
+  onSnapshot,
+  query,
+  runTransaction,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
+import { Check, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 type FilterStatus = "all" | "pending" | "done" | "overdue";
 
 function statusMeta(task: Task, uid: string) {
   const isOverdue = task.dueDate ? isPast(new Date(task.dueDate)) : false;
-  const isTaskCompleted =
-    task.status === "completed" || task.status === "approved";
+  const isTaskCompleted = task.status === "completed" || task.status === "approved";
   const alreadyCompleted = task.assigneeCompleted?.[uid] === true;
 
   const color = isTaskCompleted
@@ -48,8 +47,7 @@ function statusMeta(task: Task, uid: string) {
       : isOverdue
         ? "Хоцорсон"
         : "Хүлээгдэж буй";
-  const Icon =
-    isTaskCompleted || alreadyCompleted ? CheckCircle2 : Clock;
+  const Icon = isTaskCompleted || alreadyCompleted ? CheckCircle2 : Clock;
 
   return { color, label, Icon };
 }
@@ -84,12 +82,8 @@ function TaskCard({
         cursor: "pointer",
         transition: "background 0.15s",
       }}
-      onMouseEnter={(e) =>
-        ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")
-      }
-      onMouseLeave={(e) =>
-        ((e.currentTarget as HTMLElement).style.background = "#141414")
-      }
+      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")}
+      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#141414")}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -127,9 +121,7 @@ function TaskCard({
                 fontFamily: "var(--font-jetbrains)",
               }}
             >
-              {task.dueDate
-                ? new Date(task.dueDate).toLocaleDateString("mn-MN")
-                : "-"}
+              {task.dueDate ? new Date(task.dueDate).toLocaleDateString("mn-MN") : "-"}
             </span>
           </div>
         </div>
@@ -181,8 +173,7 @@ function TaskDetailDialog({
   if (!task) return null;
 
   const { color, label, Icon } = statusMeta(task, uid);
-  const isTaskCompleted =
-    task.status === "completed" || task.status === "approved";
+  const isTaskCompleted = task.status === "completed" || task.status === "approved";
   const alreadyCompleted = task.assigneeCompleted?.[uid] === true;
   const isCompleting = completing === task.id;
   const showProgress = !isTaskCompleted && task.assignedTo.includes(uid);
@@ -227,10 +218,7 @@ function TaskDetailDialog({
         </DialogHeader>
 
         {/* Meta row */}
-        <div
-          className="flex items-center gap-4 flex-wrap"
-          style={{ fontSize: "0.75rem" }}
-        >
+        <div className="flex items-center gap-4 flex-wrap" style={{ fontSize: "0.75rem" }}>
           <div className="flex flex-col gap-1">
             <span
               style={{
@@ -272,9 +260,7 @@ function TaskDetailDialog({
                 color: "#E8E8E8",
               }}
             >
-              {task.dueDate
-                ? new Date(task.dueDate).toLocaleDateString("mn-MN")
-                : "Хугацаагүй"}
+              {task.dueDate ? new Date(task.dueDate).toLocaleDateString("mn-MN") : "Хугацаагүй"}
             </span>
           </div>
         </div>
@@ -329,10 +315,7 @@ function TaskDetailDialog({
                     fontFamily: "var(--font-jetbrains)",
                     fontSize: "0.65rem",
                     color: a === uid ? "#8B5CF6" : "#9CA3AF",
-                    background:
-                      a === uid
-                        ? "rgba(139,92,246,0.12)"
-                        : "rgba(255,255,255,0.04)",
+                    background: a === uid ? "rgba(139,92,246,0.12)" : "rgba(255,255,255,0.04)",
                     border: `1px solid ${a === uid ? "rgba(139,92,246,0.25)" : "rgba(255,255,255,0.07)"}`,
                     borderRadius: "3px",
                     padding: "2px 8px",
@@ -395,9 +378,7 @@ function TaskDetailDialog({
                   min={0}
                   max={100}
                   value={progress}
-                  onChange={(e) =>
-                    onProgressChange(task.id, Number(e.target.value))
-                  }
+                  onChange={(e) => onProgressChange(task.id, Number(e.target.value))}
                   disabled={isCompleting}
                   style={{
                     width: "100%",
@@ -418,10 +399,7 @@ function TaskDetailDialog({
                     max={100}
                     value={progress}
                     onChange={(e) => {
-                      const v = Math.min(
-                        100,
-                        Math.max(0, Number(e.target.value) || 0)
-                      );
+                      const v = Math.min(100, Math.max(0, Number(e.target.value) || 0));
                       onProgressChange(task.id, v);
                     }}
                     disabled={isCompleting}
@@ -442,12 +420,8 @@ function TaskDetailDialog({
                     onClick={() => onComplete(task)}
                     disabled={progress < 100 || isCompleting}
                     style={{
-                      background:
-                        progress === 100 && !isCompleting
-                          ? "#22C55E"
-                          : "#1F2937",
-                      color:
-                        progress === 100 && !isCompleting ? "#fff" : "#4B5563",
+                      background: progress === 100 && !isCompleting ? "#22C55E" : "#1F2937",
+                      color: progress === 100 && !isCompleting ? "#fff" : "#4B5563",
                       border: "none",
                       borderRadius: "3px",
                       padding: "6px 16px",
@@ -455,10 +429,7 @@ function TaskDetailDialog({
                       fontSize: "0.65rem",
                       fontWeight: 700,
                       letterSpacing: "0.06em",
-                      cursor:
-                        progress === 100 && !isCompleting
-                          ? "pointer"
-                          : "not-allowed",
+                      cursor: progress === 100 && !isCompleting ? "pointer" : "not-allowed",
                       display: "flex",
                       alignItems: "center",
                       gap: "5px",
@@ -489,9 +460,7 @@ export default function MemberTasksPage() {
   const [tab, setTab] = useState<"current" | "history">("current");
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [completing, setCompleting] = useState<string | null>(null);
-  const [localProgress, setLocalProgress] = useState<Record<string, number>>(
-    {}
-  );
+  const [localProgress, setLocalProgress] = useState<Record<string, number>>({});
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
@@ -506,12 +475,10 @@ export default function MemberTasksPage() {
         if (userData.team) targets.push(`team:${userData.team}`);
         const q = query(
           collection(db, "tasks"),
-          where("assignedTo", "array-contains-any", targets)
+          where("assignedTo", "array-contains-any", targets),
         );
         const unsub = onSnapshot(q, (snap) => {
-          resolve(
-            snap.docs.map((d) => ({ ...d.data(), id: d.id })) as Task[]
-          );
+          resolve(snap.docs.map((d) => ({ ...d.data(), id: d.id })) as Task[]);
         });
         return unsub;
       }),
@@ -541,7 +508,7 @@ export default function MemberTasksPage() {
             assigneeProgress: { [user.uid]: 100 },
             assigneeCompleted: { [user.uid]: true },
           },
-          { merge: true }
+          { merge: true },
         );
 
         const userRef = doc(db, "users", user.uid);
@@ -589,20 +556,15 @@ export default function MemberTasksPage() {
     );
   }
 
-  const activeTasks = tasks.filter(
-    (t) => t.status !== "completed" && t.status !== "approved"
-  );
-  const historyTasks = tasks.filter(
-    (t) => t.status === "completed" || t.status === "approved"
-  );
+  const activeTasks = tasks.filter((t) => t.status !== "completed" && t.status !== "approved");
+  const historyTasks = tasks.filter((t) => t.status === "completed" || t.status === "approved");
 
   const currentTasks = tab === "current" ? activeTasks : historyTasks;
   const filtered =
     filter === "all"
       ? currentTasks
       : currentTasks.filter((t) => {
-          if (filter === "done")
-            return t.status === "completed" || t.status === "approved";
+          if (filter === "done") return t.status === "completed" || t.status === "approved";
           if (filter === "pending")
             return (
               t.status !== "completed" &&
@@ -619,9 +581,7 @@ export default function MemberTasksPage() {
           return true;
         });
 
-  const selectedTask = selectedTaskId
-    ? tasks.find((t) => t.id === selectedTaskId) ?? null
-    : null;
+  const selectedTask = selectedTaskId ? (tasks.find((t) => t.id === selectedTaskId) ?? null) : null;
 
   return (
     <div style={{ maxWidth: "800px" }}>
@@ -652,10 +612,7 @@ export default function MemberTasksPage() {
       </div>
 
       {/* Tabs */}
-      <div
-        className="flex mb-6"
-        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}
-      >
+      <div className="flex mb-6" style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}>
         {[
           { key: "current", label: "Одоогийн" },
           { key: "history", label: "Түүх" },
@@ -674,8 +631,7 @@ export default function MemberTasksPage() {
               padding: "10px 20px",
               background: "none",
               border: "none",
-              borderBottom:
-                tab === key ? "2px solid #8B5CF6" : "2px solid transparent",
+              borderBottom: tab === key ? "2px solid #8B5CF6" : "2px solid transparent",
               color: tab === key ? "#8B5CF6" : "#6B7280",
               cursor: "pointer",
               marginBottom: "-1px",

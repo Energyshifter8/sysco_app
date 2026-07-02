@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, Check, X, Minus } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { getInitials } from "@/lib/utils";
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
+  increment,
   query,
   where,
   writeBatch,
-  doc,
-  increment,
-  getDoc,
 } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { Check, Loader2, Minus, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
-import { getInitials } from "@/lib/utils";
 
 type AttendanceStatus = "present" | "absent" | "late" | "";
 
@@ -40,9 +40,7 @@ export default function AttendancePage() {
   useEffect(() => {
     async function fetchMembers() {
       setLoading(true);
-      const snap = await getDocs(
-        query(collection(db, "users"), where("role", "!=", "admin"))
-      );
+      const snap = await getDocs(query(collection(db, "users"), where("role", "!=", "admin")));
       const data = snap.docs.map((d) => ({
         uid: d.data().uid,
         name: d.data().name,
@@ -53,17 +51,12 @@ export default function AttendancePage() {
 
       const dateKey = formatDateKey(date);
       const attSnap = await getDocs(
-        query(
-          collection(db, "attendance"),
-          where("date", "==", dateKey)
-        )
+        query(collection(db, "attendance"), where("date", "==", dateKey)),
       );
       if (!attSnap.empty) {
         setMembers((prev) =>
           prev.map((m) => {
-            const record = attSnap.docs.find(
-              (d) => d.data().uid === m.uid
-            );
+            const record = attSnap.docs.find((d) => d.data().uid === m.uid);
             if (record) {
               return {
                 ...m,
@@ -72,7 +65,7 @@ export default function AttendancePage() {
               };
             }
             return m;
-          })
+          }),
         );
       }
       setLoading(false);
@@ -80,14 +73,8 @@ export default function AttendancePage() {
     fetchMembers();
   }, [date]);
 
-  function updateMember(
-    uid: string,
-    field: "status" | "note",
-    value: string
-  ) {
-    setMembers((prev) =>
-      prev.map((m) => (m.uid === uid ? { ...m, [field]: value } : m))
-    );
+  function updateMember(uid: string, field: "status" | "note", value: string) {
+    setMembers((prev) => prev.map((m) => (m.uid === uid ? { ...m, [field]: value } : m)));
   }
 
   async function handleSave() {
@@ -250,7 +237,7 @@ export default function AttendancePage() {
         <input
           type="date"
           value={formatDateKey(date)}
-          onChange={(e) => setDate(new Date(e.target.value + "T00:00:00"))}
+          onChange={(e) => setDate(new Date(`${e.target.value}T00:00:00`))}
           style={{
             background: "#1A1A1A",
             border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -283,14 +270,14 @@ export default function AttendancePage() {
               className="flex items-center gap-4 px-4 py-3"
               style={{
                 borderBottom:
-                  i < members.length - 1
-                    ? "1px solid rgba(255, 255, 255, 0.05)"
-                    : "none",
+                  i < members.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
                 borderLeft: `3px solid ${status === "present" ? "#22C55E" : status === "absent" ? "#EF4444" : status === "late" ? "#FBBF24" : "transparent"}`,
                 transition: "background 0.1s",
               }}
               onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLElement).style.background = "transparent")
+              }
             >
               <div
                 style={{
@@ -323,42 +310,37 @@ export default function AttendancePage() {
               </div>
 
               <div className="flex gap-1">
-                {(["present", "late", "absent"] as AttendanceStatus[]).map(
-                  (s) => {
-                    const colors: Record<
-                      string,
-                      { bg: string; icon: React.ReactNode }
-                    > = {
-                      present: { bg: "#22C55E", icon: <Check size={12} /> },
-                      late: { bg: "#FBBF24", icon: <Minus size={12} /> },
-                      absent: { bg: "#EF4444", icon: <X size={12} /> },
-                    };
-                    const c = colors[s];
-                    const active = status === s;
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => updateMember(m.uid, "status", s)}
-                        title={s}
-                        style={{
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "3px",
-                          border: `1px solid ${active ? c.bg : "rgba(255, 255, 255, 0.1)"}`,
-                          background: active ? `${c.bg}25` : "transparent",
-                          color: active ? c.bg : "#374151",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        {c.icon}
-                      </button>
-                    );
-                  }
-                )}
+                {(["present", "late", "absent"] as AttendanceStatus[]).map((s) => {
+                  const colors: Record<string, { bg: string; icon: React.ReactNode }> = {
+                    present: { bg: "#22C55E", icon: <Check size={12} /> },
+                    late: { bg: "#FBBF24", icon: <Minus size={12} /> },
+                    absent: { bg: "#EF4444", icon: <X size={12} /> },
+                  };
+                  const c = colors[s];
+                  const active = status === s;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => updateMember(m.uid, "status", s)}
+                      title={s}
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        borderRadius: "3px",
+                        border: `1px solid ${active ? c.bg : "rgba(255, 255, 255, 0.1)"}`,
+                        background: active ? `${c.bg}25` : "transparent",
+                        color: active ? c.bg : "#374151",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {c.icon}
+                    </button>
+                  );
+                })}
               </div>
 
               <span
@@ -411,11 +393,7 @@ export default function AttendancePage() {
           gap: "8px",
         }}
       >
-        {saving ? (
-          <Loader2 size={14} className="animate-spin" />
-        ) : (
-          <Check size={14} />
-        )}
+        {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
         {saving ? "ХАДГАЛЖ БАЙНА..." : "ИРЦИЙГ ХАДГАЛАХ →"}
       </button>
     </div>

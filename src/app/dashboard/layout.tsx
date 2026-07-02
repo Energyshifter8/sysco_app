@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Menu, Zap } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { useAuth } from "@/context/AuthContext";
+import { Menu, Zap } from "lucide-react";
+import { useState } from "react";
 
 export default function DashboardLayout({
   children,
@@ -104,7 +104,11 @@ export default function DashboardLayout({
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <Zap size={16} style={{ color: "#8B5CF6" }} />
-            <span style={{ fontWeight: 700, fontFamily: "var(--font-jetbrains)", fontSize: "0.85rem" }}>SYSCO</span>
+            <span
+              style={{ fontWeight: 700, fontFamily: "var(--font-jetbrains)", fontSize: "0.85rem" }}
+            >
+              SYSCO
+            </span>
           </div>
           {!loading && (
             <div

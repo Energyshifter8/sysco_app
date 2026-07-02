@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
-import { Loader2, Star, CheckCircle2, Clock, Trophy } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
-import { Task } from "@/types";
-import { isPast } from "date-fns";
+import { db } from "@/lib/firebase";
 import { getInitials } from "@/lib/utils";
+import { Task } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { isPast } from "date-fns";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { CheckCircle2, Clock, Loader2, Star, Trophy } from "lucide-react";
+import Link from "next/link";
 
 function StatCard({
   label,
@@ -62,21 +62,24 @@ function StatCard({
 
 function TaskCard({ task }: { task: Task }) {
   const isOverdue = task.dueDate ? isPast(new Date(task.dueDate)) : false;
-  const statusColor = task.status === "completed" || task.status === "approved"
-    ? "#22C55E"
-    : isOverdue
-      ? "#EF4444"
-      : "#FBBF24";
-  const statusLabel = task.status === "completed" || task.status === "approved"
-    ? "Дууссан"
-    : isOverdue
-      ? "Хоцорсон"
-      : "Хүлээгдэж буй";
-  const StatusIcon = task.status === "completed" || task.status === "approved"
-    ? CheckCircle2
-    : isOverdue
-      ? Clock
-      : Clock;
+  const statusColor =
+    task.status === "completed" || task.status === "approved"
+      ? "#22C55E"
+      : isOverdue
+        ? "#EF4444"
+        : "#FBBF24";
+  const statusLabel =
+    task.status === "completed" || task.status === "approved"
+      ? "Дууссан"
+      : isOverdue
+        ? "Хоцорсон"
+        : "Хүлээгдэж буй";
+  const StatusIcon =
+    task.status === "completed" || task.status === "approved"
+      ? CheckCircle2
+      : isOverdue
+        ? Clock
+        : Clock;
 
   return (
     <div
@@ -128,9 +131,7 @@ function TaskCard({ task }: { task: Task }) {
                 fontFamily: "var(--font-jetbrains)",
               }}
             >
-              {task.dueDate
-                ? new Date(task.dueDate).toLocaleDateString("mn-MN")
-                : "-"}
+              {task.dueDate ? new Date(task.dueDate).toLocaleDateString("mn-MN") : "-"}
             </span>
           </div>
         </div>
@@ -189,12 +190,10 @@ export default function DashboardPage() {
         if (userData?.team) targets.push(`team:${userData.team}`);
         const q = query(
           collection(db, "tasks"),
-          where("assignedTo", "array-contains-any", targets)
+          where("assignedTo", "array-contains-any", targets),
         );
         const unsub = onSnapshot(q, (snap) => {
-          resolve(
-            snap.docs.map((d) => ({ ...d.data(), id: d.id })) as Task[]
-          );
+          resolve(snap.docs.map((d) => ({ ...d.data(), id: d.id })) as Task[]);
         });
         return unsub;
       }),
@@ -210,12 +209,8 @@ export default function DashboardPage() {
   }
 
   const userRank = entries.find((e) => e.uid === user.uid)?.rank ?? "-";
-  const activeTasks = tasks.filter(
-    (t) => t.status !== "completed" && t.status !== "approved"
-  );
-  const completedTasks = tasks.filter(
-    (t) => t.status === "completed" || t.status === "approved"
-  );
+  const activeTasks = tasks.filter((t) => t.status !== "completed" && t.status !== "approved");
+  const completedTasks = tasks.filter((t) => t.status === "completed" || t.status === "approved");
   const recentTasks = tasks.slice(0, 4);
   const topThree = entries.slice(0, 3);
 
@@ -270,10 +265,30 @@ export default function DashboardPage() {
 
       {/* Stat Row */}
       <div className="flex gap-4 mb-8 flex-wrap">
-        <StatCard label="НИЙТ ОНШ" value={userData.totalPoints.toLocaleString()} accent="#8B5CF6" icon={<Star size={14} />} />
-        <StatCard label="ДУУССАН" value={completedTasks.length} accent="#22C55E" icon={<CheckCircle2 size={14} />} />
-        <StatCard label="ХҮЛЭЭГДЭЖ БУЙ" value={activeTasks.length} accent="#FBBF24" icon={<Clock size={14} />} />
-        <StatCard label="ЭРЭМБЭЛЭЛТ" value={userRank} accent="#FBBF24" icon={<Trophy size={14} />} />
+        <StatCard
+          label="НИЙТ ОНШ"
+          value={userData.totalPoints.toLocaleString()}
+          accent="#8B5CF6"
+          icon={<Star size={14} />}
+        />
+        <StatCard
+          label="ДУУССАН"
+          value={completedTasks.length}
+          accent="#22C55E"
+          icon={<CheckCircle2 size={14} />}
+        />
+        <StatCard
+          label="ХҮЛЭЭГДЭЖ БУЙ"
+          value={activeTasks.length}
+          accent="#FBBF24"
+          icon={<Clock size={14} />}
+        />
+        <StatCard
+          label="ЭРЭМБЭЛЭЛТ"
+          value={userRank}
+          accent="#FBBF24"
+          icon={<Trophy size={14} />}
+        />
       </div>
 
       <div className="flex gap-6 flex-col lg:flex-row">
@@ -320,9 +335,7 @@ export default function DashboardPage() {
                 ДААЛГАВАР ОЛДСОНГҮЙ
               </div>
             ) : (
-              recentTasks.map((t) => (
-                <TaskCard key={t.id} task={t} />
-              ))
+              recentTasks.map((t) => <TaskCard key={t.id} task={t} />)
             )}
           </div>
         </div>

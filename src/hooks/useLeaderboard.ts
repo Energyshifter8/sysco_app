@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { User } from "@/types";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { useEffect, useState } from "react";
 
 export interface LeaderboardEntry extends User {
   rank: number;

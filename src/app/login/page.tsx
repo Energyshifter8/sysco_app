@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useAuthActions } from "@/hooks/useAuthActions";
+import { Loader2, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Zap } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useAuthActions } from "@/hooks/useAuthActions";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,7 +35,10 @@ export default function LoginPage() {
         <div className="text-center mb-10">
           <div
             className="inline-flex items-center justify-center w-14 h-14 rounded mb-4"
-            style={{ background: "rgba(139, 92, 246, 0.125)", border: "1px solid rgba(139, 92, 246, 0.25)" }}
+            style={{
+              background: "rgba(139, 92, 246, 0.125)",
+              border: "1px solid rgba(139, 92, 246, 0.25)",
+            }}
           >
             <Zap size={28} style={{ color: "#8B5CF6" }} />
           </div>
@@ -161,9 +164,7 @@ export default function LoginPage() {
                 gap: "8px",
               }}
             >
-              {loading ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : null}
+              {loading ? <Loader2 size={16} className="animate-spin" /> : null}
               {loading ? "НЭВТРЭЖ БАЙНА..." : "НЭВТРЭХ →"}
             </button>
             <p

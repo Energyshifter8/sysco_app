@@ -1,14 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { useAuthActions } from "@/hooks/useAuthActions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -17,6 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuthActions } from "@/hooks/useAuthActions";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -42,9 +42,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Бүртгүүлэх</CardTitle>
-          <CardDescription>
-            Эхлэхийн тулд мэдээллээ оруулна уу
-          </CardDescription>
+          <CardDescription>Эхлэхийн тулд мэдээллээ оруулна уу</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-4">
@@ -85,9 +83,7 @@ export default function SignupPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : null}
+              {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               {loading ? "Бүртгэж байна..." : "Бүртгүүлэх"}
             </Button>
             <p className="text-sm text-muted-foreground">

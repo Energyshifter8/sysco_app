@@ -1,22 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, Check, X, CheckCircle2 } from "lucide-react";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  query,
-  where,
-  doc,
-  updateDoc,
-  increment,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-import { User, Task, Team, TEAM_LABELS } from "@/types";
+import { db } from "@/lib/firebase";
 import { getInitials } from "@/lib/utils";
+import { TEAM_LABELS, Task, Team, User } from "@/types";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  increment,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { Check, CheckCircle2, Loader2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 function resolveAssignedLabel(entry: string, members: User[]): string {
   if (entry === "all") return "Бүх гишүүд";
@@ -56,7 +56,7 @@ export default function AdminTasksPage() {
 
   function toggleMember(uid: string) {
     setSelectedMembers((prev) =>
-      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
+      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid],
     );
   }
 
@@ -69,10 +69,7 @@ export default function AdminTasksPage() {
     }
     setSaving(true);
     try {
-      const assignedTo =
-        selectedMembers.length === members.length
-          ? ["all"]
-          : [...selectedMembers];
+      const assignedTo = selectedMembers.length === members.length ? ["all"] : [...selectedMembers];
       const taskData = {
         title,
         description,
@@ -116,8 +113,8 @@ export default function AdminTasksPage() {
                 assignedTo: newAssignedTo,
                 status: newAssignedTo.length === 0 ? "completed" : t.status,
               }
-            : t
-        )
+            : t,
+        ),
       );
       toast.success("Даалгавар баталгаажуулагдлаа, оноо нэмэгдлээ");
     } catch {
@@ -364,11 +361,7 @@ export default function AdminTasksPage() {
                 gap: "8px",
               }}
             >
-              {saving ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Check size={14} />
-              )}
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
               {saving ? "ҮҮСГЭЖ БАЙНА..." : "ДААЛГАВАР ҮҮСГЭХ →"}
             </button>
             <button
@@ -477,9 +470,7 @@ export default function AdminTasksPage() {
                     +{task.points}
                   </span>
                 </div>
-                {task.assignedTo.some(
-                  (id) => id !== "all" && !id.startsWith("team:")
-                ) && (
+                {task.assignedTo.some((id) => id !== "all" && !id.startsWith("team:")) && (
                   <div className="flex flex-wrap gap-1">
                     {task.assignedTo
                       .filter((id) => id !== "all" && !id.startsWith("team:"))
