@@ -1,135 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Loader2,
-  LayoutDashboard,
-  CheckSquare,
-  User,
-  Trophy,
-  ClipboardCheck,
-  ListTodo,
-  Users,
-  Menu,
-  X,
-} from "lucide-react";
+import { Menu, X, Zap } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { cn } from "@/lib/utils";
-
-const navLinks = [
-  { href: "/dashboard", label: "Хянах самбар", icon: LayoutDashboard },
-  { href: "/dashboard/tasks", label: "Даалгавар", icon: CheckSquare },
-  { href: "/dashboard/profile", label: "Профайл", icon: User },
-];
-
-const adminLinks = [
-  { href: "/dashboard/admin/attendance", label: "Ирц бүртгэл", icon: ClipboardCheck },
-  { href: "/dashboard/admin/tasks", label: "Даалгавар удирдах", icon: ListTodo },
-  { href: "/dashboard/admin/members", label: "Гишүүд", icon: Users },
-];
-
-function SidebarContent({
-  pathname,
-  userData,
-  loading,
-  onLinkClick,
-}: {
-  pathname: string;
-  userData: { name?: string; totalPoints?: number; role?: string } | null;
-  loading: boolean;
-  onLinkClick?: () => void;
-}) {
-  return (
-    <>
-      <div className="flex items-center justify-between border-b px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Trophy className="size-5 text-primary" />
-          <span className="text-lg font-semibold">Sysco</span>
-        </div>
-        {onLinkClick && (
-          <button
-            onClick={onLinkClick}
-            className="rounded-md p-1 text-muted-foreground hover:text-foreground md:hidden"
-            aria-label="Хаах"
-          >
-            <X className="size-5" />
-          </button>
-        )}
-      </div>
-
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navLinks.map((link) => {
-          const isActive =
-            link.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname.startsWith(link.href);
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onLinkClick}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                isActive
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground"
-              )}
-            >
-              <link.icon className="size-4" />
-              {link.label}
-            </Link>
-          );
-        })}
-
-        {!loading && userData?.role === "admin" && (
-          <>
-            <div className="my-2 border-t" />
-            <p className="px-3 py-1 text-xs font-medium text-muted-foreground">
-              Захиргаа
-            </p>
-            {adminLinks.map((link) => {
-              const isActive = pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={onLinkClick}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                    isActive
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  <link.icon className="size-4" />
-                  {link.label}
-                </Link>
-              );
-            })}
-          </>
-        )}
-      </nav>
-
-      <div className="border-t px-6 py-4">
-        {loading ? (
-          <Loader2 className="size-4 animate-spin text-muted-foreground" />
-        ) : (
-          <div className="space-y-1">
-            <p className="text-sm font-medium truncate">
-              {userData?.name ?? "Хэрэглэгч"}
-            </p>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Trophy className="size-3" />
-              <span>{userData?.totalPoints ?? 0} оноо</span>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
 
 export default function DashboardLayout({
   children,
@@ -141,64 +16,117 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        background: "#0A0A0A",
+        fontFamily: "var(--font-barlow)",
+        overflow: "hidden",
+      }}
+    >
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r bg-muted/40 md:flex">
-        <SidebarContent
-          pathname={pathname}
-          userData={userData}
-          loading={loading}
-        />
+      <aside
+        style={{
+          width: "220px",
+          flexShrink: 0,
+          background: "#111111",
+          borderRight: "1px solid rgba(255, 255, 255, 0.07)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+        className="hidden md:flex"
+      >
+        <DashboardSidebar />
       </aside>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            zIndex: 40,
+          }}
           onClick={() => setMobileOpen(false)}
+          className="md:hidden"
         />
       )}
 
       {/* Mobile sidebar */}
       <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-muted/40 transition-transform duration-200 md:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        )}
+        style={{
+          position: "fixed",
+          inset: 0,
+          width: "220px",
+          background: "#111111",
+          borderRight: "1px solid rgba(255, 255, 255, 0.07)",
+          display: "flex",
+          flexDirection: "column",
+          zIndex: 50,
+          transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.2s ease",
+        }}
+        className="md:hidden"
       >
-        <SidebarContent
-          pathname={pathname}
-          userData={userData}
-          loading={loading}
-          onLinkClick={() => setMobileOpen(false)}
-        />
+        <DashboardSidebar onLinkClick={() => setMobileOpen(false)} />
       </aside>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
         {/* Mobile top bar */}
-        <header className="sticky top-0 z-30 flex items-center gap-4 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
+        <header
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
+            background: "rgba(10, 10, 10, 0.95)",
+            backdropFilter: "blur(8px)",
+            padding: "12px 16px",
+          }}
+          className="md:hidden"
+        >
           <button
             onClick={() => setMobileOpen(true)}
-            className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+            style={{
+              background: "none",
+              border: "none",
+              color: "#6B7280",
+              cursor: "pointer",
+              padding: "4px",
+            }}
             aria-label="Цэс нээх"
           >
-            <Menu className="size-5" />
+            <Menu size={20} />
           </button>
-          <div className="flex items-center gap-2">
-            <Trophy className="size-4 text-primary" />
-            <span className="font-semibold">Sysco</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Zap size={16} style={{ color: "#8B5CF6" }} />
+            <span style={{ fontWeight: 700, fontFamily: "var(--font-jetbrains)", fontSize: "0.85rem" }}>SYSCO</span>
           </div>
           {!loading && (
-            <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-              <Trophy className="size-3" />
-              <span>{userData?.totalPoints ?? 0} оноо</span>
+            <div
+              style={{
+                marginLeft: "auto",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                fontSize: "0.75rem",
+                color: "#6B7280",
+                fontFamily: "var(--font-jetbrains)",
+              }}
+            >
+              {userData?.totalPoints ?? 0} оноо
             </div>
           )}
         </header>
 
-        <main className="flex-1 overflow-auto">
-          <div className="p-4 sm:p-6 md:p-8">{children}</div>
+        <main style={{ flex: 1, overflow: "auto", padding: "28px 32px", maxWidth: "1100px" }}>
+          {children}
         </main>
       </div>
     </div>
