@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuthActions } from "@/hooks/useAuthActions";
-import { Loader2, Zap } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -33,15 +34,13 @@ export default function LoginPage() {
       <div className="w-full max-w-sm px-4">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div
-            className="inline-flex items-center justify-center w-14 h-14 rounded mb-4"
-            style={{
-              background: "rgba(139, 92, 246, 0.125)",
-              border: "1px solid rgba(139, 92, 246, 0.25)",
-            }}
-          >
-            <Zap size={28} style={{ color: "#8B5CF6" }} />
-          </div>
+          <Image
+            src="/sysco-logo.png"
+            alt="Sysco Logo"
+            width={56}
+            height={56}
+            className="rounded mb-4 mx-auto"
+          />
           <h1
             style={{
               fontFamily: "var(--font-jetbrains)",

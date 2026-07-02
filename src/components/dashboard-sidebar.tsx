@@ -15,8 +15,8 @@ import {
   Trophy,
   User,
   Users,
-  Zap,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -105,20 +105,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
           gap: "10px",
         }}
       >
-        <div
-          style={{
-            width: "32px",
-            height: "32px",
-            background: "rgba(139, 92, 246, 0.125)",
-            border: "1px solid rgba(139, 92, 246, 0.25)",
-            borderRadius: "4px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Zap size={16} style={{ color: "#8B5CF6" }} />
-        </div>
+        <Image src="/sysco-logo.png" alt="Sysco Logo" width={32} height={32} className="rounded" />
         <div>
           <div
             style={{

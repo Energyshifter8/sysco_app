@@ -5,7 +5,7 @@
  * Usage:  npx tsx scripts/test-progress-transaction.ts
  */
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { FieldValue, getFirestore } from "firebase-admin/firestore";
 
 // Initialize Admin SDK pointing at the emulator
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
@@ -27,16 +27,19 @@ async function seed() {
     createdAt: FieldValue.serverTimestamp(),
   });
 
-  await db.collection("tasks").doc(TEST_TASK_ID).set({
-    title: "Test Task",
-    description: "E2E test task",
-    points: 50,
-    assignedTo: [TEST_UID],
-    status: "active",
-    createdBy: "admin-uid",
-    createdAt: FieldValue.serverTimestamp(),
-    dueDate: FieldValue.serverTimestamp(),
-  });
+  await db
+    .collection("tasks")
+    .doc(TEST_TASK_ID)
+    .set({
+      title: "Test Task",
+      description: "E2E test task",
+      points: 50,
+      assignedTo: [TEST_UID],
+      status: "active",
+      createdBy: "admin-uid",
+      createdAt: FieldValue.serverTimestamp(),
+      dueDate: FieldValue.serverTimestamp(),
+    });
 
   console.log("✓ Seeded user (totalPoints=0) and task (points=50)");
 }
@@ -57,7 +60,7 @@ async function runCompletion() {
         assigneeProgress: { [TEST_UID]: 100 },
         assigneeCompleted: { [TEST_UID]: true },
       },
-      { merge: true }
+      { merge: true },
     );
 
     const userRef = db.collection("users").doc(TEST_UID);
@@ -80,10 +83,7 @@ async function verify() {
   const userSnap = await db.collection("users").doc(TEST_UID).get();
   const pts = userSnap.data()!.totalPoints;
 
-  const historySnap = await db
-    .collection("pointsHistory")
-    .where("uid", "==", TEST_UID)
-    .get();
+  const historySnap = await db.collection("pointsHistory").where("uid", "==", TEST_UID).get();
 
   console.log(`  totalPoints: ${pts} (expected 50)`);
   console.log(`  pointsHistory docs: ${historySnap.size} (expected 1)`);
@@ -125,10 +125,7 @@ async function verifyIdempotency() {
 async function cleanup() {
   await db.collection("users").doc(TEST_UID).delete();
   await db.collection("tasks").doc(TEST_TASK_ID).delete();
-  const snap = await db
-    .collection("pointsHistory")
-    .where("uid", "==", TEST_UID)
-    .get();
+  const snap = await db.collection("pointsHistory").where("uid", "==", TEST_UID).get();
   for (const d of snap.docs) await d.ref.delete();
   console.log("✓ Cleaned up test data");
 }
