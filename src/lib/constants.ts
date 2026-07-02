@@ -13,7 +13,8 @@ export const MAJORS = [
 
 export type MajorValue = (typeof MAJORS)[number]["value"];
 
-export function getMajorLabel(value: string): string {
+export function getMajorLabel(value?: string | null): string {
+  if (!value) return "";
   const match = MAJORS.find((m) => m.value === value);
   return match ? match.label : value;
 }

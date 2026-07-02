@@ -166,7 +166,8 @@ function rankMedal(i: number) {
   return { color: "#4B5563", label: `#${i + 1}` };
 }
 
-function getMajorLabel(major: string): string {
+function getMajorLabel(major?: string | null): string {
+  if (!major) return "";
   const map: Record<string, string> = {
     computer_science: "Компьютерын ухаан",
     software_engineering: "Програм хангамж",
