@@ -470,7 +470,7 @@ function TaskDetailDialog({
                     ) : (
                       <Check size={12} />
                     )}
-                    ДУУСГАХ
+                    Дуусгах
                   </button>
                 </div>
               </>
