@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
-    "format": "biome format --write src/"
+    "format": "biome format --write src/",
+    "check": "biome check src/ && tsc --noEmit && next build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
