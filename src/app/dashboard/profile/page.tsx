@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { Team, TEAM_LABELS } from "@/types";
 import { MAJORS } from "@/lib/constants";
+import { getInitials } from "@/lib/utils";
 
 function StatCard({
   label,
@@ -56,15 +57,6 @@ function StatCard({
       </div>
     </div>
   );
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 export default function ProfilePage() {

@@ -15,6 +15,7 @@ import {
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { getInitials } from "@/lib/utils";
 
 type AttendanceStatus = "present" | "absent" | "late" | "";
 
@@ -27,15 +28,6 @@ interface MemberAttendance {
 
 function formatDateKey(date: Date): string {
   return date.toISOString().split("T")[0];
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 export default function AttendancePage() {

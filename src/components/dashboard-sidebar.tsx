@@ -13,11 +13,13 @@ import {
   LogOut,
   ChevronRight,
   Zap,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import { getInitials } from "@/lib/utils";
 
 interface NavItem {
   href: string;
@@ -87,14 +89,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
     router.push("/login");
   }
 
-  const initials = userData?.name
-    ? userData.name
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
-    : "??";
+  const initials = getInitials(userData?.name);
 
   return (
     <>
@@ -208,62 +203,70 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
           gap: "10px",
         }}
       >
-        <div
-          style={{
-            width: "30px",
-            height: "30px",
-            background: "rgba(139, 92, 246, 0.125)",
-            border: "1px solid rgba(139, 92, 246, 0.25)",
-            borderRadius: "3px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "var(--font-jetbrains)",
-            fontSize: "0.55rem",
-            color: "#8B5CF6",
-            fontWeight: 700,
-            flexShrink: 0,
-          }}
-        >
-          {initials}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p
-            style={{
-              color: "#E8E8E8",
-              fontSize: "0.78rem",
-              fontWeight: 600,
-              fontFamily: "var(--font-barlow)",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {userData?.name ?? "Хэрэглэгч"}
-          </p>
-          <p
-            style={{
-              color: "#6B7280",
-              fontSize: "0.6rem",
-              fontFamily: "var(--font-jetbrains)",
-            }}
-          >
-            {userData?.role ?? "member"}
-          </p>
-        </div>
-        <button
-          onClick={handleLogout}
-          style={{
-            background: "none",
-            border: "none",
-            color: "#4B5563",
-            cursor: "pointer",
-            padding: "4px",
-          }}
-          title="Гарах"
-        >
-          <LogOut size={14} />
-        </button>
+        {loading ? (
+          <div style={{ flex: 1, textAlign: "center", padding: "4px 0" }}>
+            <Loader2 size={14} className="animate-spin" style={{ color: "#6B7280" }} />
+          </div>
+        ) : (
+          <>
+            <div
+              style={{
+                width: "30px",
+                height: "30px",
+                background: "rgba(139, 92, 246, 0.125)",
+                border: "1px solid rgba(139, 92, 246, 0.25)",
+                borderRadius: "3px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.55rem",
+                color: "#8B5CF6",
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {initials}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p
+                style={{
+                  color: "#E8E8E8",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  fontFamily: "var(--font-barlow)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {userData?.name ?? "Хэрэглэгч"}
+              </p>
+              <p
+                style={{
+                  color: "#6B7280",
+                  fontSize: "0.6rem",
+                  fontFamily: "var(--font-jetbrains)",
+                }}
+              >
+                {userData?.role ?? "member"}
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#4B5563",
+                cursor: "pointer",
+                padding: "4px",
+              }}
+              title="Гарах"
+            >
+              <LogOut size={14} />
+            </button>
+          </>
+        )}
       </div>
     </>
   );

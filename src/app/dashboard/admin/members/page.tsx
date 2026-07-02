@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/firebase";
 import { User, Task, AttendanceRecord } from "@/types";
 import { getMajorLabel } from "@/lib/constants";
+import { getInitials } from "@/lib/utils";
 
 function StatCard({
   label,
@@ -60,15 +61,6 @@ function StatCard({
       </div>
     </div>
   );
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 export default function MembersPage() {

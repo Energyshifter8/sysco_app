@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { Task } from "@/types";
 import { isPast } from "date-fns";
+import { getInitials } from "@/lib/utils";
 
 function StatCard({
   label,
@@ -158,15 +159,6 @@ function TaskCard({ task }: { task: Task }) {
   );
 }
 
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 function rankMedal(i: number) {
   if (i === 0) return { color: "#FBBF24", label: "#1" };
   if (i === 1) return { color: "#9CA3AF", label: "#2" };
@@ -241,7 +233,7 @@ export default function DashboardPage() {
               marginBottom: "4px",
             }}
           >
-            Сайн байна уу, {userData.name?.split(" ")[0]} 👾
+            Сайн байна уу, {(userData.name ?? "Хэрэглэгч").split(" ")[0]} 👾
           </h1>
           <p
             style={{

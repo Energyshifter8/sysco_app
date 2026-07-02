@@ -2,21 +2,13 @@
 
 import { Loader2 } from "lucide-react";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { getInitials } from "@/lib/utils";
 
 function rankMedal(i: number) {
   if (i === 0) return { color: "#FBBF24", label: "#1" };
   if (i === 1) return { color: "#9CA3AF", label: "#2" };
   if (i === 2) return { color: "#CD7F32", label: "#3" };
   return { color: "#4B5563", label: `#${i + 1}` };
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 function getMajorLabel(major: string): string {
