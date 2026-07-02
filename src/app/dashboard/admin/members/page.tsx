@@ -133,7 +133,7 @@ export default function MembersPage() {
               marginTop: "4px",
             }}
           >
-            {members.length} ГИШҮҮН — SYSCO CLUB
+            {members.length} ГИШҮҮН — SYSCO&TECH CLUB
           </p>
         </div>
         {/* Search */}

@@ -107,7 +107,7 @@ export default function DashboardLayout({
             <span
               style={{ fontWeight: 700, fontFamily: "var(--font-jetbrains)", fontSize: "0.85rem" }}
             >
-              SYSCO
+              SYSCO&TECH
             </span>
           </div>
           {!loading && (

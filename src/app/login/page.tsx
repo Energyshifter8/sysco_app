@@ -50,7 +50,7 @@ export default function LoginPage() {
               letterSpacing: "-0.02em",
             }}
           >
-            SYSCO APP
+            SYSCO&TECH APP
           </h1>
           <p
             style={{
@@ -198,7 +198,7 @@ export default function LoginPage() {
             fontFamily: "var(--font-jetbrains)",
           }}
         >
-          SYSCO © 2025 — ALL RIGHTS RESERVED
+          SYSCO&TECH © 2025 — ALL RIGHTS RESERVED
         </p>
       </div>
     </div>

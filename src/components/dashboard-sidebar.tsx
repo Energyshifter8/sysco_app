@@ -116,7 +116,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
               letterSpacing: "-0.01em",
             }}
           >
-            SYSCO
+            SYSCO&TECH
           </div>
           <div
             style={{
