@@ -1,5 +1,6 @@
 "use client";
 
+import { SyscoLogo } from "@/components/sysco-logo";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { getInitials } from "@/lib/utils";
@@ -16,7 +17,6 @@ import {
   User,
   Users,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -105,20 +105,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
           gap: "10px",
         }}
       >
-        <div
-          className="relative flex items-center justify-center"
-          style={{ filter: "drop-shadow(0 0 8px rgba(139, 92, 246, 0.25))" }}
-        >
-          <Image
-            src="/sysco-logo.png"
-            alt="Sysco Logo"
-            width={48}
-            height={48}
-            quality={100}
-            priority
-            className="rounded-lg"
-          />
-        </div>
+        <SyscoLogo size={48} className="drop-shadow-[0_0_8px_rgba(139,92,246,0.25)]" />
         <div>
           <div
             style={{

@@ -1,8 +1,8 @@
 "use client";
 
+import { SyscoLogo } from "@/components/sysco-logo";
 import { useAuthActions } from "@/hooks/useAuthActions";
 import { Loader2 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -34,19 +34,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm px-4">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div
-            className="relative inline-flex items-center justify-center mb-4"
-            style={{ filter: "drop-shadow(0 0 12px rgba(139, 92, 246, 0.3))" }}
-          >
-            <Image
-              src="/sysco-logo.png"
-              alt="Sysco Logo"
-              width={72}
-              height={72}
-              quality={100}
-              priority
-              className="rounded-lg"
-            />
+          <div className="mb-4 flex justify-center">
+            <SyscoLogo size={72} className="drop-shadow-[0_0_12px_rgba(139,92,246,0.3)]" />
           </div>
           <h1
             style={{
