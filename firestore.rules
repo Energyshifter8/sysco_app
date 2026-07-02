@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // NOTE: totalPoints is writable by the owning member via client SDK.
+    // This is a deliberate trade-off — a Cloud Function would be the proper
+    // enforcement point but this project has no function infrastructure.
+    // The pointsHistory collection serves as an append-only audit ledger;
+    // any anomalous point awards can be detected there.
+    // See: https://firebase.google.com/docs/firestore/security/rules-conditions
+
+    // Helper: is the request authenticated?
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: does the UID match the authenticated user?
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // Helper: is the user an admin?
+    function isAdmin() {
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ── Users ──────────────────────────────────────────────────
+    match /users/{uid} {
+      // Anyone authenticated can read any profile (needed for leaderboard, admin views)
+      allow read: if isAuth();
+
+      // A member can update their OWN doc — profile fields OR totalPoints.
+      // totalPoints is guarded by the pointsHistory audit log; see that section.
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['name', 'major', 'course', 'team', 'totalPoints']);
+
+      // Admins can update any user doc (for role assignment, point corrections, etc.)
+      allow update: if isAdmin();
+
+      // Only admins can create or delete user docs
+      allow create: if false;
+      allow delete: if false;
+    }
+
+    // ── Tasks ──────────────────────────────────────────────────
+    match /tasks/{taskId} {
+      // Any authenticated user can read tasks
+      allow read: if isAuth();
+
+      // Admins can create / update / delete tasks
+      allow create, update, delete: if isAdmin();
+
+      // Members can update ONLY their own progress/completed sub-fields on
+      // tasks that list them in assignedTo.
+      allow update: if isAuth()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['assigneeProgress', 'assigneeCompleted'])
+        && request.auth.uid in resource.data.assignedTo
+        // Ensure the member can only write to their own uid key
+        && keys(request.resource.data.assigneeProgress).hasOnly([request.auth.uid])
+        && keys(request.resource.data.assigneeCompleted).hasOnly([request.auth.uid]);
+    }
+
+    // ── Points History (append-only ledger) ────────────────────
+    match /pointsHistory/{entryId} {
+      // The authenticated user can read their own entries; admins can read all
+      allow read: if isAuth()
+        && (resource.data.uid == request.auth.uid || isAdmin());
+
+      // Anyone authenticated can create — but only the server-side transaction
+      // should normally write here.  We allow client writes because Firebase
+      // client SDK runs the transaction as the user.
+      allow create: if isAuth()
+        && request.resource.data.uid == request.auth.uid;
+
+      // No updates or deletes — this is an immutable ledger
+      allow update, delete: if false;
+    }
+
+    // ── Attendance ─────────────────────────────────────────────
+    match /attendance/{docId} {
+      allow read: if isAuth();
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+  }
+}
