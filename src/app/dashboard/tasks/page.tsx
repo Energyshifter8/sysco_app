@@ -584,8 +584,8 @@ export default function MemberTasksPage() {
   const selectedTask = selectedTaskId ? (tasks.find((t) => t.id === selectedTaskId) ?? null) : null;
 
   return (
-    <div style={{ maxWidth: "800px" }}>
-      <div className="flex items-center justify-between mb-8">
+    <div style={{ width: "100%" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-8">
         <div>
           <h1
             style={{
@@ -612,7 +612,10 @@ export default function MemberTasksPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex mb-6" style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}>
+      <div
+        className="flex mb-6 overflow-x-auto"
+        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}
+      >
         {[
           { key: "current", label: "Одоогийн" },
           { key: "history", label: "Түүх" },

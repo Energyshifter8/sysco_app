@@ -127,7 +127,7 @@ export default function DashboardLayout({
           )}
         </header>
 
-        <main style={{ flex: 1, overflow: "auto", padding: "28px 32px", maxWidth: "1100px" }}>
+        <main style={{ flex: 1, overflow: "auto" }} className="px-4 py-4 md:px-6 md:py-5">
           {children}
         </main>
       </div>
