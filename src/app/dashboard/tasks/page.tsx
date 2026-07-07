@@ -496,7 +496,7 @@ export default function MemberTasksPage() {
       await runTransaction(db, async (transaction) => {
         const taskRef = doc(db, "tasks", task.id);
         const taskSnap = await transaction.get(taskRef);
-        if (!taskSnap.exists()) throw new Error("Даалгавар олдсонгүй");
+        if (!taskSnap.exists()) throw new Error("Task олдсонгүй");
 
         const data = taskSnap.data() as Task;
         const completed = data.assigneeCompleted?.[user.uid] === true;
@@ -526,7 +526,7 @@ export default function MemberTasksPage() {
         });
       });
 
-      toast.success(`Даалгавар дууслаа! +${task.points} оноо нэмэгдлээ`);
+      toast.success(`Task дууслаа! +${task.points} оноо нэмэгдлээ`);
       setLocalProgress((prev) => {
         const next = { ...prev };
         delete next[task.id];

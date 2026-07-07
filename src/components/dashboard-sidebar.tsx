@@ -30,10 +30,10 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Хяналт", icon: LayoutDashboard },
-  { href: "/dashboard/tasks", label: "Даалгавар", icon: ClipboardList },
+  { href: "/dashboard/tasks", label: "Task", icon: ClipboardList },
   { href: "/dashboard/leaderboard", label: "Эрэмбэ", icon: Trophy },
   { href: "/dashboard/profile", label: "Профайл", icon: User },
-  { href: "/dashboard/admin/tasks", label: "Даалгавар үүсгэх", icon: PlusSquare, admin: true },
+  { href: "/dashboard/admin/tasks", label: "Task үүсгэх", icon: PlusSquare, admin: true },
   { href: "/dashboard/admin/attendance", label: "Ирц", icon: CalendarCheck, admin: true },
   { href: "/dashboard/admin/members", label: "Гишүүд", icon: Users, admin: true },
 ];

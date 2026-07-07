@@ -87,9 +87,9 @@ export default function AdminTasksPage() {
       setDescription("");
       setPoints("100");
       setSelectedMembers([]);
-      toast.success("Даалгавар амжилттай үүсгэгдлээ");
+      toast.success("Task амжилттай үүсгэгдлээ");
     } catch {
-      toast.error("Даалгавар үүсгэхэд алдаа гарлаа");
+      toast.error("Task үүсгэхэд алдаа гарлаа");
     } finally {
       setSaving(false);
     }
@@ -116,9 +116,9 @@ export default function AdminTasksPage() {
             : t,
         ),
       );
-      toast.success("Даалгавар баталгаажуулагдлаа, оноо нэмэгдлээ");
+      toast.success("Task баталгаажуулагдлаа, оноо нэмэгдлээ");
     } catch {
-      toast.error("Даалгавар баталгаажуулахад алдаа гарлаа");
+      toast.error("Task баталгаажуулахад алдаа гарлаа");
     }
   }
 
