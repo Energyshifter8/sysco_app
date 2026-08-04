@@ -180,7 +180,7 @@ function getMajorLabel(major?: string | null): string {
 
 export default function DashboardPage() {
   const { user, userData, loading: authLoading } = useAuth();
-  const { entries, loading: leaderboardLoading } = useLeaderboard();
+  const { entries, loading: leaderboardLoading } = useLeaderboard(!!user?.uid);
 
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ["userTasks", user?.uid],

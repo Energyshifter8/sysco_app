@@ -9,11 +9,13 @@ export interface LeaderboardEntry extends User {
   rank: number;
 }
 
-export function useLeaderboard() {
+export function useLeaderboard(enabled = true) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const q = query(collection(db, "users"), orderBy("totalPoints", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -26,7 +28,7 @@ export function useLeaderboard() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [enabled]);
 
   return { entries, loading };
 }
