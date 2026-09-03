@@ -55,20 +55,24 @@ function NavItemButton({
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded transition-all duration-150 text-sm"
+      className={`sidebar-nav-link flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm transition-all duration-200 ${active ? "is-active" : ""}`}
       style={{
         fontFamily: "var(--font-barlow)",
         fontWeight: active ? 700 : 500,
-        background: active ? "rgba(139, 92, 246, 0.125)" : "transparent",
-        color: active ? "#8B5CF6" : "#6B7280",
-        borderLeft: `2px solid ${active ? "#8B5CF6" : "transparent"}`,
+        background: active
+          ? "linear-gradient(90deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.055))"
+          : "transparent",
+        color: active ? "#C4B5FD" : "#6B7280",
       }}
     >
-      <span className="shrink-0">
+      <span
+        className="flex size-7 shrink-0 items-center justify-center rounded-md transition-colors"
+        style={{ background: active ? "rgba(139, 92, 246, 0.17)" : "rgba(255,255,255,0.025)" }}
+      >
         <Icon size={18} />
       </span>
       <span>{label}</span>
-      {active && <ChevronRight size={12} className="ml-auto" />}
+      {active && <ChevronRight size={13} className="ml-auto opacity-80" />}
     </Link>
   );
 }
@@ -106,7 +110,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
         }}
       >
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center rounded-xl bg-[#111111] border border-white/10 p-1.5">
+          <div className="flex items-center justify-center rounded-xl border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 p-1.5 shadow-[0_0_22px_rgba(139,92,246,0.12)]">
             <Image
               src="/sysco-logo.png"
               alt="Sysco Logo"
@@ -146,6 +150,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
       {/* Nav */}
       <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>
         <div
+          className="sidebar-user"
           style={{
             fontFamily: "var(--font-jetbrains)",
             fontSize: "0.55rem",
@@ -214,9 +219,9 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
               style={{
                 width: "30px",
                 height: "30px",
-                background: "rgba(139, 92, 246, 0.125)",
-                border: "1px solid rgba(139, 92, 246, 0.25)",
-                borderRadius: "3px",
+                background: "linear-gradient(135deg, rgba(139, 92, 246, 0.32), rgba(139, 92, 246, 0.1))",
+                border: "1px solid rgba(167, 139, 250, 0.32)",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -255,14 +260,9 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
             </div>
             <button
               onClick={handleLogout}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#4B5563",
-                cursor: "pointer",
-                padding: "4px",
-              }}
+              className="flex size-7 items-center justify-center rounded-md border border-transparent text-[#4B5563] transition-all hover:border-white/10 hover:bg-white/7 hover:text-[#FCA5A5]"
               title="Гарах"
+              aria-label="Системээс гарах"
             >
               <LogOut size={14} />
             </button>

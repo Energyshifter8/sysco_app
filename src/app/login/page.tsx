@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthActions } from "@/hooks/useAuthActions";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const { login, loading } = useAuthActions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,15 +28,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: "#0A0A0A" }}
-    >
-      <div className="w-full max-w-sm px-4">
+    <div className="auth-shell flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="flex items-center justify-center rounded-xl bg-[#111111] border border-white/10 p-3">
+        <div className="mb-8 text-center">
+          <div className="mb-4 flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center rounded-2xl border border-[#8B5CF6]/25 bg-[#8B5CF6]/10 p-3 shadow-[0_0_32px_rgba(139,92,246,0.16)]">
               <Image
                 src="/sysco-logo.png"
                 alt="Sysco Logo"
@@ -70,17 +68,38 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
+          <span
+            className="inline-flex rounded-full border border-white/8 bg-white/4 px-3 py-1 text-[#9CA3AF]"
+            style={{ fontFamily: "var(--font-jetbrains)", fontSize: "0.6rem", letterSpacing: "0.1em" }}
+          >
+            MEMBER PORTAL
+          </span>
         </div>
 
         {/* Card */}
-        <div
-          className="p-8"
-          style={{
-            background: "#141414",
-            border: "1px solid rgba(255, 255, 255, 0.07)",
-            borderRadius: "4px",
-          }}
-        >
+        <div className="auth-card rounded-2xl p-6 sm:p-8">
+          <div className="mb-7">
+            <h1
+              style={{
+                color: "#F3F4F6",
+                fontFamily: "var(--font-barlow)",
+                fontSize: "1.35rem",
+                fontWeight: 800,
+              }}
+            >
+              Шинэ клубийн өрөөндөө тавтай морил
+            </h1>
+            <p
+              style={{
+                color: "#6B7280",
+                fontFamily: "var(--font-barlow)",
+                fontSize: "0.85rem",
+                marginTop: "4px",
+              }}
+            >
+              
+            </p>
+          </div>
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
               <label
@@ -97,6 +116,7 @@ export default function LoginPage() {
               </label>
               <input
                 type="email"
+                className="auth-input"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -128,29 +148,58 @@ export default function LoginPage() {
               >
                 НУУЦ ҮГ
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                style={{
-                  width: "100%",
-                  background: "#1A1A1A",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "3px",
-                  padding: "10px 12px",
-                  color: "#E8E8E8",
-                  fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.9rem",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="auth-input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  style={{
+                    width: "100%",
+                    background: "#1A1A1A",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "3px",
+                    padding: "10px 42px 10px 12px",
+                    color: "#E8E8E8",
+                    fontFamily: "var(--font-jetbrains)",
+                    fontSize: "0.9rem",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Нууц үг нуух" : "Нууц үг харуулах"}
+                  aria-pressed={showPassword}
+                  title={showPassword ? "Нууц үг нуух" : "Нууц үг харуулах"}
+                  className="group absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md border border-transparent transition-all duration-200 hover:border-white/10 hover:bg-white/10 hover:text-white focus-visible:border-[#8B5CF6] focus-visible:bg-[#8B5CF6]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/30 active:scale-95"
+                  style={{
+                    background: showPassword ? "rgba(139, 92, 246, 0.14)" : "transparent",
+                    color: showPassword ? "#A78BFA" : "#6B7280",
+                    cursor: "pointer",
+                  }}
+                >
+                  {showPassword ? (
+                    <EyeOff
+                      size={17}
+                      className="transition-transform duration-200 group-hover:scale-110"
+                    />
+                  ) : (
+                    <Eye
+                      size={17}
+                      className="transition-transform duration-200 group-hover:scale-110"
+                    />
+                  )}
+                </button>
+              </div>
             </div>
             <button
               type="submit"
               disabled={loading}
+              className="auth-submit"
               style={{
                 width: "100%",
                 background: "#8B5CF6",
@@ -164,7 +213,7 @@ export default function LoginPage() {
                 borderRadius: "3px",
                 cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.7 : 1,
-                transition: "background 0.15s",
+                transition: "background 0.2s, transform 0.2s, box-shadow 0.2s",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -202,7 +251,7 @@ export default function LoginPage() {
             textAlign: "center",
             color: "#374151",
             fontSize: "0.75rem",
-            marginTop: "24px",
+            marginTop: "20px",
             fontFamily: "var(--font-jetbrains)",
           }}
         >

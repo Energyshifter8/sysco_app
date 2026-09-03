@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { getInitials } from "@/lib/utils";
+import { formatDateTime, getInitials } from "@/lib/utils";
 import { TEAM_LABELS, Task, Team, User } from "@/types";
 import {
   addDoc,
@@ -28,6 +28,17 @@ function resolveAssignedLabel(entry: string, members: User[]): string {
   return member?.name ?? entry;
 }
 
+function toDateTimeLocalValue(date: Date): string {
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+
+function defaultDeadlineValue(): string {
+  const deadline = new Date();
+  deadline.setDate(deadline.getDate() + 7);
+  deadline.setSeconds(0, 0);
+  return toDateTimeLocalValue(deadline);
+}
+
 export default function AdminTasksPage() {
   const { userData, loading: authLoading } = useAuth();
   const [members, setMembers] = useState<User[]>([]);
@@ -38,6 +49,7 @@ export default function AdminTasksPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [points, setPoints] = useState("100");
+  const [deadline, setDeadline] = useState(defaultDeadlineValue);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
   useEffect(() => {
@@ -62,19 +74,32 @@ export default function AdminTasksPage() {
 
   async function handleCreateTask(e: React.FormEvent) {
     e.preventDefault();
-    if (!userData || !title) return;
+    if (!userData || !title.trim()) return;
     if (selectedMembers.length === 0) {
-      toast.error("Нэг эсвэл түбээс олон гишүүн сонгоно уу");
+      toast.error("Нэг эсвэл түүнээс олон гишүүн сонгоно уу");
       return;
     }
+
+    const deadlineDate = new Date(deadline);
+    if (Number.isNaN(deadlineDate.getTime()) || deadlineDate <= new Date()) {
+      toast.error("Хүлээн авах эцсийн хугацааг ирээдүйд сонгоно уу");
+      return;
+    }
+
+    const pointValue = Number(points);
+    if (!Number.isFinite(pointValue) || pointValue < 0) {
+      toast.error("Зөв оноо оруулна уу");
+      return;
+    }
+
     setSaving(true);
     try {
       const assignedTo = selectedMembers.length === members.length ? ["all"] : [...selectedMembers];
       const taskData = {
-        title,
-        description,
-        points: Number(points),
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        title: title.trim(),
+        description: description.trim(),
+        points: pointValue,
+        dueDate: deadlineDate,
         createdAt: new Date(),
         createdBy: userData.uid,
         assignedTo,
@@ -86,6 +111,7 @@ export default function AdminTasksPage() {
       setTitle("");
       setDescription("");
       setPoints("100");
+      setDeadline(defaultDeadlineValue());
       setSelectedMembers([]);
       toast.success("Task амжилттай үүсгэгдлээ");
     } catch {
@@ -285,6 +311,53 @@ export default function AdminTasksPage() {
             </div>
           </div>
 
+          {/* Acceptance deadline */}
+          <div style={{ maxWidth: "320px" }}>
+            <label
+              htmlFor="task-deadline"
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.65rem",
+                color: "#6B7280",
+                letterSpacing: "0.1em",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              ХҮЛЭЭН АВАХ ЭЦСИЙН ХУГАЦАА *
+            </label>
+            <input
+              id="task-deadline"
+              type="datetime-local"
+              value={deadline}
+              min={toDateTimeLocalValue(new Date())}
+              onChange={(e) => setDeadline(e.target.value)}
+              required
+              style={{
+                width: "100%",
+                background: "#1A1A1A",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "3px",
+                padding: "10px 12px",
+                color: "#E8E8E8",
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.8rem",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            <p
+              style={{
+                color: "#4B5563",
+                fontFamily: "var(--font-barlow)",
+                fontSize: "0.75rem",
+                marginTop: "6px",
+              }}
+            >
+              Энэ цагаас хойш task хүлээн авах боломжгүй болно.
+            </p>
+          </div>
+
           {/* Member select */}
           <div>
             <label
@@ -370,6 +443,7 @@ export default function AdminTasksPage() {
                 setTitle("");
                 setDescription("");
                 setPoints("100");
+                setDeadline(defaultDeadlineValue());
                 setSelectedMembers([]);
               }}
               style={{
@@ -447,6 +521,15 @@ export default function AdminTasksPage() {
                     }}
                   >
                     {task.assignedTo.map((a) => resolveAssignedLabel(a, members)).join(", ")}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-jetbrains)",
+                      fontSize: "0.65rem",
+                      color: "#60A5FA",
+                    }}
+                  >
+                    ХҮЛЭЭН АВАХ: {formatDateTime(task.dueDate, "Хугацаа заагаагүй")}
                   </span>
                 </div>
               </div>

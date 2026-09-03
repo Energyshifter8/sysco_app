@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { getInitials } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
@@ -30,8 +29,7 @@ function getMajorLabel(major?: string | null): string {
 }
 
 export default function LeaderboardPage() {
-  const { user } = useAuth();
-  const { entries, loading } = useLeaderboard(!!user?.uid);
+  const { entries, loading } = useLeaderboard();
 
   if (loading) {
     return (

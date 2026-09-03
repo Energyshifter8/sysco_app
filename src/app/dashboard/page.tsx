@@ -3,12 +3,12 @@
 import { useAuth } from "@/context/AuthContext";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { db } from "@/lib/firebase";
-import { getInitials } from "@/lib/utils";
+import { asDate, formatDateTime, getInitials } from "@/lib/utils";
 import { Task } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { isPast } from "date-fns";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { CheckCircle2, Clock, Loader2, Star, Trophy } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, Sparkles, Star, Trophy } from "lucide-react";
 import Link from "next/link";
 
 function StatCard({
@@ -24,16 +24,23 @@ function StatCard({
 }) {
   return (
     <div
-      className="border flex-1"
-      style={{
-        background: "#141414",
-        borderColor: "rgba(255, 255, 255, 0.07)",
-        borderRadius: "4px",
+      className="surface-card dashboard-stat-card flex-1 rounded-xl"
+      style={
+        {
+          "--stat-accent": accent,
+          "--stat-glow": `${accent}42`,
+          "--stat-shadow": `${accent}20`,
         padding: "18px 20px",
-      }}
+        } as React.CSSProperties
+      }
     >
       <div className="flex items-center gap-2 mb-3">
-        <span style={{ color: accent }}>{icon}</span>
+        <span
+          className="flex size-7 items-center justify-center rounded-lg"
+          style={{ color: accent, background: `${accent}16`, border: `1px solid ${accent}25` }}
+        >
+          {icon}
+        </span>
         <span
           style={{
             fontFamily: "var(--font-jetbrains)",
@@ -61,7 +68,8 @@ function StatCard({
 }
 
 function TaskCard({ task }: { task: Task }) {
-  const isOverdue = task.dueDate ? isPast(new Date(task.dueDate)) : false;
+  const deadline = asDate(task.dueDate);
+  const isOverdue = deadline ? isPast(deadline) : false;
   const statusColor =
     task.status === "completed" || task.status === "approved"
       ? "#22C55E"
@@ -83,17 +91,22 @@ function TaskCard({ task }: { task: Task }) {
 
   return (
     <div
-      className="border"
+      className="surface-card rounded-xl"
       style={{
-        background: "#141414",
-        borderColor: "rgba(255, 255, 255, 0.07)",
-        borderRadius: "4px",
         padding: "14px 16px",
         borderLeft: `3px solid ${statusColor}`,
-        transition: "background 0.15s",
+        transition: "background 180ms ease, border-color 180ms ease, transform 180ms ease",
       }}
-      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")}
-      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#141414")}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#1A1A1A";
+        e.currentTarget.style.borderColor = `${statusColor}55`;
+        e.currentTarget.style.transform = "translateX(3px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "";
+        e.currentTarget.style.borderColor = "";
+        e.currentTarget.style.transform = "";
+      }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -131,7 +144,7 @@ function TaskCard({ task }: { task: Task }) {
                 fontFamily: "var(--font-jetbrains)",
               }}
             >
-              {task.dueDate ? new Date(task.dueDate).toLocaleDateString("mn-MN") : "-"}
+              {formatDateTime(task.dueDate, "Хугацаагүй")}
             </span>
           </div>
         </div>
@@ -180,7 +193,7 @@ function getMajorLabel(major?: string | null): string {
 
 export default function DashboardPage() {
   const { user, userData, loading: authLoading } = useAuth();
-  const { entries, loading: leaderboardLoading } = useLeaderboard(!!user?.uid);
+  const { entries, loading: leaderboardLoading } = useLeaderboard();
 
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ["userTasks", user?.uid],
@@ -217,8 +230,26 @@ export default function DashboardPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="surface-card relative mb-6 overflow-hidden rounded-2xl px-5 py-6 sm:px-7">
+        <div
+          className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(139, 92, 246, 0.24), transparent 68%)" }}
+        />
+        <div className="relative flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 px-2.5 py-1 text-[#C4B5FD]">
+              <Sparkles size={12} />
+              <span
+                style={{
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.09em",
+                }}
+              >
+                ӨНӨӨДӨР
+              </span>
+            </div>
           <h1
             style={{
               fontFamily: "var(--font-jetbrains)",
@@ -226,12 +257,12 @@ export default function DashboardPage() {
               fontWeight: 800,
               color: "#E8E8E8",
               letterSpacing: "-0.02em",
-              marginBottom: "4px",
+              marginBottom: "6px",
             }}
           >
-            Сайн байна уу, {(userData.name ?? "Хэрэглэгч").split(" ")[0]} 👾
+            Сайн байна уу, {(userData.name ?? "Хэрэглэгч").split(" ")[0]} 
           </h1>
-          <p
+            <p
             style={{
               color: "#6B7280",
               fontSize: "0.8rem",
@@ -243,30 +274,57 @@ export default function DashboardPage() {
               month: "long",
               day: "numeric",
             })}
-          </p>
-        </div>
-        {userData.role === "admin" && (
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1.5"
-            style={{
-              background: "rgba(139, 92, 246, 0.125)",
-              border: "1px solid rgba(139, 92, 246, 0.25)",
-              borderRadius: "3px",
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.7rem",
-              color: "#8B5CF6",
-              letterSpacing: "0.06em",
-            }}
-          >
-            ADMIN
+            </p>
           </div>
-        )}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div
+              className="rounded-xl border border-white/8 bg-black/15 px-4 py-2.5 text-right"
+              style={{ backdropFilter: "blur(8px)" }}
+            >
+              <p
+                style={{
+                  color: "#6B7280",
+                  fontSize: "0.55rem",
+                  fontFamily: "var(--font-jetbrains)",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                НИЙТ ОНОО
+              </p>
+              <p
+                style={{
+                  color: "#C4B5FD",
+                  fontSize: "1.25rem",
+                  fontWeight: 800,
+                  fontFamily: "var(--font-barlow-condensed)",
+                  lineHeight: 1.1,
+                }}
+              >
+                {userData.totalPoints.toLocaleString()}
+              </p>
+            </div>
+            {userData.role === "admin" && (
+              <div
+                className="rounded-lg border border-[#8B5CF6]/25 bg-[#8B5CF6]/12 px-2.5 py-2"
+                style={{
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  color: "#C4B5FD",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                ADMIN
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Stat Row */}
-      <div className="flex gap-4 mb-8 flex-wrap">
+      <div className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="НИЙТ ОНШ"
+          label="НИЙТ ОНОО"
           value={userData.totalPoints.toLocaleString()}
           accent="#8B5CF6"
           icon={<Star size={14} />}
@@ -284,18 +342,19 @@ export default function DashboardPage() {
           icon={<Clock size={14} />}
         />
         <StatCard
-          label="ЭРЭМБЭЛЭЛТ"
+          label="Rank"
           value={userRank}
           accent="#FBBF24"
           icon={<Trophy size={14} />}
         />
       </div>
 
-      <div className="flex gap-6 flex-col lg:flex-row">
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Recent Tasks */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
             <h2
+              className="transition-colors hover:text-[#C4B5FD]"
               style={{
                 fontFamily: "var(--font-jetbrains)",
                 fontSize: "0.75rem",
@@ -325,7 +384,7 @@ export default function DashboardPage() {
               </div>
             ) : recentTasks.length === 0 ? (
               <div
-                className="text-center py-12"
+                className="surface-card rounded-xl py-12 text-center"
                 style={{
                   color: "#374151",
                   fontFamily: "var(--font-jetbrains)",
@@ -368,12 +427,7 @@ export default function DashboardPage() {
           </div>
           <div
             className="border"
-            style={{
-              background: "#141414",
-              borderColor: "rgba(255, 255, 255, 0.07)",
-              borderRadius: "4px",
-              overflow: "hidden",
-            }}
+            className="surface-card overflow-hidden rounded-xl"
           >
             {leaderboardLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -385,7 +439,7 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={m.uid}
-                    className="flex items-center gap-3 px-4 py-3"
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.035]"
                     style={{
                       borderBottom: i < 2 ? "1px solid rgba(255, 255, 255, 0.06)" : "none",
                     }}
