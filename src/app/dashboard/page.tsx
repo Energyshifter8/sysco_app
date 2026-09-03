@@ -426,8 +426,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div
-            className="border"
-            className="surface-card overflow-hidden rounded-xl"
+            className="border surface-card overflow-hidden rounded-xl"
           >
             {leaderboardLoading ? (
               <div className="flex items-center justify-center py-8">
