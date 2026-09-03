@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { asDate, formatDateTime } from "@/lib/utils";
 import { Task } from "@/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { isPast } from "date-fns";
@@ -28,8 +29,13 @@ import { toast } from "sonner";
 
 type FilterStatus = "all" | "pending" | "done" | "overdue";
 
+function isTaskOverdue(task: Task): boolean {
+  const deadline = asDate(task.dueDate);
+  return deadline ? isPast(deadline) : false;
+}
+
 function statusMeta(task: Task, uid: string) {
-  const isOverdue = task.dueDate ? isPast(new Date(task.dueDate)) : false;
+  const isOverdue = isTaskOverdue(task);
   const isTaskCompleted = task.status === "completed" || task.status === "approved";
   const alreadyCompleted = task.assigneeCompleted?.[uid] === true;
 
@@ -121,7 +127,7 @@ function TaskCard({
                 fontFamily: "var(--font-jetbrains)",
               }}
             >
-              {task.dueDate ? new Date(task.dueDate).toLocaleDateString("mn-MN") : "-"}
+              {formatDateTime(task.dueDate, "Хугацаагүй")}
             </span>
           </div>
         </div>
@@ -176,7 +182,8 @@ function TaskDetailDialog({
   const isTaskCompleted = task.status === "completed" || task.status === "approved";
   const alreadyCompleted = task.assigneeCompleted?.[uid] === true;
   const isCompleting = completing === task.id;
-  const showProgress = !isTaskCompleted && task.assignedTo.includes(uid);
+  const canManageTask = !isTaskCompleted && task.assignedTo.includes(uid);
+  const isOverdue = isTaskOverdue(task);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -250,7 +257,7 @@ function TaskDetailDialog({
                 letterSpacing: "0.08em",
               }}
             >
-              Хугацаа
+              ХҮЛЭЭН АВАХ ХУГАЦАА
             </span>
             <span
               style={{
@@ -260,7 +267,7 @@ function TaskDetailDialog({
                 color: "#E8E8E8",
               }}
             >
-              {task.dueDate ? new Date(task.dueDate).toLocaleDateString("mn-MN") : "Хугацаагүй"}
+              {formatDateTime(task.dueDate)}
             </span>
           </div>
         </div>
@@ -329,14 +336,25 @@ function TaskDetailDialog({
         )}
 
         {/* Progress section — only for non-completed tasks assigned to current user */}
-        {showProgress && (
+        {canManageTask && (
           <div
             style={{
               borderTop: "1px solid rgba(255,255,255,0.06)",
               paddingTop: "16px",
             }}
           >
-            {alreadyCompleted ? (
+            {isOverdue ? (
+              <span
+                style={{
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.7rem",
+                  color: "#EF4444",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                ХҮЛЭЭН АВАХ ХУГАЦАА ДУУССАН
+              </span>
+            ) : alreadyCompleted ? (
               <div className="flex items-center gap-2">
                 <span
                   style={{
@@ -502,6 +520,11 @@ export default function MemberTasksPage() {
         const completed = data.assigneeCompleted?.[user.uid] === true;
         if (completed) throw new Error("Аль хэдийн дууссан байна");
 
+        const deadline = asDate(data.dueDate);
+        if (deadline && deadline <= new Date()) {
+          throw new Error("Task хүлээн авах хугацаа дууссан байна");
+        }
+
         transaction.set(
           taskRef,
           {
@@ -566,18 +589,9 @@ export default function MemberTasksPage() {
       : currentTasks.filter((t) => {
           if (filter === "done") return t.status === "completed" || t.status === "approved";
           if (filter === "pending")
-            return (
-              t.status !== "completed" &&
-              t.status !== "approved" &&
-              !(t.dueDate && isPast(new Date(t.dueDate)))
-            );
+            return t.status !== "completed" && t.status !== "approved" && !isTaskOverdue(t);
           if (filter === "overdue")
-            return (
-              t.status !== "completed" &&
-              t.status !== "approved" &&
-              t.dueDate &&
-              isPast(new Date(t.dueDate))
-            );
+            return t.status !== "completed" && t.status !== "approved" && isTaskOverdue(t);
           return true;
         });
 

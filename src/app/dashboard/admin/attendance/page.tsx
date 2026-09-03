@@ -3,21 +3,20 @@
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { getInitials } from "@/lib/utils";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  increment,
-  query,
-  where,
-  writeBatch,
-} from "firebase/firestore";
-import { Check, Loader2, Minus, X } from "lucide-react";
+import { collection, doc, getDocs, increment, query, where, writeBatch } from "firebase/firestore";
+import { CalendarOff, Check, Loader2, Minus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-type AttendanceStatus = "present" | "absent" | "late" | "";
+const attendanceStatuses = ["present", "late", "absent", "excused"] as const;
+type AttendanceStatus = (typeof attendanceStatuses)[number] | "";
+
+const attendanceMeta = {
+  present: { color: "#22C55E", label: "ИРСЭН", Icon: Check },
+  late: { color: "#FBBF24", label: "ХОЦОРСОН", Icon: Minus },
+  absent: { color: "#EF4444", label: "ИРЭЭГҮЙ", Icon: X },
+  excused: { color: "#60A5FA", label: "ЧӨЛӨӨТЭЙ", Icon: CalendarOff },
+} as const;
 
 interface MemberAttendance {
   uid: string;
@@ -82,6 +81,15 @@ export default function AttendancePage() {
     setSaving(true);
     try {
       const dateKey = formatDateKey(date);
+      const existingSnap = await getDocs(
+        query(collection(db, "attendance"), where("date", "==", dateKey)),
+      );
+      const existingStatuses = new Map(
+        existingSnap.docs.map((record) => [
+          record.data().uid,
+          record.data().status as AttendanceStatus,
+        ]),
+      );
       const batch = writeBatch(db);
 
       for (const member of members) {
@@ -97,14 +105,13 @@ export default function AttendancePage() {
           note: member.note,
         });
 
-        if (member.status === "present") {
+        const previousStatus = existingStatuses.get(member.uid);
+        if (previousStatus !== "present" && member.status === "present") {
           const userRef = doc(db, "users", member.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            batch.update(userRef, {
-              totalPoints: increment(5),
-            });
-          }
+          batch.update(userRef, { totalPoints: increment(5) });
+        } else if (previousStatus === "present" && member.status !== "present") {
+          const userRef = doc(db, "users", member.uid);
+          batch.update(userRef, { totalPoints: increment(-5) });
         }
       }
 
@@ -129,6 +136,7 @@ export default function AttendancePage() {
     present: members.filter((m) => m.status === "present").length,
     late: members.filter((m) => m.status === "late").length,
     absent: members.filter((m) => m.status === "absent").length,
+    excused: members.filter((m) => m.status === "excused").length,
   };
 
   return (
@@ -183,6 +191,28 @@ export default function AttendancePage() {
               }}
             >
               ИРСЭН
+            </div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-barlow-condensed)",
+                fontWeight: 800,
+                fontSize: "1.5rem",
+                color: "#60A5FA",
+              }}
+            >
+              {counts.excused}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "0.55rem",
+                color: "#60A5FA",
+                letterSpacing: "0.08em",
+              }}
+            >
+              ЧӨЛӨӨТЭЙ
             </div>
           </div>
           <div style={{ textAlign: "center" }}>
@@ -271,7 +301,7 @@ export default function AttendancePage() {
               style={{
                 borderBottom:
                   i < members.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
-                borderLeft: `3px solid ${status === "present" ? "#22C55E" : status === "absent" ? "#EF4444" : status === "late" ? "#FBBF24" : "transparent"}`,
+                borderLeft: `3px solid ${status ? attendanceMeta[status].color : "transparent"}`,
                 transition: "background 0.1s",
               }}
               onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#1A1A1A")}
@@ -310,26 +340,22 @@ export default function AttendancePage() {
               </div>
 
               <div className="flex gap-1">
-                {(["present", "late", "absent"] as AttendanceStatus[]).map((s) => {
-                  const colors: Record<string, { bg: string; icon: React.ReactNode }> = {
-                    present: { bg: "#22C55E", icon: <Check size={12} /> },
-                    late: { bg: "#FBBF24", icon: <Minus size={12} /> },
-                    absent: { bg: "#EF4444", icon: <X size={12} /> },
-                  };
-                  const c = colors[s];
+                {attendanceStatuses.map((s) => {
+                  const { color, label, Icon } = attendanceMeta[s];
                   const active = status === s;
                   return (
                     <button
                       key={s}
                       onClick={() => updateMember(m.uid, "status", s)}
-                      title={s}
+                      title={label}
+                      aria-label={`${m.name}: ${label}`}
                       style={{
                         width: "28px",
                         height: "28px",
                         borderRadius: "3px",
-                        border: `1px solid ${active ? c.bg : "rgba(255, 255, 255, 0.1)"}`,
-                        background: active ? `${c.bg}25` : "transparent",
-                        color: active ? c.bg : "#374151",
+                        border: `1px solid ${active ? color : "rgba(255, 255, 255, 0.1)"}`,
+                        background: active ? `${color}25` : "transparent",
+                        color: active ? color : "#374151",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
@@ -337,7 +363,7 @@ export default function AttendancePage() {
                         transition: "all 0.15s",
                       }}
                     >
-                      {c.icon}
+                      <Icon size={12} />
                     </button>
                   );
                 })}
@@ -348,25 +374,12 @@ export default function AttendancePage() {
                   fontFamily: "var(--font-jetbrains)",
                   fontSize: "0.6rem",
                   letterSpacing: "0.06em",
-                  color:
-                    status === "present"
-                      ? "#22C55E"
-                      : status === "absent"
-                        ? "#EF4444"
-                        : status === "late"
-                          ? "#FBBF24"
-                          : "#374151",
-                  width: "72px",
+                  color: status ? attendanceMeta[status].color : "#374151",
+                  width: "88px",
                   textAlign: "right",
                 }}
               >
-                {status === "present"
-                  ? "ИРСЭН"
-                  : status === "absent"
-                    ? "ИРЭЭГҮЙ"
-                    : status === "late"
-                      ? "ХОЦОРСОН"
-                      : ""}
+                {status ? attendanceMeta[status].label : ""}
               </span>
             </div>
           );

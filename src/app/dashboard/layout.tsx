@@ -2,7 +2,7 @@
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useAuth } from "@/context/AuthContext";
-import { Menu, Zap } from "lucide-react";
+import { Menu, Sparkles, Zap } from "lucide-react";
 import { useState } from "react";
 
 export default function DashboardLayout({
@@ -14,15 +14,7 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-        background: "#0A0A0A",
-        fontFamily: "var(--font-barlow)",
-        overflow: "hidden",
-      }}
-    >
+    <div className="app-shell flex h-screen overflow-hidden" style={{ fontFamily: "var(--font-barlow)" }}>
       {/* Desktop sidebar */}
       <aside
         style={{
@@ -33,7 +25,7 @@ export default function DashboardLayout({
           display: "flex",
           flexDirection: "column",
         }}
-        className="hidden md:flex"
+        className="dashboard-sidebar-surface hidden md:flex"
       >
         <DashboardSidebar />
       </aside>
@@ -66,13 +58,13 @@ export default function DashboardLayout({
           transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.2s ease",
         }}
-        className="md:hidden"
+        className="dashboard-sidebar-surface md:hidden"
       >
         <DashboardSidebar onLinkClick={() => setMobileOpen(false)} />
       </aside>
 
       {/* Main content */}
-      <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
+      <div style={{ flex: 1, overflowY: "auto" }}>
         {/* Mobile top bar */}
         <header
           style={{
@@ -83,51 +75,43 @@ export default function DashboardLayout({
             alignItems: "center",
             gap: "16px",
             borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
-            background: "rgba(10, 10, 10, 0.95)",
-            backdropFilter: "blur(8px)",
+            background: "rgba(10, 10, 10, 0.82)",
+            backdropFilter: "blur(16px)",
             padding: "12px 16px",
           }}
           className="md:hidden"
         >
           <button
             onClick={() => setMobileOpen(true)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#6B7280",
-              cursor: "pointer",
-              padding: "4px",
-            }}
+            className="flex size-9 items-center justify-center rounded-lg border border-white/8 bg-white/4 text-[#9CA3AF] transition-colors hover:border-white/12 hover:bg-white/8 hover:text-white"
             aria-label="Цэс нээх"
           >
             <Menu size={20} />
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Zap size={16} style={{ color: "#8B5CF6" }} />
+            <span className="flex size-7 items-center justify-center rounded-md bg-[#8B5CF6]/15 text-[#A78BFA]">
+              <Zap size={15} />
+            </span>
             <span
-              style={{ fontWeight: 700, fontFamily: "var(--font-jetbrains)", fontSize: "0.85rem" }}
+              style={{ fontWeight: 800, fontFamily: "var(--font-jetbrains)", fontSize: "0.8rem" }}
             >
               SYSCO&TECH
             </span>
           </div>
           {!loading && (
-            <div
-              style={{
-                marginLeft: "auto",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                fontSize: "0.75rem",
-                color: "#6B7280",
-                fontFamily: "var(--font-jetbrains)",
-              }}
-            >
+            <div className="ml-auto flex items-center gap-1.5 rounded-full border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 px-2.5 py-1 text-[#C4B5FD]">
+              <Sparkles size={12} />
+              <span style={{ fontSize: "0.65rem", fontFamily: "var(--font-jetbrains)", fontWeight: 700 }}>
               {userData?.totalPoints ?? 0} оноо
+              </span>
             </div>
           )}
         </header>
 
-        <main style={{ flex: 1, overflow: "auto" }} className="px-4 py-4 md:px-6 md:py-5">
+        <main
+          style={{ flex: 1, overflow: "auto" }}
+          className="mx-auto w-full max-w-[1500px] px-4 py-5 md:px-7 md:py-7"
+        >
           {children}
         </main>
       </div>

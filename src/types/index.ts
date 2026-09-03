@@ -28,7 +28,7 @@ export interface Task {
   status: string;
   createdBy: string;
   createdAt: Date;
-  dueDate: Date;
+  dueDate?: Date;
   assigneeProgress?: Record<string, number>;
   assigneeCompleted?: Record<string, boolean>;
 }
