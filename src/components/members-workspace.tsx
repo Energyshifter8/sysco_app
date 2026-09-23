@@ -1,7 +1,7 @@
 "use client";
 
 import { MemberRoleEditor } from "@/components/member-role-editor";
-import { PageContainer, PageHeader } from "@/components/page-container";
+import { EmptyState, PageContainer, PageHeader } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { TeamFilter } from "@/components/team-filter";
 import {
@@ -41,7 +41,7 @@ const ATTENDANCE_WINDOW_DAYS = 90;
 const mono = { fontFamily: "var(--font-jetbrains)" } as const;
 const labelStyle: React.CSSProperties = {
   ...mono,
-  fontSize: "0.6rem",
+  fontSize: "0.75rem",
   color: "#6B7280",
   letterSpacing: "0.1em",
 };
@@ -66,21 +66,12 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="surface-card flex-1 rounded-xl" style={{ padding: "16px 20px" }}>
+    <div className="surface-card h-full flex-1 rounded-xl p-5">
       <div className="mb-2 flex items-center gap-2">
         <span style={{ color: accent }}>{icon}</span>
         <span style={labelStyle}>{label}</span>
       </div>
-      <div
-        className="tabular-nums"
-        style={{
-          fontFamily: "var(--font-barlow-condensed)",
-          fontSize: "1.9rem",
-          fontWeight: 800,
-          color: accent,
-          lineHeight: 1,
-        }}
-      >
+      <div className="type-stat leading-none" style={{ color: accent }}>
         {value}
       </div>
     </div>
@@ -243,39 +234,23 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
         title={canAdminister ? "ГИШҮҮДИЙН ТОЙМ" : "БАГИЙН ГИШҮҮД"}
         description={`${rows.length} ГИШҮҮН${scopedTeam ? ` · ${TEAM_SHORT_LABELS[scopedTeam]}` : " — SYSCO&TECH CLUB"}`}
         actions={
-          <div style={{ position: "relative" }}>
+          <div className="relative w-full sm:w-auto">
             <Search
-              size={14}
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#6B7280",
-              }}
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
             />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Хайх..."
               aria-label="Гишүүн хайх"
-              style={{
-                background: "#1A1A1A",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "3px",
-                padding: "8px 12px 8px 30px",
-                color: "#E8E8E8",
-                fontFamily: "var(--font-barlow)",
-                fontSize: "0.85rem",
-                outline: "none",
-                width: "200px",
-              }}
+              className="h-11 w-full rounded-lg border border-white/10 bg-[#1A1A1A] pl-9 pr-3 font-sans text-sm text-[#E8E8E8] outline-none placeholder:text-[#4B5563] focus-visible:border-[#8B5CF6] sm:w-64"
             />
           </div>
         }
       />
 
-      <div className="mb-5 flex flex-wrap gap-3">
+      <div className="mb-5 grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
         <StatCard
           label="НИЙТ ГИШҮҮН"
           value={filtered.length}
@@ -296,8 +271,72 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
         </div>
       )}
 
-      <div className="surface-card overflow-x-auto rounded-xl">
-        <div style={{ minWidth: "760px" }}>
+      {/* Narrow screens: one card per member. The table below needs 760px and
+          used to truncate names to two letters at 768. */}
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))] lg:hidden">
+        {filtered.map(({ user, activeTasks, latest }) => {
+          const palette = avatarPalette(user.uid);
+          const status = latest?.status;
+          return (
+            <button
+              key={user.uid}
+              type="button"
+              onClick={() => openMember(user)}
+              className="surface-card flex h-full flex-col gap-3 rounded-xl p-4 text-left transition-colors hover:border-[#8B5CF6]/50"
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-bold"
+                  style={{
+                    background: palette.background,
+                    border: `1px solid ${palette.border}`,
+                    color: palette.color,
+                  }}
+                >
+                  {getInitials(user.name)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-sans text-sm font-semibold text-[#E8E8E8]">
+                    {user.name}
+                  </span>
+                  <span className="type-meta block truncate">
+                    {getMajorLabel(user.major) || ROLE_LABELS[user.role]}
+                  </span>
+                </span>
+                <span className="type-stat-sm shrink-0 text-[#22C55E]">{user.totalPoints}</span>
+              </div>
+              <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="type-meta">
+                  {user.course ? `${user.course}-р курс` : "Курс —"}
+                </span>
+                <span
+                  className="font-mono text-xs"
+                  style={{ color: activeTasks > 0 ? "#FBBF24" : "#4B5563" }}
+                >
+                  {activeTasks > 0 ? `${activeTasks} даалгавар` : "Даалгаваргүй"}
+                </span>
+                <span
+                  className="font-mono text-xs font-bold"
+                  style={{
+                    color: isAttendanceStatus(status) ? ATTENDANCE_COLORS[status] : "#4B5563",
+                  }}
+                >
+                  {isAttendanceStatus(status) ? ATTENDANCE_SHORT_LABELS[status] : "ИРЦГҮЙ"}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className="surface-card rounded-xl md:col-span-2">
+            <EmptyState icon={<Users size={18} />} message="Гишүүн олдсонгүй." />
+          </div>
+        )}
+      </div>
+
+      <div className="surface-card hidden rounded-xl lg:block">
+        <div>
           <div
             className="grid gap-3 px-4 py-2.5"
             style={{
@@ -316,7 +355,7 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
               "ИРЦ",
               "ОНОО",
             ].map((head) => (
-              <span key={head} style={{ ...labelStyle, fontSize: "0.58rem" }}>
+              <span key={head} style={{ ...labelStyle, fontSize: "0.75rem" }}>
                 {head}
               </span>
             ))}
@@ -331,14 +370,14 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
                 key={user.uid}
                 type="button"
                 onClick={() => openMember(user)}
-                className="grid w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/[0.035]"
+                className="grid w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.035]"
                 style={{
                   gridTemplateColumns: columns,
                   borderBottom:
                     i < filtered.length - 1 ? "1px solid rgba(255, 255, 255, 0.04)" : "none",
                 }}
               >
-                <span style={{ ...mono, fontSize: "0.72rem", color: "#4B5563" }}>{i + 1}</span>
+                <span style={{ ...mono, fontSize: "0.8125rem", color: "#4B5563" }}>{i + 1}</span>
 
                 <span className="flex min-w-0 items-center gap-2">
                   <span
@@ -349,7 +388,7 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
                       border: `1px solid ${palette.border}`,
                       color: palette.color,
                       ...mono,
-                      fontSize: "0.55rem",
+                      fontSize: "0.75rem",
                       fontWeight: 700,
                     }}
                   >
@@ -360,16 +399,16 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
                       className="block truncate"
                       style={{
                         color: "#E8E8E8",
-                        fontFamily: "var(--font-barlow)",
+                        fontFamily: "var(--font-montserrat)",
                         fontWeight: 600,
-                        fontSize: "0.85rem",
+                        fontSize: "0.875rem",
                       }}
                     >
                       {user.name}
                     </span>
                     <span
                       className="block truncate"
-                      style={{ ...mono, fontSize: "0.58rem", color: "#4B5563" }}
+                      style={{ ...mono, fontSize: "0.75rem", color: "#4B5563" }}
                     >
                       {ROLE_LABELS[user.role]}
                     </span>
@@ -380,8 +419,8 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
                   className="truncate"
                   style={{
                     color: "#9CA3AF",
-                    fontFamily: "var(--font-barlow)",
-                    fontSize: "0.78rem",
+                    fontFamily: "var(--font-montserrat)",
+                    fontSize: "0.875rem",
                   }}
                 >
                   {getMajorLabel(user.major) || "—"}
@@ -392,15 +431,15 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
                     className="truncate"
                     style={{
                       color: user.team ? "#9CA3AF" : "#374151",
-                      fontFamily: "var(--font-barlow)",
-                      fontSize: "0.78rem",
+                      fontFamily: "var(--font-montserrat)",
+                      fontSize: "0.875rem",
                     }}
                   >
                     {user.team ? TEAM_SHORT_LABELS[user.team] : "—"}
                   </span>
                 )}
 
-                <span style={{ ...mono, fontSize: "0.72rem", color: "#9CA3AF" }}>
+                <span style={{ ...mono, fontSize: "0.8125rem", color: "#9CA3AF" }}>
                   {user.course ? `${user.course}-р` : "—"}
                 </span>
 
@@ -408,7 +447,7 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
                   className="tabular-nums"
                   style={{
                     ...mono,
-                    fontSize: "0.72rem",
+                    fontSize: "0.8125rem",
                     color: activeTasks > 0 ? "#FBBF24" : "#374151",
                   }}
                 >
@@ -419,7 +458,7 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
                   className="truncate"
                   style={{
                     ...mono,
-                    fontSize: "0.6rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     color: isAttendanceStatus(status) ? ATTENDANCE_COLORS[status] : "#374151",
                   }}
@@ -431,9 +470,9 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
                 <span
                   className="tabular-nums"
                   style={{
-                    fontFamily: "var(--font-barlow-condensed)",
+                    fontFamily: "var(--font-condensed)",
                     fontWeight: 800,
-                    fontSize: "1rem",
+                    fontSize: "1.0rem",
                     color: "#22C55E",
                   }}
                 >
@@ -444,9 +483,7 @@ export function MembersWorkspace({ scope }: { scope: MembersScope }) {
           })}
 
           {filtered.length === 0 && (
-            <p className="px-4 py-6 text-center" style={{ ...labelStyle, fontSize: "0.78rem" }}>
-              ГИШҮҮН ОЛДСОНГҮЙ
-            </p>
+            <EmptyState icon={<Users size={18} />} message="Гишүүн олдсонгүй." />
           )}
         </div>
       </div>
@@ -507,7 +544,7 @@ function MemberDetailDialog({
             <DialogHeader style={{ gap: "4px" }}>
               <DialogTitle
                 style={{
-                  fontFamily: "var(--font-barlow)",
+                  fontFamily: "var(--font-montserrat)",
                   fontWeight: 800,
                   fontSize: "1.15rem",
                   color: "#E8E8E8",
@@ -539,8 +576,8 @@ function MemberDetailDialog({
                       <p
                         className="truncate"
                         style={{
-                          fontFamily: "var(--font-barlow)",
-                          fontSize: "0.88rem",
+                          fontFamily: "var(--font-montserrat)",
+                          fontSize: "1.0rem",
                           color: "#E8E8E8",
                           fontWeight: 600,
                         }}
@@ -556,7 +593,7 @@ function MemberDetailDialog({
 
                 {tasks.length > 0 && (
                   <div>
-                    <p style={{ ...labelStyle, fontSize: "0.65rem", marginBottom: "8px" }}>
+                    <p style={{ ...labelStyle, fontSize: "0.8125rem", marginBottom: "8px" }}>
                       ДААЛГАВРЫН ТҮҮХ
                     </p>
                     <div className="flex flex-col gap-1">
@@ -572,8 +609,8 @@ function MemberDetailDialog({
                             <span
                               className="truncate"
                               style={{
-                                fontFamily: "var(--font-barlow)",
-                                fontSize: "0.8rem",
+                                fontFamily: "var(--font-montserrat)",
+                                fontSize: "0.875rem",
                                 color: "#E8E8E8",
                               }}
                             >
@@ -583,7 +620,7 @@ function MemberDetailDialog({
                               className="shrink-0"
                               style={{
                                 ...mono,
-                                fontSize: "0.62rem",
+                                fontSize: "0.75rem",
                                 fontWeight: 700,
                                 color: review ? "#22C55E" : ASSIGNEE_STATUS_COLORS[status],
                               }}
@@ -601,7 +638,7 @@ function MemberDetailDialog({
 
                 {attendance.length > 0 && (
                   <div>
-                    <p style={{ ...labelStyle, fontSize: "0.65rem", marginBottom: "8px" }}>
+                    <p style={{ ...labelStyle, fontSize: "0.8125rem", marginBottom: "8px" }}>
                       ИРЦИЙН ТҮҮХ
                     </p>
                     <div className="flex flex-col gap-1">
@@ -611,13 +648,13 @@ function MemberDetailDialog({
                           className="flex items-center justify-between rounded px-3 py-2"
                           style={{ background: "#0F0F0F" }}
                         >
-                          <span style={{ ...mono, fontSize: "0.78rem", color: "#6B7280" }}>
+                          <span style={{ ...mono, fontSize: "0.875rem", color: "#6B7280" }}>
                             {record.date}
                           </span>
                           <span
                             style={{
                               ...mono,
-                              fontSize: "0.68rem",
+                              fontSize: "0.8125rem",
                               fontWeight: 700,
                               color: isAttendanceStatus(record.status)
                                 ? ATTENDANCE_COLORS[record.status]

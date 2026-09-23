@@ -32,14 +32,14 @@ import { Loader2 } from "lucide-react";
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains)",
-  fontSize: "0.6rem",
+  fontSize: "0.75rem",
   color: "#6B7280",
   letterSpacing: "0.08em",
 };
 
 const headStyle: React.CSSProperties = {
   ...labelStyle,
-  fontSize: "0.55rem",
+  fontSize: "0.75rem",
   textAlign: "left",
   padding: "0 10px 6px 0",
   whiteSpace: "nowrap",
@@ -47,7 +47,7 @@ const headStyle: React.CSSProperties = {
 
 const cellStyle: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains)",
-  fontSize: "0.62rem",
+  fontSize: "0.75rem",
   color: "#9CA3AF",
   padding: "8px 10px 8px 0",
   whiteSpace: "nowrap",
@@ -143,7 +143,7 @@ export function TaskDetailDialog({
         {loadingTask && (
           <>
             <DialogHeader>
-              <DialogTitle style={{ fontFamily: "var(--font-barlow)", color: "#E8E8E8" }}>
+              <DialogTitle style={{ fontFamily: "var(--font-montserrat)", color: "#E8E8E8" }}>
                 Ачаалж байна…
               </DialogTitle>
               <DialogDescription style={labelStyle}>Даалгаврын мэдээлэл</DialogDescription>
@@ -156,7 +156,7 @@ export function TaskDetailDialog({
 
         {!loadingTask && !task && (
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: "var(--font-barlow)", color: "#E8E8E8" }}>
+            <DialogTitle style={{ fontFamily: "var(--font-montserrat)", color: "#E8E8E8" }}>
               Task олдсонгүй
             </DialogTitle>
             <DialogDescription style={labelStyle}>
@@ -216,7 +216,7 @@ function TaskDetailBody({
         <div className="flex items-start justify-between gap-3">
           <DialogTitle
             style={{
-              fontFamily: "var(--font-barlow)",
+              fontFamily: "var(--font-montserrat)",
               fontWeight: 700,
               fontSize: "1.1rem",
               color: "#E8E8E8",
@@ -229,7 +229,7 @@ function TaskDetailBody({
             className="shrink-0 rounded-sm border border-[#22C55E]/25 bg-[#22C55E]/10 px-2 py-1"
             style={{
               fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.72rem",
+              fontSize: "0.8125rem",
               fontWeight: 700,
               color: "#22C55E",
             }}
@@ -241,7 +241,7 @@ function TaskDetailBody({
           className="flex flex-wrap items-center gap-x-3 gap-y-1"
           style={{
             fontFamily: "var(--font-jetbrains)",
-            fontSize: "0.68rem",
+            fontSize: "0.8125rem",
             letterSpacing: "0.04em",
           }}
         >
@@ -255,8 +255,8 @@ function TaskDetailBody({
         <span style={{ ...labelStyle, display: "block", marginBottom: "6px" }}>ТОЙМ</span>
         <p
           style={{
-            fontFamily: "var(--font-barlow)",
-            fontSize: "0.85rem",
+            fontFamily: "var(--font-montserrat)",
+            fontSize: "0.875rem",
             color: "#9CA3AF",
             lineHeight: 1.55,
             whiteSpace: "pre-wrap",
@@ -269,20 +269,24 @@ function TaskDetailBody({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <span style={{ ...labelStyle, display: "block", marginBottom: "4px" }}>ҮҮСГЭСЭН</span>
-          <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.82rem", color: "#E8E8E8" }}>
+          <p
+            style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.875rem", color: "#E8E8E8" }}
+          >
             {nameOf(task.createdBy, members)}
             {task.createdByRole ? ` · ${ROLE_LABELS[task.createdByRole]}` : ""}
           </p>
-          <p style={{ ...labelStyle, fontSize: "0.58rem", marginTop: "2px" }}>
+          <p style={{ ...labelStyle, fontSize: "0.75rem", marginTop: "2px" }}>
             {formatDateTime(task.createdAt, "—")}
           </p>
         </div>
         <div>
           <span style={{ ...labelStyle, display: "block", marginBottom: "4px" }}>ОНООЛТ</span>
-          <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.82rem", color: "#E8E8E8" }}>
+          <p
+            style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.875rem", color: "#E8E8E8" }}
+          >
             {assignmentLabel(task)}
           </p>
-          <p style={{ ...labelStyle, fontSize: "0.58rem", marginTop: "2px" }}>
+          <p style={{ ...labelStyle, fontSize: "0.75rem", marginTop: "2px" }}>
             {assignees.length} гишүүн
           </p>
         </div>
@@ -294,7 +298,7 @@ function TaskDetailBody({
           ОНООГДСОН ГИШҮҮД
         </span>
         {assignees.length === 0 ? (
-          <p style={{ ...labelStyle, fontSize: "0.68rem", color: "#4B5563" }}>
+          <p style={{ ...labelStyle, fontSize: "0.8125rem", color: "#4B5563" }}>
             Оноогдсон гишүүн алга
           </p>
         ) : (
@@ -334,7 +338,7 @@ function TaskDetailBody({
                                 className="flex size-7 shrink-0 items-center justify-center rounded-md border"
                                 style={{
                                   fontFamily: "var(--font-jetbrains)",
-                                  fontSize: "0.55rem",
+                                  fontSize: "0.75rem",
                                   fontWeight: 700,
                                   color: palette.color,
                                   background: palette.background,
@@ -351,8 +355,8 @@ function TaskDetailBody({
                           <div className="min-w-0">
                             <p
                               style={{
-                                fontFamily: "var(--font-barlow)",
-                                fontSize: "0.82rem",
+                                fontFamily: "var(--font-montserrat)",
+                                fontSize: "0.875rem",
                                 fontWeight: 600,
                                 color: "#E8E8E8",
                               }}
@@ -360,7 +364,7 @@ function TaskDetailBody({
                               {assignee.name}
                               {isViewer ? " (Та)" : ""}
                             </p>
-                            <p style={{ ...labelStyle, fontSize: "0.55rem" }}>
+                            <p style={{ ...labelStyle, fontSize: "0.75rem" }}>
                               {assignee.team ? TEAM_SHORT_LABELS[assignee.team] : "Баггүй"}
                             </p>
                           </div>
@@ -371,7 +375,7 @@ function TaskDetailBody({
                         <span
                           className="rounded-full px-2 py-0.5"
                           style={{
-                            fontSize: "0.58rem",
+                            fontSize: "0.75rem",
                             fontWeight: 700,
                             color: ASSIGNEE_STATUS_COLORS[status],
                             background: `${ASSIGNEE_STATUS_COLORS[status]}1F`,
@@ -399,7 +403,7 @@ function TaskDetailBody({
                                   display: "block",
                                   color: "#9CA3AF",
                                   fontWeight: 400,
-                                  fontFamily: "var(--font-barlow)",
+                                  fontFamily: "var(--font-montserrat)",
                                   whiteSpace: "normal",
                                   marginTop: "2px",
                                 }}
@@ -440,7 +444,7 @@ function TaskDetailBody({
             <p
               style={{
                 fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.65rem",
+                fontSize: "0.8125rem",
                 color: "#22C55E",
                 marginTop: "8px",
               }}
@@ -453,7 +457,7 @@ function TaskDetailBody({
               <p
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.65rem",
+                  fontSize: "0.8125rem",
                   color: "#EF4444",
                   marginTop: "8px",
                 }}
@@ -480,11 +484,15 @@ function TaskDetailBody({
             ))}
           </div>
         ) : activityError ? (
-          <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.8rem", color: "#FCA5A5" }}>
+          <p
+            style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.875rem", color: "#FCA5A5" }}
+          >
             {activityError}
           </p>
         ) : activity.length === 0 ? (
-          <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.8rem", color: "#4B5563" }}>
+          <p
+            style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.875rem", color: "#4B5563" }}
+          >
             Түүх бүртгэгдээгүй (хуучин task)
           </p>
         ) : (
@@ -503,8 +511,8 @@ function TaskDetailBody({
                 <div className="min-w-0">
                   <p
                     style={{
-                      fontFamily: "var(--font-barlow)",
-                      fontSize: "0.82rem",
+                      fontFamily: "var(--font-montserrat)",
+                      fontSize: "0.875rem",
                       color: "#E8E8E8",
                     }}
                   >
@@ -525,7 +533,7 @@ function TaskDetailBody({
                       </>
                     )}
                   </p>
-                  <p style={{ ...labelStyle, fontSize: "0.58rem", marginTop: "1px" }}>
+                  <p style={{ ...labelStyle, fontSize: "0.75rem", marginTop: "1px" }}>
                     {shortTime(entry.at)}
                   </p>
                 </div>

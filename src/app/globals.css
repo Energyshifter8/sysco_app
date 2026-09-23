@@ -7,9 +7,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-montserrat);
+  --font-mono: var(--font-jetbrains);
+  --font-heading: var(--font-montserrat);
+  --font-display: var(--font-condensed);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -51,7 +52,7 @@
 }
 
 :root {
-  --font-size: 15px;
+  --font-size: 16px;
   --background: #0a0a0a;
   --foreground: #e8e8e8;
   --card: #141414;
@@ -164,6 +165,47 @@
 }
 
 @layer components {
+  /* ── Type scale ───────────────────────────────────────────── */
+
+  .type-page-title {
+    @apply font-mono text-2xl font-extrabold tracking-tight text-[#E8E8E8] md:text-3xl;
+  }
+
+  .type-page-subtitle {
+    @apply font-mono text-xs text-[#6B7280] md:text-sm;
+  }
+
+  .type-section-title {
+    @apply font-mono text-xs font-bold tracking-[0.1em] text-[#6B7280] md:text-sm;
+  }
+
+  .type-card-title {
+    @apply font-sans text-base font-bold text-[#E8E8E8] md:text-lg;
+  }
+
+  .type-body {
+    @apply font-sans text-sm text-[#9CA3AF];
+  }
+
+  /* Field captions and table headers — the smallest text that still has to be
+     readable, so it stops at 12px rather than the 8–10px it used to hit. */
+  .type-label {
+    @apply font-mono text-xs tracking-[0.08em] text-[#6B7280];
+  }
+
+  .type-meta {
+    @apply font-mono text-xs text-[#6B7280];
+  }
+
+  /* Points, ranks, counts — the numbers the whole app is about. */
+  .type-stat {
+    @apply font-display text-3xl font-extrabold tabular-nums md:text-4xl;
+  }
+
+  .type-stat-sm {
+    @apply font-display text-2xl font-extrabold tabular-nums;
+  }
+
   .app-shell {
     background: radial-gradient(circle at 100% 0%, rgba(139, 92, 246, 0.1), transparent 28rem),
       radial-gradient(circle at 35% 100%, rgba(139, 92, 246, 0.05), transparent 32rem), #0a0a0a;

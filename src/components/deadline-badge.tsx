@@ -27,7 +27,7 @@ export function DeadlineBadge({ task, compact = false }: DeadlineBadgeProps) {
       title={exact}
       style={{
         fontFamily: "var(--font-jetbrains)",
-        fontSize: "0.65rem",
+        fontSize: "0.8125rem",
         letterSpacing: "0.04em",
         color,
       }}

@@ -17,7 +17,7 @@ const MAX_SEGMENTED_POINTS = 10;
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains)",
-  fontSize: "0.6rem",
+  fontSize: "0.75rem",
   color: "#6B7280",
   letterSpacing: "0.08em",
   display: "block",
@@ -79,7 +79,7 @@ export function ReviewDialog({
         <DialogHeader style={{ gap: "8px" }}>
           <DialogTitle
             style={{
-              fontFamily: "var(--font-barlow)",
+              fontFamily: "var(--font-montserrat)",
               fontWeight: 700,
               fontSize: "1.1rem",
               color: "#E8E8E8",
@@ -91,7 +91,7 @@ export function ReviewDialog({
           <DialogDescription
             style={{
               fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.7rem",
+              fontSize: "0.8125rem",
               color: "#6B7280",
               letterSpacing: "0.06em",
             }}
@@ -129,7 +129,7 @@ export function ReviewDialog({
                 onClick={() => setScore((s) => clamp(s - 1))}
                 disabled={submitting || score <= 0}
                 aria-label="Оноо хасах"
-                className="flex size-8 items-center justify-center rounded-md border border-white/10 text-[#9CA3AF] transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex size-10 items-center justify-center rounded-lg border border-white/10 text-[#9CA3AF] transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Minus size={14} />
               </button>
@@ -143,14 +143,15 @@ export function ReviewDialog({
                 onChange={(e) => setScore(clamp(Number(e.target.value) || 0))}
                 aria-label="Өгөх оноо"
                 style={{
-                  width: "88px",
+                  width: "96px",
+                  height: "40px",
                   background: "#1A1A1A",
                   border: "1px solid rgba(255,255,255,0.1)",
                   borderRadius: "3px",
                   padding: "6px 10px",
                   color: "#22C55E",
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.9rem",
+                  fontSize: "1.0rem",
                   fontWeight: 700,
                   textAlign: "center",
                   outline: "none",
@@ -161,7 +162,7 @@ export function ReviewDialog({
                 onClick={() => setScore((s) => clamp(s + 1))}
                 disabled={submitting || score >= max}
                 aria-label="Оноо нэмэх"
-                className="flex size-8 items-center justify-center rounded-md border border-white/10 text-[#9CA3AF] transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex size-10 items-center justify-center rounded-lg border border-white/10 text-[#9CA3AF] transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Plus size={14} />
               </button>
@@ -176,7 +177,7 @@ export function ReviewDialog({
                   padding: "6px 10px",
                   color: "#6B7280",
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.62rem",
+                  fontSize: "0.75rem",
                   cursor: submitting ? "not-allowed" : "pointer",
                 }}
               >
@@ -204,8 +205,8 @@ export function ReviewDialog({
               borderRadius: "3px",
               padding: "10px 12px",
               color: "#E8E8E8",
-              fontFamily: "var(--font-barlow)",
-              fontSize: "0.85rem",
+              fontFamily: "var(--font-montserrat)",
+              fontSize: "0.875rem",
               outline: "none",
               resize: "vertical",
               boxSizing: "border-box",
@@ -226,7 +227,7 @@ export function ReviewDialog({
               padding: "9px 18px",
               fontFamily: "var(--font-jetbrains)",
               fontWeight: 700,
-              fontSize: "0.72rem",
+              fontSize: "0.8125rem",
               letterSpacing: "0.06em",
               cursor: submitting ? "not-allowed" : "pointer",
               display: "flex",
@@ -249,7 +250,7 @@ export function ReviewDialog({
               padding: "9px 14px",
               color: "#6B7280",
               fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.7rem",
+              fontSize: "0.8125rem",
               cursor: submitting ? "not-allowed" : "pointer",
             }}
           >
@@ -259,8 +260,8 @@ export function ReviewDialog({
 
         <p
           style={{
-            fontFamily: "var(--font-barlow)",
-            fontSize: "0.75rem",
+            fontFamily: "var(--font-montserrat)",
+            fontSize: "0.875rem",
             color: "#4B5563",
           }}
         >

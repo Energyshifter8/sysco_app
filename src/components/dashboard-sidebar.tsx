@@ -48,7 +48,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const sectionHeadingStyle: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains)",
-  fontSize: "0.55rem",
+  fontSize: "0.75rem",
   color: "#374151",
   letterSpacing: "0.12em",
   padding: "16px 10px 4px",
@@ -73,7 +73,7 @@ function NavItemButton({
       onClick={onClick}
       className={`sidebar-nav-link flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm transition-all duration-200 ${active ? "is-active" : ""}`}
       style={{
-        fontFamily: "var(--font-barlow)",
+        fontFamily: "var(--font-montserrat)",
         fontWeight: active ? 700 : 500,
         background: active
           ? "linear-gradient(90deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.055))"
@@ -143,7 +143,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
               style={{
                 fontFamily: "var(--font-jetbrains)",
                 fontWeight: 800,
-                fontSize: "0.85rem",
+                fontSize: "0.875rem",
                 color: "#E8E8E8",
                 letterSpacing: "-0.01em",
               }}
@@ -153,7 +153,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
             <span
               style={{
                 fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.55rem",
+                fontSize: "0.75rem",
                 color: "#6B7280",
                 letterSpacing: "0.1em",
               }}
@@ -170,7 +170,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
           className="sidebar-user"
           style={{
             fontFamily: "var(--font-jetbrains)",
-            fontSize: "0.55rem",
+            fontSize: "0.75rem",
             color: "#374151",
             letterSpacing: "0.12em",
             padding: "8px 10px 4px",
@@ -250,7 +250,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
                 alignItems: "center",
                 justifyContent: "center",
                 fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.55rem",
+                fontSize: "0.75rem",
                 color: "#8B5CF6",
                 fontWeight: 700,
                 flexShrink: 0,
@@ -262,9 +262,9 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
               <p
                 style={{
                   color: "#E8E8E8",
-                  fontSize: "0.78rem",
+                  fontSize: "0.875rem",
                   fontWeight: 600,
-                  fontFamily: "var(--font-barlow)",
+                  fontFamily: "var(--font-montserrat)",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -275,7 +275,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
               <p
                 style={{
                   color: "#6B7280",
-                  fontSize: "0.6rem",
+                  fontSize: "0.75rem",
                   fontFamily: "var(--font-jetbrains)",
                 }}
               >

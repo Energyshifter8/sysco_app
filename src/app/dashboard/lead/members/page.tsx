@@ -15,7 +15,7 @@ function LeadMembersContent() {
     return (
       <PageContainer>
         <PageHeader title="БАГИЙН ГИШҮҮД" description="БАГ ОНООГДООГҮЙ" />
-        <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.9rem", color: "#9CA3AF" }}>
+        <p style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.9rem", color: "#9CA3AF" }}>
           Танд баг оноогдоогүй тул багийн гишүүд харагдахгүй байна. Админтай холбогдоно уу.
         </p>
       </PageContainer>

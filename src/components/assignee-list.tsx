@@ -44,7 +44,7 @@ export function AssigneeList({
         style={{
           color: "#4B5563",
           fontFamily: "var(--font-jetbrains)",
-          fontSize: "0.68rem",
+          fontSize: "0.8125rem",
         }}
       >
         {emptyLabel}
@@ -78,7 +78,7 @@ export function AssigneeList({
               className="flex size-7 shrink-0 items-center justify-center rounded-md border"
               style={{
                 fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.55rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 ...palette,
                 borderColor: palette.border,
@@ -91,8 +91,8 @@ export function AssigneeList({
               <p
                 className="truncate"
                 style={{
-                  fontFamily: "var(--font-barlow)",
-                  fontSize: "0.82rem",
+                  fontFamily: "var(--font-montserrat)",
+                  fontSize: "0.875rem",
                   fontWeight: 600,
                   color: "#E8E8E8",
                 }}
@@ -102,7 +102,7 @@ export function AssigneeList({
               <p
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.58rem",
+                  fontSize: "0.75rem",
                   color: "#4B5563",
                 }}
               >
@@ -114,7 +114,7 @@ export function AssigneeList({
               className="shrink-0 rounded-full px-2 py-0.5"
               style={{
                 fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.58rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.04em",
                 color: ASSIGNEE_STATUS_COLORS[status],
@@ -130,7 +130,7 @@ export function AssigneeList({
                 className="shrink-0 rounded-sm border border-[#22C55E]/25 bg-[#22C55E]/10 px-1.5 py-0.5"
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.6rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   color: "#22C55E",
                 }}
@@ -156,7 +156,7 @@ export function AssigneeList({
           className="rounded-md border border-white/6 bg-white/[0.02] px-2.5 py-1.5 text-left transition-colors hover:border-[#8B5CF6]/40 hover:text-[#C4B5FD]"
           style={{
             fontFamily: "var(--font-jetbrains)",
-            fontSize: "0.62rem",
+            fontSize: "0.75rem",
             color: "#6B7280",
           }}
         >
@@ -206,7 +206,7 @@ export function AssigneeAvatars({
                 className="flex size-5 shrink-0 items-center justify-center rounded-full border"
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.48rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   color: palette.color,
                   background: palette.background,
@@ -224,7 +224,7 @@ export function AssigneeAvatars({
         <span
           style={{
             fontFamily: "var(--font-jetbrains)",
-            fontSize: "0.58rem",
+            fontSize: "0.75rem",
             color: "#4B5563",
           }}
         >

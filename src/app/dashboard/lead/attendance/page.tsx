@@ -16,7 +16,7 @@ function LeadAttendanceContent() {
     return (
       <PageContainer>
         <PageHeader title="БАГИЙН ИРЦ" description="БАГ ОНООГДООГҮЙ" />
-        <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.9rem", color: "#9CA3AF" }}>
+        <p style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.9rem", color: "#9CA3AF" }}>
           Танд баг оноогдоогүй тул ирц бүртгэх боломжгүй. Админтай холбогдоно уу.
         </p>
       </PageContainer>

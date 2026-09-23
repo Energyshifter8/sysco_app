@@ -42,7 +42,7 @@ export function ReviewButton({ task, assignee, viewer }: ReviewButtonProps) {
         className="flex shrink-0 items-center gap-1 rounded-sm border border-[#8B5CF6]/30 bg-[#8B5CF6]/12 px-2 py-1 text-[#A78BFA] transition-colors hover:border-[#8B5CF6]/60 hover:bg-[#8B5CF6]/20"
         style={{
           fontFamily: "var(--font-jetbrains)",
-          fontSize: "0.6rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           letterSpacing: "0.04em",
         }}

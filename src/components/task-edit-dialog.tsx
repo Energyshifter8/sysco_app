@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,7 @@ import { toast } from "sonner";
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains)",
-  fontSize: "0.62rem",
+  fontSize: "0.75rem",
   color: "#6B7280",
   letterSpacing: "0.1em",
   display: "block",
@@ -29,11 +30,11 @@ const fieldStyle: React.CSSProperties = {
   width: "100%",
   background: "#1A1A1A",
   border: "1px solid rgba(255, 255, 255, 0.1)",
-  borderRadius: "3px",
-  padding: "9px 12px",
+  borderRadius: "6px",
+  padding: "12px 14px",
   color: "#E8E8E8",
-  fontFamily: "var(--font-barlow)",
-  fontSize: "0.88rem",
+  fontFamily: "var(--font-montserrat)",
+  fontSize: "1.0rem",
   outline: "none",
   boxSizing: "border-box",
 };
@@ -190,7 +191,7 @@ export function TaskEditDialog({
         <DialogHeader style={{ gap: "6px" }}>
           <DialogTitle
             style={{
-              fontFamily: "var(--font-barlow)",
+              fontFamily: "var(--font-montserrat)",
               fontWeight: 700,
               fontSize: "1.05rem",
               color: "#E8E8E8",
@@ -263,7 +264,7 @@ export function TaskEditDialog({
                 style={{
                   ...fieldStyle,
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.78rem",
+                  fontSize: "0.875rem",
                 }}
               />
             </div>
@@ -289,18 +290,18 @@ export function TaskEditDialog({
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "6px",
-                      padding: "4px 10px",
+                      padding: "8px 12px",
                       borderRadius: "20px",
                       border: `1px solid ${on ? "#8B5CF6" : "rgba(255, 255, 255, 0.1)"}`,
                       background: on ? "rgba(139, 92, 246, 0.125)" : "transparent",
                       color: on ? "#8B5CF6" : "#9CA3AF",
                       cursor: "pointer",
-                      fontFamily: "var(--font-barlow)",
-                      fontSize: "0.78rem",
+                      fontFamily: "var(--font-montserrat)",
+                      fontSize: "0.875rem",
                       fontWeight: 600,
                     }}
                   >
-                    <span style={{ fontFamily: "var(--font-jetbrains)", fontSize: "0.58rem" }}>
+                    <span style={{ fontFamily: "var(--font-jetbrains)", fontSize: "0.75rem" }}>
                       {getInitials(member.name)}
                     </span>
                     {member.name}
@@ -311,45 +312,19 @@ export function TaskEditDialog({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-1">
-            <button
+          <div className="flex items-center justify-end gap-3 pt-1">
+            <Button
               type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={saving}
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "3px",
-                padding: "9px 14px",
-                color: "#6B7280",
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.72rem",
-                cursor: "pointer",
-              }}
             >
-              БОЛИХ
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2"
-              style={{
-                background: "#8B5CF6",
-                color: "#fff",
-                border: "none",
-                borderRadius: "3px",
-                padding: "9px 18px",
-                fontFamily: "var(--font-jetbrains)",
-                fontWeight: 700,
-                fontSize: "0.75rem",
-                letterSpacing: "0.06em",
-                cursor: saving ? "not-allowed" : "pointer",
-                opacity: saving ? 0.7 : 1,
-              }}
-            >
-              {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-              ХАДГАЛАХ
-            </button>
+              Болих
+            </Button>
+            <Button type="submit" size="lg" disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : <Check />}
+              Хадгалах
+            </Button>
           </div>
         </form>
       </DialogContent>

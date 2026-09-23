@@ -282,6 +282,21 @@ pnpm migrate:status -- --apply --cleanup # once verified, drop the legacy fields
 changes `totalPoints`.** Tasks the old admin "approve" emptied out are reported at the end — their
 assignments cannot be reconstructed.
 
+## UI Screenshots
+
+`scripts/ui-screenshots.ts` signs in and captures every screen at 375 / 768 / 1280 / 1440 / 1920 px, writing full-page PNGs plus a `metrics.json` of layout measurements (content width, wasted side space, page height, sub-minimum tap targets, text under 13px, horizontal scroll).
+
+```bash
+# Local build
+pnpm build && pnpm start
+pnpm ui:shots -- --out screenshots/after --base http://localhost:3000
+
+# Deployed build
+pnpm ui:shots -- --out screenshots/before --base https://sysco-app.vercel.app
+```
+
+Credentials come from `UI_TEST_EMAIL` / `UI_TEST_PASSWORD` in `.env.local`, which is gitignored; they are never printed or passed on the command line. `screenshots/` is gitignored too.
+
 ## Known Limitations
 
 - **A lead's per-uid assignments are only checked client-side**: security rules have no loops, so they can block a lead from using the `"all"` token or another team's `"team:<team>"` token, but cannot verify that every individual uid in `assignedTo` belongs to that lead's team. `src/components/task-workspace.tsx` and `src/components/task-edit-dialog.tsx` enforce it before writing; the trade-off is documented in `firestore.rules`.

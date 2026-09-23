@@ -14,7 +14,8 @@
     "test:review": "tsx scripts/test-review-flow.ts",
     "migrate:status": "tsx scripts/migrate-task-status.ts",
     "backfill:users": "tsx scripts/backfill-users.ts",
-    "test:signup": "tsx scripts/test-signup-flow.ts"
+    "test:signup": "tsx scripts/test-signup-flow.ts",
+    "ui:shots": "tsx scripts/ui-screenshots.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
@@ -41,7 +42,9 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^18.0.3",
     "firebase-admin": "^14.1.0",
+    "playwright": "^1.63.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"

@@ -3,6 +3,7 @@
 import { RadioGroupSegment, RadioGroupSegments } from "@/components/ui/radio-group";
 import { ALL_TEAMS, type TeamFilterValue } from "@/hooks/useTeamFilter";
 import { TEAMS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 export interface TeamFilterProps {
   value: TeamFilterValue;
@@ -17,7 +18,7 @@ export function TeamFilter({ value, onChange, className }: TeamFilterProps) {
       value={value}
       onValueChange={(next) => onChange(next as TeamFilterValue)}
       aria-label="Багаар шүүх"
-      className={className}
+      className={cn("overflow-x-auto", className)}
     >
       <RadioGroupSegment value={ALL_TEAMS}>Бүгд</RadioGroupSegment>
       {TEAMS.map((team) => (

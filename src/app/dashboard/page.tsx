@@ -1,9 +1,10 @@
 "use client";
 
-import { PageContainer } from "@/components/page-container";
+import { EmptyState, PageContainer } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { TaskCard } from "@/components/task-card";
 import { TaskDetailDialog } from "@/components/task-detail-dialog";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useAssignedTasks } from "@/hooks/useAssignedTasks";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
@@ -11,7 +12,7 @@ import { useMembers } from "@/hooks/useMembers";
 import { useResolvedTask, useSelectedTask } from "@/hooks/useSelectedTask";
 import { getAssigneeReview, resolveAssignees } from "@/lib/tasks";
 import { getInitials } from "@/lib/utils";
-import { CheckCircle2, Clock, Loader2, Sparkles, Star, Trophy } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock, Loader2, Sparkles, Star, Trophy } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -20,52 +21,39 @@ function StatCard({
   value,
   accent,
   icon,
+  hint,
 }: {
   label: string;
   value: string | number;
   accent: string;
   icon: React.ReactNode;
+  hint?: string;
 }) {
   return (
     <div
-      className="surface-card dashboard-stat-card flex-1 rounded-xl"
+      className="surface-card dashboard-stat-card flex h-full flex-col justify-between gap-4 rounded-xl p-5"
       style={
         {
           "--stat-accent": accent,
           "--stat-glow": `${accent}42`,
           "--stat-shadow": `${accent}20`,
-          padding: "18px 20px",
         } as React.CSSProperties
       }
     >
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2.5">
         <span
-          className="flex size-7 items-center justify-center rounded-lg"
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg"
           style={{ color: accent, background: `${accent}16`, border: `1px solid ${accent}25` }}
         >
           {icon}
         </span>
-        <span
-          style={{
-            fontFamily: "var(--font-jetbrains)",
-            fontSize: "0.65rem",
-            color: "#6B7280",
-            letterSpacing: "0.1em",
-          }}
-        >
-          {label}
-        </span>
+        <span className="type-label">{label}</span>
       </div>
-      <div
-        style={{
-          fontFamily: "var(--font-barlow-condensed)",
-          fontSize: "2rem",
-          fontWeight: 800,
-          color: accent,
-          lineHeight: 1,
-        }}
-      >
-        {value}
+      <div>
+        <div className="type-stat leading-none" style={{ color: accent }}>
+          {value}
+        </div>
+        {hint && <p className="type-meta mt-1.5">{hint}</p>}
       </div>
     </div>
   );
@@ -126,36 +114,12 @@ function DashboardContent() {
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 px-2.5 py-1 text-[#C4B5FD]">
               <Sparkles size={12} />
-              <span
-                style={{
-                  fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.6rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.09em",
-                }}
-              >
-                ӨНӨӨДӨР
-              </span>
+              <span className="font-mono text-xs font-bold tracking-[0.09em]">ӨНӨӨДӨР</span>
             </div>
-            <h1
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "1.4rem",
-                fontWeight: 800,
-                color: "#E8E8E8",
-                letterSpacing: "-0.02em",
-                marginBottom: "6px",
-              }}
-            >
+            <h1 className="type-page-title mb-1.5">
               Сайн байна уу, {(userData.name ?? "Хэрэглэгч").split(" ")[0]}
             </h1>
-            <p
-              style={{
-                color: "#6B7280",
-                fontSize: "0.8rem",
-                fontFamily: "var(--font-jetbrains)",
-              }}
-            >
+            <p className="type-page-subtitle">
               {new Date().toLocaleDateString("mn-MN", {
                 year: "numeric",
                 month: "long",
@@ -168,39 +132,13 @@ function DashboardContent() {
               className="rounded-xl border border-white/8 bg-black/15 px-4 py-2.5 text-right"
               style={{ backdropFilter: "blur(8px)" }}
             >
-              <p
-                style={{
-                  color: "#6B7280",
-                  fontSize: "0.55rem",
-                  fontFamily: "var(--font-jetbrains)",
-                  letterSpacing: "0.1em",
-                }}
-              >
-                НИЙТ ОНОО
-              </p>
-              <p
-                style={{
-                  color: "#C4B5FD",
-                  fontSize: "1.25rem",
-                  fontWeight: 800,
-                  fontFamily: "var(--font-barlow-condensed)",
-                  lineHeight: 1.1,
-                }}
-              >
+              <p className="type-label">НИЙТ ОНОО</p>
+              <p className="type-stat-sm leading-tight text-[#C4B5FD]">
                 {userData.totalPoints.toLocaleString()}
               </p>
             </div>
             {userData.role === "admin" && (
-              <div
-                className="rounded-lg border border-[#8B5CF6]/25 bg-[#8B5CF6]/12 px-2.5 py-2"
-                style={{
-                  fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.6rem",
-                  fontWeight: 700,
-                  color: "#C4B5FD",
-                  letterSpacing: "0.08em",
-                }}
-              >
+              <div className="flex h-11 items-center rounded-lg border border-[#8B5CF6]/25 bg-[#8B5CF6]/12 px-3 font-mono text-xs font-bold tracking-[0.08em] text-[#C4B5FD]">
                 ADMIN
               </div>
             )}
@@ -209,74 +147,65 @@ function DashboardContent() {
       </div>
 
       {/* Stat Row */}
-      <div className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-8 grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
         <StatCard
           label="НИЙТ ОНОО"
           value={userData.totalPoints.toLocaleString()}
           accent="#8B5CF6"
-          icon={<Star size={14} />}
+          icon={<Star size={16} />}
         />
         <StatCard
           label="ДУУССАН"
           value={completedTasks.length}
           accent="#22C55E"
-          icon={<CheckCircle2 size={14} />}
+          icon={<CheckCircle2 size={16} />}
+          hint={`${tasks.length} даалгавраас`}
         />
         <StatCard
           label="ХҮЛЭЭГДЭЖ БУЙ"
           value={activeTasks.length}
           accent="#FBBF24"
-          icon={<Clock size={14} />}
+          icon={<Clock size={16} />}
         />
-        <StatCard label="Rank" value={userRank} accent="#FBBF24" icon={<Trophy size={14} />} />
+        <StatCard
+          label="ЭРЭМБЭ"
+          value={typeof userRank === "number" ? `#${userRank}` : userRank}
+          accent="#FBBF24"
+          icon={<Trophy size={16} />}
+          hint={entries.length > 0 ? `${entries.length} гишүүнээс` : undefined}
+        />
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         {/* Recent Tasks */}
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-4">
-            <h2
-              className="transition-colors hover:text-[#C4B5FD]"
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                color: "#6B7280",
-                letterSpacing: "0.1em",
-              }}
-            >
-              СҮҮЛИЙН ДААЛГАВРУУД
-            </h2>
-            <Link
-              href="/dashboard/tasks"
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.65rem",
-                color: "#8B5CF6",
-                letterSpacing: "0.06em",
-              }}
-            >
-              БҮГДИЙГ ХАРАХ →
-            </Link>
+        <div className="min-w-0">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="type-section-title mb-0">СҮҮЛИЙН ДААЛГАВРУУД</h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/tasks" className="font-mono text-xs tracking-[0.06em]">
+                БҮГДИЙГ ХАРАХ →
+              </Link>
+            </Button>
           </div>
-          <div className="flex flex-col gap-2">
-            {tasksLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="size-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : recentTasks.length === 0 ? (
-              <div
-                className="surface-card rounded-xl py-12 text-center"
-                style={{
-                  color: "#374151",
-                  fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.8rem",
-                }}
-              >
-                ДААЛГАВАР ОЛДСОНГҮЙ
-              </div>
-            ) : (
-              recentTasks.map((t) => (
+          {tasksLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : recentTasks.length === 0 ? (
+            <div className="surface-card rounded-xl">
+              <EmptyState
+                icon={<ClipboardList size={18} />}
+                message="Танд одоогоор даалгавар оноогдоогүй байна."
+                action={
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/dashboard/tasks">Жагсаалт руу</Link>
+                  </Button>
+                }
+              />
+            </div>
+          ) : (
+            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
+              {recentTasks.map((t) => (
                 <TaskCard
                   key={t.id}
                   task={t}
@@ -285,107 +214,57 @@ function DashboardContent() {
                   variant="surface"
                   onOpen={() => open(t.id)}
                 />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Leaderboard preview */}
-        <div style={{ width: "280px", flexShrink: 0 }}>
-          <div className="flex items-center justify-between mb-4">
-            <h2
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                color: "#6B7280",
-                letterSpacing: "0.1em",
-              }}
-            >
-              ТОП ГИШҮҮД
-            </h2>
-            <Link
-              href="/dashboard/leaderboard"
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.65rem",
-                color: "#8B5CF6",
-                letterSpacing: "0.06em",
-              }}
-            >
-              ДЭЛГЭРЭНГҮЙ →
-            </Link>
+        <div className="min-w-0">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="type-section-title mb-0">ТОП ГИШҮҮД</h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/leaderboard" className="font-mono text-xs tracking-[0.06em]">
+                ДЭЛГЭРЭНГҮЙ →
+              </Link>
+            </Button>
           </div>
           <div className="border surface-card overflow-hidden rounded-xl">
             {leaderboardLoading ? (
-              <div className="flex items-center justify-center py-8">
+              <div className="flex items-center justify-center py-10">
                 <Loader2 className="size-6 animate-spin text-muted-foreground" />
               </div>
+            ) : topThree.length === 0 ? (
+              <EmptyState icon={<Trophy size={18} />} message="Оноо авсан гишүүн хараахан алга." />
             ) : (
               topThree.map((m, i) => {
                 const medal = rankMedal(i);
                 return (
                   <div
                     key={m.uid}
-                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.035]"
+                    className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.035]"
                     style={{
                       borderBottom: i < 2 ? "1px solid rgba(255, 255, 255, 0.06)" : "none",
                     }}
                   >
                     <span
-                      style={{
-                        fontFamily: "var(--font-jetbrains)",
-                        fontWeight: 800,
-                        fontSize: "0.85rem",
-                        color: medal.color,
-                        width: "24px",
-                      }}
+                      className="w-8 shrink-0 font-mono text-base font-extrabold"
+                      style={{ color: medal.color }}
                     >
                       {medal.label}
                     </span>
-                    <div
-                      className="w-8 h-8 rounded flex items-center justify-center text-xs font-bold shrink-0"
-                      style={{
-                        background: "rgba(139, 92, 246, 0.125)",
-                        color: "#8B5CF6",
-                        fontFamily: "var(--font-jetbrains)",
-                        fontSize: "0.6rem",
-                      }}
-                    >
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#8B5CF6]/12 font-mono text-xs font-bold text-[#8B5CF6]">
                       {getInitials(m.name)}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        style={{
-                          color: "#E8E8E8",
-                          fontSize: "0.82rem",
-                          fontWeight: 600,
-                          fontFamily: "var(--font-barlow)",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-sans text-sm font-semibold text-[#E8E8E8]">
                         {m.name}
                       </p>
-                      <p
-                        style={{
-                          color: "#6B7280",
-                          fontSize: "0.65rem",
-                          fontFamily: "var(--font-jetbrains)",
-                        }}
-                      >
-                        {getMajorLabel(m.major).split(" ")[0]}
+                      <p className="type-meta truncate">
+                        {getMajorLabel(m.major).split(" ")[0] || "—"}
                       </p>
                     </div>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-barlow-condensed)",
-                        fontWeight: 800,
-                        fontSize: "1rem",
-                        color: medal.color,
-                      }}
-                    >
+                    <span className="type-stat-sm" style={{ color: medal.color }}>
                       {m.totalPoints}
                     </span>
                   </div>

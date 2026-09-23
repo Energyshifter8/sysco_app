@@ -19,7 +19,7 @@ const NO_TEAM = "__none__";
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains)",
-  fontSize: "0.6rem",
+  fontSize: "0.75rem",
   color: "#6B7280",
   letterSpacing: "0.1em",
   marginBottom: "4px",

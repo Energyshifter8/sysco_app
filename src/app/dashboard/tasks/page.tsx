@@ -1,15 +1,18 @@
 "use client";
 
-import { PageContainer, PageHeader } from "@/components/page-container";
+import { EmptyState, PageContainer, PageHeader } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { TaskCard } from "@/components/task-card";
 import { TaskDetailDialog } from "@/components/task-detail-dialog";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useAssignedTasks } from "@/hooks/useAssignedTasks";
 import { useMembers } from "@/hooks/useMembers";
 import { useResolvedTask, useSelectedTask } from "@/hooks/useSelectedTask";
 import { ASSIGNEE_STATUS_LABELS, type AssigneeStatus } from "@/lib/constants";
 import { getAssigneeReview, getAssigneeStatus, isTaskOverdue, resolveAssignees } from "@/lib/tasks";
+import { cn } from "@/lib/utils";
+import { ClipboardList } from "lucide-react";
 import { Suspense } from "react";
 import { useState } from "react";
 
@@ -52,14 +55,11 @@ function MemberTasksContent() {
       <PageHeader title="ДААЛГАВРЫН ЖАГСААЛТ" description={`${filtered.length} ДААЛГАВАР`} />
 
       {/* Tabs */}
-      <div
-        className="mb-6 flex overflow-x-auto"
-        style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}
-      >
+      <div className="mb-6 flex overflow-x-auto border-b border-white/8">
         {[
-          { key: "current", label: "Одоогийн" },
-          { key: "history", label: "Түүх" },
-        ].map(({ key, label }) => (
+          { key: "current", label: "Одоогийн", count: active.length },
+          { key: "history", label: "Түүх", count: reviewed.length },
+        ].map(({ key, label, count }) => (
           <button
             key={key}
             type="button"
@@ -67,22 +67,15 @@ function MemberTasksContent() {
               setTab(key as "current" | "history");
               setFilter("all");
             }}
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              letterSpacing: "0.04em",
-              padding: "10px 20px",
-              background: "none",
-              border: "none",
-              borderBottom: tab === key ? "2px solid #8B5CF6" : "2px solid transparent",
-              color: tab === key ? "#8B5CF6" : "#6B7280",
-              cursor: "pointer",
-              marginBottom: "-1px",
-              transition: "all 0.15s",
-            }}
+            className={cn(
+              "-mb-px shrink-0 border-b-2 px-5 py-3 font-mono text-sm font-bold tracking-[0.04em] transition-colors",
+              tab === key
+                ? "border-[#8B5CF6] text-[#8B5CF6]"
+                : "border-transparent text-[#6B7280] hover:text-[#9CA3AF]",
+            )}
           >
             {label}
+            <span className="ml-2 text-xs opacity-70">{count}</span>
           </button>
         ))}
       </div>
@@ -103,17 +96,11 @@ function MemberTasksContent() {
               key={key}
               type="button"
               onClick={() => setFilter(key)}
+              className="h-9 rounded-lg border px-3.5 font-mono text-xs tracking-[0.06em] transition-colors"
               style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.65rem",
-                letterSpacing: "0.06em",
-                padding: "5px 12px",
-                borderRadius: "3px",
-                border: `1px solid ${filter === key ? color : "rgba(255,255,255,0.1)"}`,
-                background: filter === key ? `${color}18` : "transparent",
-                color: filter === key ? color : "#6B7280",
-                cursor: "pointer",
-                transition: "all 0.15s",
+                borderColor: filter === key ? color : "rgba(255,255,255,0.1)",
+                background: filter === key ? `${color}1A` : "transparent",
+                color: filter === key ? color : "#9CA3AF",
               }}
             >
               {label}
@@ -123,29 +110,37 @@ function MemberTasksContent() {
       )}
 
       {/* Task list */}
-      <div className="flex flex-col gap-2">
-        {filtered.map((t) => (
-          <TaskCard
-            key={t.id}
-            task={t}
-            uid={uid}
-            assignees={resolveAssignees(t, members)}
-            onOpen={() => open(t.id)}
+      {filtered.length === 0 ? (
+        <div className="rounded-xl border border-white/8 bg-[#141414]">
+          <EmptyState
+            icon={<ClipboardList size={18} />}
+            message={
+              tab === "history"
+                ? "Баталгаажсан даалгавар хараахан алга."
+                : "Энэ шүүлтүүрт тохирох даалгавар алга."
+            }
+            action={
+              filter !== "all" ? (
+                <Button variant="outline" size="sm" onClick={() => setFilter("all")}>
+                  Бүгдийг харах
+                </Button>
+              ) : undefined
+            }
           />
-        ))}
-        {filtered.length === 0 && (
-          <div
-            className="py-12 text-center"
-            style={{
-              color: "#374151",
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.8rem",
-            }}
-          >
-            ДААЛГАВАР ОЛДСОНГҮЙ
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(320px,1fr))]">
+          {filtered.map((t) => (
+            <TaskCard
+              key={t.id}
+              task={t}
+              uid={uid}
+              assignees={resolveAssignees(t, members)}
+              onOpen={() => open(t.id)}
+            />
+          ))}
+        </div>
+      )}
 
       <TaskDetailDialog
         task={selectedTask}

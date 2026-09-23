@@ -59,7 +59,7 @@ export default function LoginPage() {
               <span
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.7rem",
+                  fontSize: "0.8125rem",
                   color: "#6B7280",
                   letterSpacing: "0.12em",
                 }}
@@ -72,7 +72,7 @@ export default function LoginPage() {
             className="inline-flex rounded-full border border-white/8 bg-white/4 px-3 py-1 text-[#9CA3AF]"
             style={{
               fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.6rem",
+              fontSize: "0.75rem",
               letterSpacing: "0.1em",
             }}
           >
@@ -86,7 +86,7 @@ export default function LoginPage() {
             <h1
               style={{
                 color: "#F3F4F6",
-                fontFamily: "var(--font-barlow)",
+                fontFamily: "var(--font-montserrat)",
                 fontSize: "1.35rem",
                 fontWeight: 800,
               }}
@@ -96,8 +96,8 @@ export default function LoginPage() {
             <p
               style={{
                 color: "#6B7280",
-                fontFamily: "var(--font-barlow)",
-                fontSize: "0.85rem",
+                fontFamily: "var(--font-montserrat)",
+                fontSize: "0.875rem",
                 marginTop: "4px",
               }}
             />
@@ -107,7 +107,7 @@ export default function LoginPage() {
               <label
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.7rem",
+                  fontSize: "0.8125rem",
                   color: "#6B7280",
                   letterSpacing: "0.1em",
                   display: "block",
@@ -128,10 +128,10 @@ export default function LoginPage() {
                   background: "#1A1A1A",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
                   borderRadius: "3px",
-                  padding: "10px 12px",
+                  padding: "12px 14px",
                   color: "#E8E8E8",
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.9rem",
+                  fontSize: "1.0rem",
                   outline: "none",
                   boxSizing: "border-box",
                 }}
@@ -141,7 +141,7 @@ export default function LoginPage() {
               <label
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.7rem",
+                  fontSize: "0.8125rem",
                   color: "#6B7280",
                   letterSpacing: "0.1em",
                   display: "block",
@@ -167,9 +167,9 @@ export default function LoginPage() {
                 color: "#fff",
                 fontFamily: "var(--font-jetbrains)",
                 fontWeight: 700,
-                fontSize: "0.85rem",
+                fontSize: "1rem",
                 letterSpacing: "0.08em",
-                padding: "12px",
+                padding: "14px",
                 border: "none",
                 borderRadius: "3px",
                 cursor: loading ? "not-allowed" : "pointer",
@@ -188,9 +188,9 @@ export default function LoginPage() {
               style={{
                 textAlign: "center",
                 color: "#6B7280",
-                fontSize: "0.8rem",
+                fontSize: "0.875rem",
                 marginTop: "16px",
-                fontFamily: "var(--font-barlow)",
+                fontFamily: "var(--font-montserrat)",
               }}
             >
               Бүртгэл байхгүй юу?{" "}
@@ -211,7 +211,7 @@ export default function LoginPage() {
           style={{
             textAlign: "center",
             color: "#374151",
-            fontSize: "0.75rem",
+            fontSize: "0.875rem",
             marginTop: "20px",
             fontFamily: "var(--font-jetbrains)",
           }}

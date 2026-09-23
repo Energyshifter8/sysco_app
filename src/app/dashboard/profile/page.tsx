@@ -39,7 +39,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const mono = { fontFamily: "var(--font-jetbrains)" } as const;
-const condensed = { fontFamily: "var(--font-barlow-condensed)" } as const;
+const condensed = { fontFamily: "var(--font-condensed)" } as const;
 
 const COURSES = [
   { value: "1", label: "1-р курс" },
@@ -67,7 +67,7 @@ function Chip({ color, children }: { color: string; children: React.ReactNode })
       className="inline-flex items-center rounded px-2 py-0.5"
       style={{
         ...mono,
-        fontSize: "0.62rem",
+        fontSize: "0.75rem",
         fontWeight: 700,
         letterSpacing: "0.05em",
         color,
@@ -127,7 +127,7 @@ function IdentityCard({
         <h2
           className="truncate"
           style={{
-            fontFamily: "var(--font-barlow)",
+            fontFamily: "var(--font-montserrat)",
             fontWeight: 800,
             fontSize: "1.25rem",
             color: "#E8E8E8",
@@ -135,13 +135,13 @@ function IdentityCard({
         >
           {name}
         </h2>
-        <p className="truncate" style={{ ...mono, fontSize: "0.72rem", color: "#6B7280" }}>
+        <p className="truncate" style={{ ...mono, fontSize: "0.8125rem", color: "#6B7280" }}>
           {email}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Chip color={ROLE_ACCENT[role]}>{ROLE_LABELS[role]}</Chip>
           {team && <Chip color="#22C55E">{TEAM_LABELS[team]}</Chip>}
-          <span style={{ ...mono, fontSize: "0.65rem", color: "#4B5563" }}>
+          <span style={{ ...mono, fontSize: "0.8125rem", color: "#4B5563" }}>
             Элссэн: {formatDay(createdAt)}
           </span>
         </div>
@@ -167,7 +167,7 @@ function StatCard({
 }) {
   return (
     <Panel
-      className="dashboard-stat-card px-4 py-3.5"
+      className="dashboard-stat-card h-full p-5"
       style={
         {
           "--stat-accent": accent,
@@ -185,19 +185,16 @@ function StatCard({
         </span>
         <span
           className="truncate"
-          style={{ ...mono, fontSize: "0.58rem", letterSpacing: "0.09em", color: "#6B7280" }}
+          style={{ ...mono, fontSize: "0.75rem", letterSpacing: "0.09em", color: "#6B7280" }}
         >
           {label}
         </span>
       </div>
-      <div
-        className="tabular-nums"
-        style={{ ...condensed, fontSize: "1.75rem", fontWeight: 800, lineHeight: 1, color: accent }}
-      >
+      <div className="type-stat leading-none" style={{ color: accent }}>
         {value}
       </div>
       {hint && (
-        <p className="mt-1 truncate" style={{ ...mono, fontSize: "0.58rem", color: "#4B5563" }}>
+        <p className="mt-1 truncate" style={{ ...mono, fontSize: "0.75rem", color: "#4B5563" }}>
           {hint}
         </p>
       )}
@@ -286,7 +283,7 @@ function ProfileForm({
           <div className="grid gap-1.5">
             <Label
               htmlFor="profile-name"
-              style={{ ...mono, fontSize: "0.62rem", color: "#9CA3AF" }}
+              style={{ ...mono, fontSize: "0.75rem", color: "#9CA3AF" }}
             >
               НЭР
             </Label>
@@ -296,14 +293,14 @@ function ProfileForm({
               onChange={(e) => set("name", e.target.value)}
               disabled={saving}
               placeholder="Таны нэр"
-              className="h-9"
+              className="h-11"
             />
           </div>
 
           <div className="grid gap-1.5">
             <Label
               htmlFor="profile-major"
-              style={{ ...mono, fontSize: "0.62rem", color: "#9CA3AF" }}
+              style={{ ...mono, fontSize: "0.75rem", color: "#9CA3AF" }}
             >
               МЭРГЭЖИЛ
             </Label>
@@ -312,7 +309,7 @@ function ProfileForm({
               disabled={saving}
               onValueChange={(value) => set("major", value === UNSET ? "" : value)}
             >
-              <SelectTrigger id="profile-major" className="h-9 w-full">
+              <SelectTrigger id="profile-major" className="h-11 w-full">
                 <SelectValue placeholder="Сонгоогүй" />
               </SelectTrigger>
               <SelectContent>
@@ -329,7 +326,7 @@ function ProfileForm({
           <div className="grid gap-1.5">
             <Label
               htmlFor="profile-course"
-              style={{ ...mono, fontSize: "0.62rem", color: "#9CA3AF" }}
+              style={{ ...mono, fontSize: "0.75rem", color: "#9CA3AF" }}
             >
               КУРС
             </Label>
@@ -338,7 +335,7 @@ function ProfileForm({
               disabled={saving}
               onValueChange={(value) => set("course", value === UNSET ? "" : value)}
             >
-              <SelectTrigger id="profile-course" className="h-9 w-full">
+              <SelectTrigger id="profile-course" className="h-11 w-full">
                 <SelectValue placeholder="Сонгоогүй" />
               </SelectTrigger>
               <SelectContent>
@@ -355,7 +352,7 @@ function ProfileForm({
           <div className="grid gap-1.5">
             <Label
               htmlFor="profile-team"
-              style={{ ...mono, fontSize: "0.62rem", color: "#9CA3AF" }}
+              style={{ ...mono, fontSize: "0.75rem", color: "#9CA3AF" }}
             >
               БАГ
             </Label>
@@ -364,7 +361,7 @@ function ProfileForm({
               disabled={saving}
               onValueChange={(value) => set("team", value === UNSET ? "" : value)}
             >
-              <SelectTrigger id="profile-team" className="h-9 w-full">
+              <SelectTrigger id="profile-team" className="h-11 w-full">
                 <SelectValue placeholder="Сонгоогүй" />
               </SelectTrigger>
               <SelectContent>
@@ -381,7 +378,7 @@ function ProfileForm({
 
         <div className="mt-5 flex items-center justify-end gap-3">
           {dirty && (
-            <span style={{ ...mono, fontSize: "0.62rem", color: "#6B7280" }}>
+            <span style={{ ...mono, fontSize: "0.75rem", color: "#6B7280" }}>
               Хадгалаагүй өөрчлөлт байна
             </span>
           )}
@@ -410,7 +407,7 @@ function RecentPoints({ uid }: { uid: string }) {
           ))}
         </div>
       ) : entries.length === 0 ? (
-        <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.82rem", color: "#6B7280" }}>
+        <p style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.875rem", color: "#6B7280" }}>
           Оноо хараахан аваагүй байна. Даалгавраа дуусгаад ахлагчаас үнэлгээ аваарай.
         </p>
       ) : (
@@ -427,15 +424,15 @@ function RecentPoints({ uid }: { uid: string }) {
                 <p
                   className="truncate"
                   style={{
-                    fontFamily: "var(--font-barlow)",
-                    fontSize: "0.82rem",
+                    fontFamily: "var(--font-montserrat)",
+                    fontSize: "0.875rem",
                     fontWeight: 600,
                     color: "#E8E8E8",
                   }}
                 >
                   {entry.reason}
                 </p>
-                <p style={{ ...mono, fontSize: "0.6rem", color: "#6B7280" }}>
+                <p style={{ ...mono, fontSize: "0.75rem", color: "#6B7280" }}>
                   {formatDay(entry.createdAt)}
                 </p>
               </div>
@@ -475,7 +472,7 @@ function ActiveTasks({
         <Link
           href="/dashboard/tasks"
           className="mb-3 transition-colors hover:text-[#C4B5FD]"
-          style={{ ...mono, fontSize: "0.6rem", color: "#8B5CF6", letterSpacing: "0.05em" }}
+          style={{ ...mono, fontSize: "0.75rem", color: "#8B5CF6", letterSpacing: "0.05em" }}
         >
           БҮГД →
         </Link>
@@ -487,7 +484,7 @@ function ActiveTasks({
           ))}
         </div>
       ) : tasks.length === 0 ? (
-        <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.82rem", color: "#6B7280" }}>
+        <p style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.875rem", color: "#6B7280" }}>
           Идэвхтэй даалгавар алга — бүгд дууссан байна.
         </p>
       ) : (
@@ -502,15 +499,15 @@ function ActiveTasks({
                 <p
                   className="truncate"
                   style={{
-                    fontFamily: "var(--font-barlow)",
-                    fontSize: "0.82rem",
+                    fontFamily: "var(--font-montserrat)",
+                    fontSize: "0.875rem",
                     fontWeight: 600,
                     color: "#E8E8E8",
                   }}
                 >
                   {task.title}
                 </p>
-                <p style={{ ...mono, fontSize: "0.6rem", color: "#6B7280" }}>
+                <p style={{ ...mono, fontSize: "0.75rem", color: "#6B7280" }}>
                   {task.dueDate ? formatDay(task.dueDate) : "Хугацаагүй"}
                 </p>
               </div>
@@ -553,10 +550,10 @@ export default function ProfilePage() {
     return (
       <PageContainer>
         <PageHeader title="ПРОФАЙЛ" description="АЧААЛЖ БАЙНА…" />
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]" aria-hidden="true">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]" aria-hidden="true">
           <div className="flex flex-col gap-5">
             <div className="h-[116px] animate-pulse rounded-xl bg-white/4" />
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))]">
               {["a", "b", "c", "d"].map((key) => (
                 <div key={key} className="h-[96px] animate-pulse rounded-xl bg-white/4" />
               ))}
@@ -608,23 +605,29 @@ export default function ProfilePage() {
           <div>
             <p
               style={{
-                fontFamily: "var(--font-barlow)",
-                fontSize: "0.85rem",
+                fontFamily: "var(--font-montserrat)",
+                fontSize: "0.875rem",
                 fontWeight: 700,
                 color: "#FCD34D",
               }}
             >
               Профайлаа бөглөнө үү
             </p>
-            <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.8rem", color: "#9CA3AF" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-montserrat)",
+                fontSize: "0.875rem",
+                color: "#9CA3AF",
+              }}
+            >
               Баг болон мэргэжлээ сонгосноор багийн даалгавар танд хуваарилагдана.
             </p>
           </div>
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-w-0 flex-col gap-5">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex min-w-0 flex-col gap-6">
           <IdentityCard
             uid={user.uid}
             name={profile.name}
@@ -634,7 +637,7 @@ export default function ProfilePage() {
             createdAt={userData.createdAt}
           />
 
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(150px,1fr))]">
             <StatCard
               label="НИЙТ ОНОО"
               value={userData.totalPoints.toLocaleString()}
@@ -669,7 +672,7 @@ export default function ProfilePage() {
           <ProfileForm uid={user.uid} saved={profile} onSaved={setProfile} />
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-5">
+        <aside className="flex min-w-0 flex-col gap-6">
           <RecentPoints uid={user.uid} />
           <ActiveTasks tasks={activeTasks} uid={user.uid} loading={tasksLoading} />
         </aside>

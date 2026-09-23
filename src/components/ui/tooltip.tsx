@@ -43,7 +43,7 @@ function TooltipContent({
           className,
         )}
         style={{
-          fontFamily: "var(--font-barlow)",
+          fontFamily: "var(--font-montserrat)",
           fontSize: "0.78rem",
           color: "#E8E8E8",
         }}

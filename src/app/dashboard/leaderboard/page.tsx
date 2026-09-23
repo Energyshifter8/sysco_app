@@ -28,7 +28,6 @@ const TEAM_COLORS: Record<Team, string> = {
 };
 
 const mono = { fontFamily: "var(--font-jetbrains)" } as const;
-const condensed = { fontFamily: "var(--font-barlow-condensed)" } as const;
 
 function Avatar({ uid, name, size = 28 }: { uid: string; name: string; size?: number }) {
   const palette = avatarPalette(uid);
@@ -54,7 +53,7 @@ function Avatar({ uid, name, size = 28 }: { uid: string; name: string; size?: nu
 
 function TeamBadge({ team, className }: { team?: Team; className?: string }) {
   if (!team) {
-    return <span style={{ ...mono, fontSize: "0.6rem", color: "#4B5563" }}>—</span>;
+    return <span style={{ ...mono, fontSize: "0.75rem", color: "#4B5563" }}>—</span>;
   }
   const color = TEAM_COLORS[team];
   return (
@@ -62,7 +61,7 @@ function TeamBadge({ team, className }: { team?: Team; className?: string }) {
       className={cn("inline-flex items-center rounded px-1.5 py-0.5", className)}
       style={{
         ...mono,
-        fontSize: "0.6rem",
+        fontSize: "0.75rem",
         fontWeight: 700,
         letterSpacing: "0.04em",
         color,
@@ -93,62 +92,45 @@ function ViewerCard({
   const gap = ahead ? ahead.totalPoints - entry.totalPoints : 0;
 
   return (
-    <Panel className="flex items-center gap-4 px-4 py-4 sm:px-5">
-      <Avatar uid={entry.uid} name={entry.name} size={40} />
-      <div className="min-w-0 flex-1">
-        <p style={{ ...mono, fontSize: "0.6rem", letterSpacing: "0.1em", color: "#6B7280" }}>
-          ТАНЫ БАЙР
-        </p>
-        <p
-          className="truncate"
-          style={{
-            fontFamily: "var(--font-barlow)",
-            fontSize: "0.95rem",
-            fontWeight: 700,
-            color: "#E8E8E8",
-          }}
-        >
-          {entry.name}
-        </p>
-        <p className="mt-0.5" style={{ ...mono, fontSize: "0.65rem", color: "#6B7280" }}>
-          {ahead
-            ? `Дээрх хүнээс ${gap} оноогоор хоцорч байна`
-            : "Та тэргүүлж байна — ялгааг хадгална уу"}
-        </p>
-      </div>
-      <div className="flex items-center gap-5 sm:gap-7">
-        <div className="text-right">
-          <p style={{ ...mono, fontSize: "0.55rem", letterSpacing: "0.1em", color: "#6B7280" }}>
-            БАЙР
+    <Panel className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:px-5">
+      <div className="flex min-w-0 flex-1 items-center gap-4">
+        <Avatar uid={entry.uid} name={entry.name} size={44} />
+        <div className="min-w-0 flex-1">
+          <p style={{ ...mono, fontSize: "0.75rem", letterSpacing: "0.1em", color: "#6B7280" }}>
+            ТАНЫ БАЙР
           </p>
           <p
+            className="truncate"
             style={{
-              ...condensed,
-              fontSize: "1.9rem",
-              fontWeight: 800,
-              lineHeight: 1,
-              color: medalColor(rank),
+              fontFamily: "var(--font-montserrat)",
+              fontSize: "1.05rem",
+              fontWeight: 700,
+              color: "#E8E8E8",
             }}
           >
+            {entry.name}
+          </p>
+          <p className="mt-0.5" style={{ ...mono, fontSize: "0.8125rem", color: "#6B7280" }}>
+            {ahead
+              ? `Дээрх хүнээс ${gap} оноогоор хоцорч байна`
+              : "Та тэргүүлж байна — ялгааг хадгална уу"}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-6 sm:gap-8">
+        <div className="text-right">
+          <p style={{ ...mono, fontSize: "0.75rem", letterSpacing: "0.1em", color: "#6B7280" }}>
+            БАЙР
+          </p>
+          <p className="type-stat leading-none" style={{ color: medalColor(rank) }}>
             #{rank}
           </p>
         </div>
         <div className="text-right">
-          <p style={{ ...mono, fontSize: "0.55rem", letterSpacing: "0.1em", color: "#6B7280" }}>
+          <p style={{ ...mono, fontSize: "0.75rem", letterSpacing: "0.1em", color: "#6B7280" }}>
             ОНОО
           </p>
-          <p
-            className="tabular-nums"
-            style={{
-              ...condensed,
-              fontSize: "1.9rem",
-              fontWeight: 800,
-              lineHeight: 1,
-              color: "#22C55E",
-            }}
-          >
-            {entry.totalPoints}
-          </p>
+          <p className="type-stat leading-none text-[#22C55E]">{entry.totalPoints}</p>
         </div>
       </div>
     </Panel>
@@ -159,9 +141,9 @@ function ViewerCard({
 
 /** Visual order and block height per place, so first place stands in the middle. */
 const PODIUM_LAYOUT = [
-  { order: 2, height: 184 },
-  { order: 1, height: 152 },
-  { order: 3, height: 136 },
+  { order: 2, height: 208 },
+  { order: 1, height: 176 },
+  { order: 3, height: 158 },
 ] as const;
 
 function Podium({ entries, viewerUid }: { entries: LeaderboardEntry[]; viewerUid?: string }) {
@@ -192,10 +174,10 @@ function Podium({ entries, viewerUid }: { entries: LeaderboardEntry[]; viewerUid
           >
             <Avatar uid={entry.uid} name={entry.name} size={place === 1 ? 40 : 34} />
             <p
-              className="line-clamp-2 text-center"
+              className="line-clamp-2 w-full break-all text-center"
               style={{
-                fontFamily: "var(--font-barlow)",
-                fontSize: "0.8rem",
+                fontFamily: "var(--font-montserrat)",
+                fontSize: "0.875rem",
                 fontWeight: 700,
                 color: "#E8E8E8",
                 lineHeight: 1.2,
@@ -206,13 +188,10 @@ function Podium({ entries, viewerUid }: { entries: LeaderboardEntry[]; viewerUid
             <span className="hidden max-w-full sm:block">
               <TeamBadge team={entry.team} className="max-w-full truncate" />
             </span>
-            <p
-              className="tabular-nums"
-              style={{ ...condensed, fontSize: "1.5rem", fontWeight: 800, lineHeight: 1, color }}
-            >
+            <p className="type-stat-sm leading-none" style={{ color }}>
               {entry.totalPoints}
             </p>
-            <span style={{ ...mono, fontSize: "0.65rem", fontWeight: 800, color }}>#{place}</span>
+            <span style={{ ...mono, fontSize: "0.8125rem", fontWeight: 800, color }}>#{place}</span>
           </div>
         );
       })}
@@ -236,7 +215,7 @@ function LeaderRow({
   return (
     <div
       className={cn(
-        "grid h-14 grid-cols-[36px_minmax(0,1fr)_64px] items-center gap-3 px-3 transition-colors sm:grid-cols-[44px_minmax(0,1fr)_132px_72px] sm:px-4",
+        "grid h-16 grid-cols-[36px_minmax(0,1fr)_64px] items-center gap-3 px-3 transition-colors sm:grid-cols-[44px_minmax(0,1fr)_132px_72px] sm:px-4",
         !isViewer && "hover:bg-white/[0.035]",
       )}
       style={{
@@ -251,7 +230,7 @@ function LeaderRow({
     >
       <span
         className="tabular-nums"
-        style={{ ...mono, fontSize: "0.75rem", fontWeight: 800, color: medalColor(rank) }}
+        style={{ ...mono, fontSize: "0.875rem", fontWeight: 800, color: medalColor(rank) }}
       >
         #{rank}
       </span>
@@ -262,21 +241,21 @@ function LeaderRow({
           <p
             className="truncate"
             style={{
-              fontFamily: "var(--font-barlow)",
-              fontSize: "0.85rem",
+              fontFamily: "var(--font-montserrat)",
+              fontSize: "0.875rem",
               fontWeight: 600,
               color: isViewer ? "#C4B5FD" : "#E8E8E8",
             }}
           >
             {entry.name}
             {isViewer && (
-              <span style={{ ...mono, fontSize: "0.6rem", color: "#8B5CF6" }}> · ТА</span>
+              <span style={{ ...mono, fontSize: "0.75rem", color: "#8B5CF6" }}> · ТА</span>
             )}
           </p>
           {/* The team column is a cell of its own from `sm` up. */}
           <p
             className="truncate sm:hidden"
-            style={{ ...mono, fontSize: "0.6rem", color: "#6B7280" }}
+            style={{ ...mono, fontSize: "0.75rem", color: "#6B7280" }}
           >
             {entry.team ? TEAM_SHORT_LABELS[entry.team] : "—"}
           </p>
@@ -287,12 +266,7 @@ function LeaderRow({
         <TeamBadge team={entry.team} />
       </div>
 
-      <span
-        className="tabular-nums text-right"
-        style={{ ...condensed, fontSize: "1.15rem", fontWeight: 800, color: "#22C55E" }}
-      >
-        {entry.totalPoints}
-      </span>
+      <span className="type-stat-sm text-right text-[#22C55E]">{entry.totalPoints}</span>
     </div>
   );
 }
@@ -307,10 +281,10 @@ function LeaderList({
   if (entries.length === 0) {
     return (
       <Panel className="px-4 py-8 text-center">
-        <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.9rem", color: "#9CA3AF" }}>
+        <p style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.875rem", color: "#9CA3AF" }}>
           Энэ багт оноо авсан гишүүн алга байна
         </p>
-        <p className="mt-1" style={{ ...mono, fontSize: "0.7rem", color: "#4B5563" }}>
+        <p className="mt-1" style={{ ...mono, fontSize: "0.75rem", color: "#4B5563" }}>
           Шүүлтүүрийг "Бүгд" болгож бүх гишүүдийг харна уу
         </p>
       </Panel>
@@ -330,7 +304,7 @@ function LeaderList({
           <span
             key={head}
             className={cn(i === 2 && "hidden sm:block", i === 3 && "text-right")}
-            style={{ ...mono, fontSize: "0.58rem", letterSpacing: "0.1em", color: "#6B7280" }}
+            style={{ ...mono, fontSize: "0.75rem", letterSpacing: "0.1em", color: "#6B7280" }}
           >
             {head}
           </span>
@@ -373,8 +347,8 @@ function TeamBreakdown({ entries }: { entries: LeaderboardEntry[] }) {
               <span
                 className="truncate"
                 style={{
-                  fontFamily: "var(--font-barlow)",
-                  fontSize: "0.8rem",
+                  fontFamily: "var(--font-montserrat)",
+                  fontSize: "0.875rem",
                   fontWeight: 600,
                   color: "#E8E8E8",
                 }}
@@ -383,7 +357,7 @@ function TeamBreakdown({ entries }: { entries: LeaderboardEntry[] }) {
               </span>
               <span
                 className="tabular-nums"
-                style={{ ...mono, fontSize: "0.7rem", fontWeight: 700, color: TEAM_COLORS[team] }}
+                style={{ ...mono, fontSize: "0.875rem", fontWeight: 700, color: TEAM_COLORS[team] }}
               >
                 {points}
               </span>
@@ -394,7 +368,7 @@ function TeamBreakdown({ entries }: { entries: LeaderboardEntry[] }) {
                 style={{ width: `${(points / max) * 100}%`, background: TEAM_COLORS[team] }}
               />
             </div>
-            <p className="mt-1" style={{ ...mono, fontSize: "0.6rem", color: "#6B7280" }}>
+            <p className="mt-1" style={{ ...mono, fontSize: "0.75rem", color: "#6B7280" }}>
               {count} гишүүн
             </p>
           </div>
@@ -418,16 +392,13 @@ function SummaryPanel({ entries }: { entries: LeaderboardEntry[] }) {
   return (
     <Panel className="px-4 py-4">
       <SectionTitle>ТОЙМ</SectionTitle>
-      <div className="grid grid-cols-3 gap-3 xl:grid-cols-1">
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(120px,1fr))] xl:grid-cols-1">
         {stats.map(({ label, value, color }) => (
           <div key={label}>
-            <p style={{ ...mono, fontSize: "0.55rem", letterSpacing: "0.1em", color: "#6B7280" }}>
+            <p style={{ ...mono, fontSize: "0.75rem", letterSpacing: "0.1em", color: "#6B7280" }}>
               {label}
             </p>
-            <p
-              className="tabular-nums"
-              style={{ ...condensed, fontSize: "1.5rem", fontWeight: 800, lineHeight: 1.1, color }}
-            >
+            <p className="type-stat-sm leading-tight" style={{ color }}>
               {value}
             </p>
           </div>
@@ -438,7 +409,7 @@ function SummaryPanel({ entries }: { entries: LeaderboardEntry[] }) {
           <Trophy size={13} className="shrink-0 text-[#FBBF24]" />
           <span
             className="truncate"
-            style={{ fontFamily: "var(--font-barlow)", fontSize: "0.78rem", color: "#9CA3AF" }}
+            style={{ fontFamily: "var(--font-montserrat)", fontSize: "0.875rem", color: "#9CA3AF" }}
           >
             Тэргүүлэгч: <span style={{ color: "#E8E8E8", fontWeight: 600 }}>{best.name}</span>
           </span>
@@ -453,11 +424,11 @@ function SummaryPanel({ entries }: { entries: LeaderboardEntry[] }) {
 /** Mirrors the real layout's boxes so nothing jumps when the data lands. */
 function LeaderboardSkeleton() {
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]" aria-hidden="true">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]" aria-hidden="true">
       <div className="flex flex-col gap-5">
         <div className="h-[76px] animate-pulse rounded-xl bg-white/4" />
         <div className="flex items-end justify-center gap-2 sm:gap-3">
-          {[152, 184, 136].map((h, i) => (
+          {[176, 208, 158].map((h, i) => (
             <div
               key={h}
               className="w-full max-w-[200px] animate-pulse rounded-xl bg-white/4"
@@ -470,7 +441,7 @@ function LeaderboardSkeleton() {
           {["a", "b", "c", "d", "e", "f"].map((key) => (
             <div
               key={key}
-              className="h-14 animate-pulse"
+              className="h-16 animate-pulse"
               style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
             />
           ))}
@@ -502,19 +473,13 @@ function LeaderboardContent() {
       <PageHeader
         title="ЭРЭМБЭ"
         description={loading ? "АЧААЛЖ БАЙНА…" : `${entries.length} ГИШҮҮН`}
-        actions={
-          <TeamFilter
-            value={team}
-            onChange={setTeam}
-            className="w-full overflow-x-auto lg:w-auto"
-          />
-        }
+        actions={<TeamFilter value={team} onChange={setTeam} className="w-full lg:w-auto" />}
       />
 
       {loading ? (
         <LeaderboardSkeleton />
       ) : (
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="flex min-w-0 flex-col gap-5">
             {viewerIndex >= 0 && (
               <ViewerCard

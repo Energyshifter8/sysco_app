@@ -4,8 +4,9 @@ import { AssigneeAvatars } from "@/components/assignee-list";
 import { DeadlineBadge } from "@/components/deadline-badge";
 import { ASSIGNEE_STATUS_COLORS, ASSIGNEE_STATUS_LABELS } from "@/lib/constants";
 import { getAssigneeReview, getAssigneeStatus, isTaskOverdue } from "@/lib/tasks";
+import { cn } from "@/lib/utils";
 import { Task, User } from "@/types";
-import { CheckCircle2, Clock } from "lucide-react";
+import { CheckCircle2, Clock, Users } from "lucide-react";
 import { memo } from "react";
 
 /** How the given member's own position on a task should read. */
@@ -14,7 +15,7 @@ export function statusMeta(task: Task, uid: string) {
   if (review) {
     return {
       color: "#22C55E",
-      label: `Баталгаажсан · ${review.score}/${task.points} оноо`,
+      label: `Баталгаажсан · ${review.score}/${task.points}`,
       Icon: CheckCircle2,
     };
   }
@@ -42,12 +43,15 @@ export interface TaskCardProps {
 }
 
 /**
- * One task, as it appears in a list. The whole card opens the detail dialog —
- * by click, or by Enter/Space for keyboard users.
+ * One task, as a card in a grid.
+ *
+ * It used to be a full-width bar: a title on the left, a point badge on the
+ * right and a few hundred pixels of nothing in between. As a card it carries
+ * the description, the deadline and who else is on it, and `h-full` keeps a
+ * row of them level however long each title runs.
  */
 function TaskCardImpl({ task, uid, assignees, onOpen, variant = "plain" }: TaskCardProps) {
   const { color, label, Icon } = statusMeta(task, uid);
-  const isSurface = variant === "surface";
 
   return (
     <div
@@ -60,87 +64,48 @@ function TaskCardImpl({ task, uid, assignees, onOpen, variant = "plain" }: TaskC
           onOpen();
         }
       }}
-      className={
-        isSurface
-          ? "surface-card cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
-          : "cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
-      }
-      style={{
-        padding: "14px 16px",
-        borderLeft: `3px solid ${color}`,
-        ...(isSurface
-          ? {}
-          : {
-              background: "#141414",
-              borderColor: "rgba(255, 255, 255, 0.07)",
-              borderRadius: "4px",
-            }),
-        transition: "background 180ms ease, border-color 180ms ease, transform 180ms ease",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "#1A1A1A";
-        e.currentTarget.style.borderColor = "#8B5CF6";
-        if (isSurface) e.currentTarget.style.transform = "translateX(3px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = isSurface ? "" : "#141414";
-        e.currentTarget.style.borderColor = isSurface ? "" : "rgba(255, 255, 255, 0.07)";
-        if (isSurface) e.currentTarget.style.transform = "";
-      }}
+      className={cn(
+        "group flex h-full cursor-pointer flex-col gap-3 rounded-xl p-5 transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50",
+        "hover:border-[#8B5CF6]/60 hover:bg-white/[0.04]",
+        variant === "surface" ? "surface-card" : "border border-white/8 bg-[#141414]",
+      )}
+      style={{ borderLeft: `3px solid ${color}` }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p
-            style={{
-              fontFamily: "var(--font-barlow)",
-              fontWeight: 700,
-              fontSize: "0.9rem",
-              color: "#E8E8E8",
-              marginBottom: "6px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {task.title}
-          </p>
-          <div className="flex items-center gap-3">
-            <span
-              className="inline-flex items-center gap-1"
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.65rem",
-                color,
-                letterSpacing: "0.06em",
-              }}
-            >
-              <Icon size={12} />
-              {label}
-            </span>
-            <DeadlineBadge task={task} compact />
-            <AssigneeAvatars task={task} assignees={assignees} highlightUid={uid} />
-          </div>
-        </div>
-        <div
-          className="shrink-0"
+        <h3 className="type-card-title line-clamp-2 min-w-0 flex-1">{task.title}</h3>
+        <span
+          className="shrink-0 rounded-lg border px-2.5 py-1 font-mono text-sm font-bold"
           style={{
-            background: "rgba(34, 197, 94, 0.094)",
-            border: "1px solid rgba(34, 197, 94, 0.25)",
-            borderRadius: "3px",
-            padding: "4px 8px",
+            background: "rgba(34, 197, 94, 0.09)",
+            borderColor: "rgba(34, 197, 94, 0.25)",
+            color: "#22C55E",
           }}
         >
-          <span
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              color: "#22C55E",
-            }}
-          >
-            {task.points} pts
+          {task.points} pts
+        </span>
+      </div>
+
+      {task.description && (
+        <p className="type-body line-clamp-2 text-[#8A8F98]">{task.description}</p>
+      )}
+
+      {/* Pushed to the bottom so every card in a row lines its footer up. */}
+      <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+        <span
+          className="inline-flex items-center gap-1.5 font-mono text-xs tracking-[0.04em]"
+          style={{ color }}
+        >
+          <Icon size={13} />
+          {label}
+        </span>
+        <DeadlineBadge task={task} />
+        {assignees.length > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <Users size={13} className="text-[#4B5563]" />
+            <AssigneeAvatars task={task} assignees={assignees} highlightUid={uid} max={4} />
           </span>
-        </div>
+        )}
       </div>
     </div>
   );

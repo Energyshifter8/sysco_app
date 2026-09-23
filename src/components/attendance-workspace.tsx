@@ -1,6 +1,6 @@
 "use client";
 
-import { PageContainer, PageHeader } from "@/components/page-container";
+import { EmptyState, PageContainer, PageHeader } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { TeamFilter } from "@/components/team-filter";
 import { useAuth } from "@/context/AuthContext";
@@ -29,7 +29,7 @@ import {
   serverTimestamp,
   where,
 } from "firebase/firestore";
-import { CalendarOff, Check, Loader2, Minus, X } from "lucide-react";
+import { CalendarOff, Check, Loader2, Minus, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -250,28 +250,13 @@ export function AttendanceWorkspace({ scope }: { scope: AttendanceScope }) {
           weekday: "long",
         })}${scopedTeam ? ` · ${TEAM_LABELS[scopedTeam]}` : ""}`}
         actions={
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-5">
             {ATTENDANCE_STATUSES.map(({ value, short, color }) => (
               <div key={value} style={{ textAlign: "center" }}>
-                <div
-                  className="tabular-nums"
-                  style={{
-                    fontFamily: "var(--font-barlow-condensed)",
-                    fontWeight: 800,
-                    fontSize: "1.5rem",
-                    color,
-                  }}
-                >
+                <div className="type-stat-sm leading-none" style={{ color }}>
                   {counts[value]}
                 </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-jetbrains)",
-                    fontSize: "0.55rem",
-                    color,
-                    letterSpacing: "0.08em",
-                  }}
-                >
+                <div className="mt-1 font-mono text-xs tracking-[0.08em]" style={{ color }}>
                   {short}
                 </div>
               </div>
@@ -294,7 +279,7 @@ export function AttendanceWorkspace({ scope }: { scope: AttendanceScope }) {
               padding: "8px 12px",
               color: "#E8E8E8",
               fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.8rem",
+              fontSize: "0.875rem",
               outline: "none",
             }}
           />
@@ -318,58 +303,42 @@ export function AttendanceWorkspace({ scope }: { scope: AttendanceScope }) {
           }}
         >
           {visible.length === 0 && (
-            <p
-              className="px-4 py-6"
-              style={{ fontFamily: "var(--font-barlow)", fontSize: "0.85rem", color: "#6B7280" }}
-            >
-              Бүртгэх гишүүн алга байна.
-            </p>
+            <EmptyState icon={<Users size={18} />} message="Бүртгэх гишүүн алга байна." />
           )}
 
           {visible.map((m, i) => (
             <div
               key={m.uid}
-              className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-white/[0.03]"
+              className="flex flex-col gap-3 px-4 py-3.5 transition-colors hover:bg-white/[0.03] sm:flex-row sm:items-center sm:gap-4"
               style={{
                 borderBottom:
                   i < visible.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
                 borderLeft: `3px solid ${m.status ? ATTENDANCE_COLORS[m.status] : "transparent"}`,
               }}
             >
-              <div
-                aria-hidden="true"
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  background: "rgba(139, 92, 246, 0.08)",
-                  fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.6rem",
-                  color: "#8B5CF6",
-                }}
-              >
-                {getInitials(m.name)}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p
-                  className="truncate"
-                  style={{
-                    color: "#E8E8E8",
-                    fontWeight: 600,
-                    fontSize: "0.88rem",
-                    fontFamily: "var(--font-barlow)",
-                  }}
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#8B5CF6]/10 font-mono text-xs text-[#8B5CF6]"
                 >
-                  {m.name}
-                </p>
+                  {getInitials(m.name)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-sans text-sm font-semibold text-[#E8E8E8]">
+                    {m.name}
+                  </p>
+                  {/* The chosen state is spelled out here on mobile, where the
+                      right-hand label column has nowhere to go. */}
+                  <p
+                    className="font-mono text-xs sm:hidden"
+                    style={{ color: m.status ? ATTENDANCE_COLORS[m.status] : "#4B5563" }}
+                  >
+                    {m.status ? ATTENDANCE_LABELS[m.status] : "Тэмдэглээгүй"}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 {ATTENDANCE_STATUSES.map(({ value, label, color }) => {
                   const Icon = STATUS_ICONS[value];
                   const active = m.status === value;
@@ -402,14 +371,8 @@ export function AttendanceWorkspace({ scope }: { scope: AttendanceScope }) {
               </div>
 
               <span
-                style={{
-                  fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.6rem",
-                  letterSpacing: "0.06em",
-                  color: m.status ? ATTENDANCE_COLORS[m.status] : "#374151",
-                  width: "88px",
-                  textAlign: "right",
-                }}
+                className="hidden w-[104px] text-right font-mono text-xs tracking-[0.06em] sm:block"
+                style={{ color: m.status ? ATTENDANCE_COLORS[m.status] : "#374151" }}
               >
                 {m.status ? ATTENDANCE_LABELS[m.status] : ""}
               </span>
@@ -417,7 +380,7 @@ export function AttendanceWorkspace({ scope }: { scope: AttendanceScope }) {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
           <button
             type="button"
             onClick={handleSave}
@@ -431,7 +394,7 @@ export function AttendanceWorkspace({ scope }: { scope: AttendanceScope }) {
               padding: "11px 24px",
               fontFamily: "var(--font-jetbrains)",
               fontWeight: 700,
-              fontSize: "0.8rem",
+              fontSize: "0.875rem",
               letterSpacing: "0.08em",
               cursor: saving ? "not-allowed" : "pointer",
               opacity: saving ? 0.7 : 1,
@@ -439,10 +402,10 @@ export function AttendanceWorkspace({ scope }: { scope: AttendanceScope }) {
             }}
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-            {saving ? "ХАДГАЛЖ БАЙНА..." : "ИРЦИЙГ ХАДГАЛАХ →"}
+            {saving ? "ХАДГАЛЖ БАЙНА..." : "ИРЦ ХАДГАЛАХ →"}
           </button>
           <span
-            style={{ fontFamily: "var(--font-jetbrains)", fontSize: "0.62rem", color: "#4B5563" }}
+            style={{ fontFamily: "var(--font-jetbrains)", fontSize: "0.75rem", color: "#4B5563" }}
           >
             "Ирсэн" тэмдэглэгээ +5 оноо
           </span>

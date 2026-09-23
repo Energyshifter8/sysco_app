@@ -34,7 +34,7 @@ export default function DashboardLayout({
   return (
     <div
       className="app-shell flex h-screen overflow-hidden"
-      style={{ fontFamily: "var(--font-barlow)" }}
+      style={{ fontFamily: "var(--font-montserrat)" }}
     >
       {/* Desktop sidebar */}
       <aside
@@ -106,7 +106,7 @@ export default function DashboardLayout({
               <Zap size={15} />
             </span>
             <span
-              style={{ fontWeight: 800, fontFamily: "var(--font-jetbrains)", fontSize: "0.8rem" }}
+              style={{ fontWeight: 800, fontFamily: "var(--font-jetbrains)", fontSize: "0.875rem" }}
             >
               SYSCO&TECH
             </span>
@@ -116,7 +116,7 @@ export default function DashboardLayout({
               <Sparkles size={12} />
               <span
                 style={{
-                  fontSize: "0.65rem",
+                  fontSize: "0.8125rem",
                   fontFamily: "var(--font-jetbrains)",
                   fontWeight: 700,
                 }}
@@ -137,8 +137,8 @@ export default function DashboardLayout({
                 <AlertTriangle size={16} className="shrink-0 text-[#EF4444]" />
                 <span
                   style={{
-                    fontFamily: "var(--font-barlow)",
-                    fontSize: "0.85rem",
+                    fontFamily: "var(--font-montserrat)",
+                    fontSize: "0.875rem",
                     color: "#FCA5A5",
                   }}
                 >

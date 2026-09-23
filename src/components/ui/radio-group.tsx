@@ -75,7 +75,7 @@ function RadioGroupSegment({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-segment"
       className={cn(
-        "flex-1 cursor-pointer rounded-md border border-transparent px-2.5 py-1.5 text-center whitespace-nowrap text-[#6B7280] transition-colors outline-none",
+        "flex h-9 flex-1 cursor-pointer items-center justify-center rounded-md border border-transparent px-3 text-center whitespace-nowrap text-[#6B7280] transition-colors outline-none",
         "hover:text-[#9CA3AF] focus-visible:ring-2 focus-visible:ring-ring/50",
         "disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:text-[#6B7280]",
         "data-[state=checked]:border-[color-mix(in_srgb,var(--segment-accent)_40%,transparent)]",
@@ -86,7 +86,7 @@ function RadioGroupSegment({
       style={
         {
           fontFamily: "var(--font-jetbrains)",
-          fontSize: "0.63rem",
+          fontSize: "0.8125rem",
           fontWeight: 700,
           letterSpacing: "0.04em",
           "--segment-accent": accent,

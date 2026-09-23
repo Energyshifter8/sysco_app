@@ -51,7 +51,7 @@ function resolveAssignedLabel(entry: string, members: User[]): string {
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains)",
-  fontSize: "0.65rem",
+  fontSize: "0.8125rem",
   color: "#6B7280",
   letterSpacing: "0.1em",
   display: "block",
@@ -65,8 +65,8 @@ const fieldStyle: React.CSSProperties = {
   borderRadius: "3px",
   padding: "10px 12px",
   color: "#E8E8E8",
-  fontFamily: "var(--font-barlow)",
-  fontSize: "0.9rem",
+  fontFamily: "var(--font-montserrat)",
+  fontSize: "1.0rem",
   outline: "none",
   boxSizing: "border-box",
 };
@@ -226,13 +226,13 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
           maxWidth: "640px",
         }}
       >
-        <p style={{ fontFamily: "var(--font-barlow)", fontSize: "0.9rem", color: "#E8E8E8" }}>
+        <p style={{ fontFamily: "var(--font-montserrat)", fontSize: "1.0rem", color: "#E8E8E8" }}>
           Танд баг оноогдоогүй байна.
         </p>
         <p
           style={{
-            fontFamily: "var(--font-barlow)",
-            fontSize: "0.8rem",
+            fontFamily: "var(--font-montserrat)",
+            fontSize: "0.875rem",
             color: "#6B7280",
             marginTop: "6px",
           }}
@@ -310,7 +310,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                   padding: "10px 36px 10px 12px",
                   color: "#22C55E",
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.95rem",
+                  fontSize: "1.0rem",
                   fontWeight: 700,
                 }}
               />
@@ -322,7 +322,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                   transform: "translateY(-50%)",
                   color: "#22C55E",
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.7rem",
+                  fontSize: "0.8125rem",
                 }}
               >
                 pts
@@ -331,8 +331,8 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
             <p
               style={{
                 color: "#4B5563",
-                fontFamily: "var(--font-barlow)",
-                fontSize: "0.75rem",
+                fontFamily: "var(--font-montserrat)",
+                fontSize: "0.875rem",
                 marginTop: "6px",
               }}
             >
@@ -354,14 +354,14 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
               style={{
                 ...fieldStyle,
                 fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.8rem",
+                fontSize: "0.875rem",
               }}
             />
             <p
               style={{
                 color: "#4B5563",
-                fontFamily: "var(--font-barlow)",
-                fontSize: "0.75rem",
+                fontFamily: "var(--font-montserrat)",
+                fontSize: "0.875rem",
                 marginTop: "6px",
               }}
             >
@@ -375,8 +375,8 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
               <p
                 style={{
                   color: "#4B5563",
-                  fontFamily: "var(--font-barlow)",
-                  fontSize: "0.8rem",
+                  fontFamily: "var(--font-montserrat)",
+                  fontSize: "0.875rem",
                 }}
               >
                 {scope === "lead" ? "Таны багт гишүүн алга байна." : "Гишүүн бүртгэгдээгүй байна."}
@@ -394,7 +394,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                       padding: "4px 10px",
                       color: "#9CA3AF",
                       fontFamily: "var(--font-jetbrains)",
-                      fontSize: "0.62rem",
+                      fontSize: "0.75rem",
                       cursor: "pointer",
                     }}
                   >
@@ -410,7 +410,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                       padding: "4px 10px",
                       color: "#9CA3AF",
                       fontFamily: "var(--font-jetbrains)",
-                      fontSize: "0.62rem",
+                      fontSize: "0.75rem",
                       cursor: "pointer",
                     }}
                   >
@@ -435,13 +435,13 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                           background: sel ? "rgba(139, 92, 246, 0.125)" : "transparent",
                           color: sel ? "#8B5CF6" : "#9CA3AF",
                           cursor: "pointer",
-                          fontFamily: "var(--font-barlow)",
-                          fontSize: "0.8rem",
+                          fontFamily: "var(--font-montserrat)",
+                          fontSize: "0.875rem",
                           fontWeight: 600,
                           transition: "all 0.15s",
                         }}
                       >
-                        <span style={{ fontFamily: "var(--font-jetbrains)", fontSize: "0.6rem" }}>
+                        <span style={{ fontFamily: "var(--font-jetbrains)", fontSize: "0.75rem" }}>
                           {getInitials(m.name)}
                         </span>
                         {m.name}
@@ -466,7 +466,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                 padding: "11px 24px",
                 fontFamily: "var(--font-jetbrains)",
                 fontWeight: 700,
-                fontSize: "0.8rem",
+                fontSize: "0.875rem",
                 letterSpacing: "0.08em",
                 cursor: saving ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
@@ -488,7 +488,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                 padding: "11px 16px",
                 color: "#6B7280",
                 fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.75rem",
+                fontSize: "0.875rem",
                 cursor: "pointer",
               }}
             >
@@ -501,7 +501,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
       <h2
         style={{
           fontFamily: "var(--font-jetbrains)",
-          fontSize: "0.75rem",
+          fontSize: "0.875rem",
           fontWeight: 700,
           color: "#6B7280",
           letterSpacing: "0.1em",
@@ -520,8 +520,8 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
           <p
             style={{
               color: "#4B5563",
-              fontFamily: "var(--font-barlow)",
-              fontSize: "0.85rem",
+              fontFamily: "var(--font-montserrat)",
+              fontSize: "0.875rem",
             }}
           >
             Одоогоор даалгавар алга байна.
@@ -556,23 +556,12 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
             >
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p
-                    className="truncate"
-                    style={{
-                      fontFamily: "var(--font-barlow)",
-                      fontWeight: 700,
-                      fontSize: "0.9rem",
-                      color: "#E8E8E8",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    {task.title}
-                  </p>
+                  <p className="type-card-title mb-1.5 line-clamp-2">{task.title}</p>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span
                       style={{
                         fontFamily: "var(--font-jetbrains)",
-                        fontSize: "0.65rem",
+                        fontSize: "0.8125rem",
                         color: summary.color,
                         letterSpacing: "0.06em",
                       }}
@@ -584,7 +573,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                   <p
                     style={{
                       color: "#4B5563",
-                      fontSize: "0.65rem",
+                      fontSize: "0.8125rem",
                       fontFamily: "var(--font-jetbrains)",
                       marginTop: "4px",
                     }}
@@ -605,7 +594,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                       className="flex items-center gap-1 rounded-sm border border-white/10 px-2 py-1 text-[#9CA3AF] transition-colors hover:border-[#8B5CF6]/60 hover:text-[#C4B5FD]"
                       style={{
                         fontFamily: "var(--font-jetbrains)",
-                        fontSize: "0.6rem",
+                        fontSize: "0.75rem",
                         fontWeight: 700,
                         letterSpacing: "0.04em",
                       }}
@@ -625,7 +614,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                     <span
                       style={{
                         fontFamily: "var(--font-jetbrains)",
-                        fontSize: "0.75rem",
+                        fontSize: "0.875rem",
                         fontWeight: 700,
                         color: "#22C55E",
                       }}

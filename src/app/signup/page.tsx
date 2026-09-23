@@ -59,7 +59,7 @@ export default function SignupPage() {
               <span
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.65rem",
+                  fontSize: "0.8125rem",
                   color: "#6B7280",
                   letterSpacing: "0.12em",
                 }}
@@ -72,7 +72,7 @@ export default function SignupPage() {
             className="inline-flex rounded-full border border-white/8 bg-white/4 px-3 py-1 text-[#9CA3AF]"
             style={{
               fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.6rem",
+              fontSize: "0.75rem",
               letterSpacing: "0.1em",
             }}
           >
@@ -85,7 +85,7 @@ export default function SignupPage() {
             <h1
               style={{
                 color: "#F3F4F6",
-                fontFamily: "var(--font-barlow)",
+                fontFamily: "var(--font-montserrat)",
                 fontSize: "1.35rem",
                 fontWeight: 800,
               }}
@@ -95,8 +95,8 @@ export default function SignupPage() {
             <p
               style={{
                 color: "#6B7280",
-                fontFamily: "var(--font-barlow)",
-                fontSize: "0.85rem",
+                fontFamily: "var(--font-montserrat)",
+                fontSize: "0.875rem",
                 marginTop: "4px",
               }}
             >
@@ -110,7 +110,7 @@ export default function SignupPage() {
                 htmlFor="name"
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.7rem",
+                  fontSize: "0.8125rem",
                   color: "#6B7280",
                   letterSpacing: "0.1em",
                   display: "block",
@@ -132,10 +132,10 @@ export default function SignupPage() {
                   background: "#1A1A1A",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
                   borderRadius: "6px",
-                  padding: "10px 12px",
+                  padding: "12px 14px",
                   color: "#E8E8E8",
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.85rem",
+                  fontSize: "0.875rem",
                   outline: "none",
                   boxSizing: "border-box",
                 }}
@@ -146,7 +146,7 @@ export default function SignupPage() {
                 htmlFor="email"
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.7rem",
+                  fontSize: "0.8125rem",
                   color: "#6B7280",
                   letterSpacing: "0.1em",
                   display: "block",
@@ -168,10 +168,10 @@ export default function SignupPage() {
                   background: "#1A1A1A",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
                   borderRadius: "6px",
-                  padding: "10px 12px",
+                  padding: "12px 14px",
                   color: "#E8E8E8",
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.85rem",
+                  fontSize: "0.875rem",
                   outline: "none",
                   boxSizing: "border-box",
                 }}
@@ -182,7 +182,7 @@ export default function SignupPage() {
                 htmlFor="password"
                 style={{
                   fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.7rem",
+                  fontSize: "0.8125rem",
                   color: "#6B7280",
                   letterSpacing: "0.1em",
                   display: "block",
@@ -213,9 +213,9 @@ export default function SignupPage() {
                 color: "#fff",
                 fontFamily: "var(--font-jetbrains)",
                 fontWeight: 700,
-                fontSize: "0.8rem",
+                fontSize: "1rem",
                 letterSpacing: "0.08em",
-                padding: "12px",
+                padding: "14px",
                 border: "none",
                 borderRadius: "6px",
                 cursor: loading ? "not-allowed" : "pointer",
@@ -234,9 +234,9 @@ export default function SignupPage() {
               style={{
                 textAlign: "center",
                 color: "#6B7280",
-                fontSize: "0.8rem",
+                fontSize: "0.875rem",
                 marginTop: "18px",
-                fontFamily: "var(--font-barlow)",
+                fontFamily: "var(--font-montserrat)",
               }}
             >
               Бүртгэл байна уу?{" "}
@@ -250,7 +250,7 @@ export default function SignupPage() {
           style={{
             textAlign: "center",
             color: "#374151",
-            fontSize: "0.7rem",
+            fontSize: "0.8125rem",
             marginTop: "20px",
             fontFamily: "var(--font-jetbrains)",
           }}
