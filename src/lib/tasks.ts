@@ -78,3 +78,37 @@ export function deriveTaskSummary(task: Task, assignees: User[]): TaskSummary {
 export function awardedPoints(task: Task, uid: string): number {
   return getAssigneeReview(task, uid)?.score ?? 0;
 }
+
+export interface DeadlineLabel {
+  /** "2 өдөр 3 цаг үлдсэн" / "Хоцорсон" / "Хугацаагүй" */
+  text: string;
+  color: string;
+  overdue: boolean;
+}
+
+/**
+ * How much time is left on a task, as one short phrase.
+ *
+ * Shared by the cards and the detail dialog so a member reads the same words
+ * wherever the task appears, instead of an absolute timestamp in one place and
+ * a countdown in the other.
+ */
+export function deadlineLabel(task: Pick<Task, "dueDate">): DeadlineLabel {
+  const due = asDate(task.dueDate);
+  if (!due) return { text: "Хугацаагүй", color: "#4B5563", overdue: false };
+
+  const ms = due.getTime() - Date.now();
+  if (ms <= 0) return { text: "Хоцорсон", color: "#EF4444", overdue: true };
+
+  const minutes = Math.floor(ms / 60_000);
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+
+  if (days > 0)
+    return { text: `${days} өдөр ${hours} цаг үлдсэн`, color: "#3B82F6", overdue: false };
+  if (hours > 0) {
+    // Under a day left is the point at which this stops being routine.
+    return { text: `${hours} цаг ${minutes % 60} минут үлдсэн`, color: "#FBBF24", overdue: false };
+  }
+  return { text: `${minutes} минут үлдсэн`, color: "#FBBF24", overdue: false };
+}

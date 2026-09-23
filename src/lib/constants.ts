@@ -59,6 +59,14 @@ export const ROLE_LABELS = Object.fromEntries(ROLES.map((r) => [r.value, r.label
   string
 >;
 
+/**
+ * Ceiling on a task's point value.
+ *
+ * The review dialog draws one segment per possible score, so an unbounded field
+ * let a mistyped number turn into a million-element render.
+ */
+export const MAX_TASK_POINTS = 1000;
+
 /* ─── Per-assignee task status ─── */
 
 export const ASSIGNEE_STATUSES = [
@@ -104,4 +112,47 @@ export function parseTeamToken(entry: string): Team | null {
   if (!entry.startsWith("team:")) return null;
   const value = entry.slice(5);
   return isTeam(value) ? value : null;
+}
+
+/* ─── Attendance ─── */
+
+/**
+ * The four states a day can be marked with, and the points each is worth.
+ *
+ * Only "present" earns anything; "excused" is a sanctioned absence, so it is
+ * neither rewarded nor counted against the member.
+ */
+export const ATTENDANCE_STATUSES = [
+  { value: "present", label: "Ирсэн", short: "ИРСЭН", color: "#22C55E" },
+  { value: "late", label: "Хоцорсон", short: "ХОЦОРСОН", color: "#FBBF24" },
+  { value: "absent", label: "Ирээгүй", short: "ИРЭЭГҮЙ", color: "#EF4444" },
+  { value: "excused", label: "Чөлөөтэй", short: "ЧӨЛӨӨТЭЙ", color: "#60A5FA" },
+] as const;
+
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number]["value"];
+
+/** "Not marked yet" — the state a member is in before anyone files the day. */
+export type AttendanceMark = AttendanceStatus | "";
+
+export const ATTENDANCE_LABELS = Object.fromEntries(
+  ATTENDANCE_STATUSES.map((s) => [s.value, s.label]),
+) as Record<AttendanceStatus, string>;
+
+export const ATTENDANCE_SHORT_LABELS = Object.fromEntries(
+  ATTENDANCE_STATUSES.map((s) => [s.value, s.short]),
+) as Record<AttendanceStatus, string>;
+
+export const ATTENDANCE_COLORS = Object.fromEntries(
+  ATTENDANCE_STATUSES.map((s) => [s.value, s.color]),
+) as Record<AttendanceStatus, string>;
+
+export function isAttendanceStatus(value: unknown): value is AttendanceStatus {
+  return ATTENDANCE_STATUSES.some((s) => s.value === value);
+}
+
+/** Points credited for one day. Turning up is the only thing that scores. */
+export const ATTENDANCE_POINTS = 5;
+
+export function attendancePoints(status: AttendanceMark): number {
+  return status === "present" ? ATTENDANCE_POINTS : 0;
 }

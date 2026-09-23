@@ -16,6 +16,10 @@ export interface AssigneeListProps {
   /** Rendered to the right of a row — the "Үнэлэх" button, when one applies. */
   renderAction?: (assignee: User) => React.ReactNode;
   emptyLabel?: string;
+  /** Rows to draw before collapsing the rest into a count. */
+  max?: number;
+  /** Where the collapsed remainder is shown in full — the detail dialog. */
+  onShowAll?: () => void;
 }
 
 /**
@@ -31,6 +35,8 @@ export function AssigneeList({
   viewer,
   renderAction,
   emptyLabel = "Оноогдсон гишүүн алга",
+  max,
+  onShowAll,
 }: AssigneeListProps) {
   if (assignees.length === 0) {
     return (
@@ -46,9 +52,16 @@ export function AssigneeList({
     );
   }
 
+  // A task assigned to "all" resolves to the whole club. Drawing every row of
+  // every task is what made the workspace unusable, so the list shows the first
+  // few and sends the rest to the dialog.
+  const shown = max === undefined ? assignees : assignees.slice(0, max);
+  const hidden = assignees.length - shown.length;
+
   return (
     <div className="flex flex-col gap-1.5">
-      {assignees.map((assignee) => {
+      {shown.map((assignee) => {
+        const palette = avatarPalette(assignee.uid);
         const status = getAssigneeStatus(task, assignee.uid);
         const review = getAssigneeReview(task, assignee.uid);
         const canSeeComment =
@@ -67,8 +80,8 @@ export function AssigneeList({
                 fontFamily: "var(--font-jetbrains)",
                 fontSize: "0.55rem",
                 fontWeight: 700,
-                ...avatarPalette(assignee.uid),
-                borderColor: avatarPalette(assignee.uid).border,
+                ...palette,
+                borderColor: palette.border,
               }}
             >
               {getInitials(assignee.name)}
@@ -131,6 +144,25 @@ export function AssigneeList({
           </div>
         );
       })}
+
+      {hidden > 0 && (
+        <button
+          type="button"
+          onClick={(event) => {
+            // The surrounding card opens the dialog on click as well.
+            event.stopPropagation();
+            onShowAll?.();
+          }}
+          className="rounded-md border border-white/6 bg-white/[0.02] px-2.5 py-1.5 text-left transition-colors hover:border-[#8B5CF6]/40 hover:text-[#C4B5FD]"
+          style={{
+            fontFamily: "var(--font-jetbrains)",
+            fontSize: "0.62rem",
+            color: "#6B7280",
+          }}
+        >
+          + {hidden} гишүүн — бүгдийг харах
+        </button>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 /**
  * Security-rules tests for the role / status / review model.
  *
@@ -16,15 +17,14 @@ import {
   collection,
   deleteDoc,
   doc,
-  increment,
   getDoc,
-  serverTimestamp,
+  increment,
   runTransaction,
+  serverTimestamp,
   setDoc,
   setLogLevel,
   updateDoc,
 } from "firebase/firestore";
-import { readFileSync } from "node:fs";
 
 const HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
 const [host, port] = HOST.split(":");
@@ -270,11 +270,9 @@ async function main() {
   await seed();
   await it("гишүүн assigneeReview бичиж чадахгүй", async () => {
     await assertFails(
-      setDoc(
-        doc(db(MEMBER_DEV), "tasks", "task-done"),
-        reviewWrite(MEMBER_DEV, MEMBER_DEV, 5),
-        { merge: true },
-      ),
+      setDoc(doc(db(MEMBER_DEV), "tasks", "task-done"), reviewWrite(MEMBER_DEV, MEMBER_DEV, 5), {
+        merge: true,
+      }),
     );
   });
 
@@ -832,9 +830,7 @@ async function main() {
 
   await seed();
   await it("хэрэглэгч өөр хүний баримт үүсгэж чадахгүй", async () => {
-    await assertFails(
-      setDoc(doc(db("uid-new"), "users", "uid-other"), signupDoc("uid-other")),
-    );
+    await assertFails(setDoc(doc(db("uid-new"), "users", "uid-other"), signupDoc("uid-other")));
   });
 
   await seed();
@@ -850,10 +846,7 @@ async function main() {
   await seed();
   await it("зөвшөөрөгдөөгүй талбартай бол унана", async () => {
     await assertFails(
-      setDoc(
-        doc(db("uid-new"), "users", "uid-new"),
-        signupDoc("uid-new", { isSuperUser: true }),
-      ),
+      setDoc(doc(db("uid-new"), "users", "uid-new"), signupDoc("uid-new", { isSuperUser: true })),
     );
   });
 
@@ -895,15 +888,156 @@ async function main() {
   });
 
   await seed();
-  await it("lead ирц бүртгэж чадахгүй", async () => {
-    await assertFails(
-      setDoc(doc(db(LEAD_DEV), "attendance", "2026-01-01_y"), {
-        id: "2026-01-01_y",
+  await it("lead багийнхаа гишүүний ирцийг бүртгэж чадна", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(LEAD_DEV), "attendance", `2026-01-01_${MEMBER_DEV}`), {
+        id: `2026-01-01_${MEMBER_DEV}`,
         uid: MEMBER_DEV,
         date: "2026-01-01",
         status: "present",
         markedBy: LEAD_DEV,
         note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("lead өөр багийн гишүүний ирц бичиж чадахгүй", async () => {
+    await assertFails(
+      setDoc(doc(db(LEAD_DEV), "attendance", `2026-01-01_${MEMBER_OPS}`), {
+        id: `2026-01-01_${MEMBER_OPS}`,
+        uid: MEMBER_OPS,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: LEAD_DEV,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("lead өөрийн ирцээ бичиж чадахгүй", async () => {
+    await assertFails(
+      setDoc(doc(db(LEAD_DEV), "attendance", `2026-01-01_${LEAD_DEV}`), {
+        id: `2026-01-01_${LEAD_DEV}`,
+        uid: LEAD_DEV,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: LEAD_DEV,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("гишүүн ирц бичиж чадахгүй", async () => {
+    await assertFails(
+      setDoc(doc(db(MEMBER_DEV), "attendance", `2026-01-01_${MEMBER_DEV}`), {
+        id: `2026-01-01_${MEMBER_DEV}`,
+        uid: MEMBER_DEV,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: MEMBER_DEV,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("markedBy-г хуурамчаар өгвөл унана", async () => {
+    await assertFails(
+      setDoc(doc(db(LEAD_DEV), "attendance", `2026-01-01_${MEMBER_DEV}`), {
+        id: `2026-01-01_${MEMBER_DEV}`,
+        uid: MEMBER_DEV,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: ADMIN,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("зөвшөөрөгдөөгүй ирцийн төлөв унана", async () => {
+    await assertFails(
+      setDoc(doc(db(ADMIN), "attendance", `2026-01-01_${MEMBER_DEV}`), {
+        id: `2026-01-01_${MEMBER_DEV}`,
+        uid: MEMBER_DEV,
+        date: "2026-01-01",
+        status: "vacation",
+        markedBy: ADMIN,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("ирцийн бичлэгийг устгах боломжгүй", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "attendance", `2026-01-01_${MEMBER_DEV}`), {
+        id: `2026-01-01_${MEMBER_DEV}`,
+        uid: MEMBER_DEV,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: ADMIN,
+        note: "",
+      });
+    });
+    await assertFails(deleteDoc(doc(db(ADMIN), "attendance", `2026-01-01_${MEMBER_DEV}`)));
+  });
+
+  await seed();
+  await it("lead ирцийн оноог багийнхаа гишүүнд бичиж чадна (transaction)", async () => {
+    const leadDb = db(LEAD_DEV);
+    await assertSucceeds(
+      runTransaction(leadDb, async (tx) => {
+        const attRef = doc(leadDb, "attendance", `2026-01-02_${MEMBER_DEV}`);
+        await tx.get(attRef);
+        tx.set(attRef, {
+          id: `2026-01-02_${MEMBER_DEV}`,
+          uid: MEMBER_DEV,
+          date: "2026-01-02",
+          status: "present",
+          markedBy: LEAD_DEV,
+          note: "",
+        });
+        tx.update(doc(leadDb, "users", MEMBER_DEV), { totalPoints: increment(5) });
+        tx.set(doc(collection(leadDb, "pointsHistory")), {
+          uid: MEMBER_DEV,
+          points: 5,
+          reason: "Ирц: 2026-01-02",
+          source: "attendance",
+          reviewedBy: LEAD_DEV,
+          createdAt: serverTimestamp(),
+        });
+      }),
+    );
+  });
+
+  await seed();
+  await it("lead өөр багийн ирцийн transaction бүхэлдээ унана", async () => {
+    const leadDb = db(LEAD_DEV);
+    await assertFails(
+      runTransaction(leadDb, async (tx) => {
+        const attRef = doc(leadDb, "attendance", `2026-01-02_${MEMBER_OPS}`);
+        await tx.get(attRef);
+        tx.set(attRef, {
+          id: `2026-01-02_${MEMBER_OPS}`,
+          uid: MEMBER_OPS,
+          date: "2026-01-02",
+          status: "present",
+          markedBy: LEAD_DEV,
+          note: "",
+        });
+        tx.update(doc(leadDb, "users", MEMBER_OPS), { totalPoints: increment(5) });
+        tx.set(doc(collection(leadDb, "pointsHistory")), {
+          uid: MEMBER_OPS,
+          points: 5,
+          reason: "Ирц: 2026-01-02",
+          source: "attendance",
+          reviewedBy: LEAD_DEV,
+          createdAt: serverTimestamp(),
+        });
       }),
     );
   });

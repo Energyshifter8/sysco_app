@@ -39,6 +39,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/leaderboard", label: "Эрэмбэ", icon: Trophy, section: "main" },
   { href: "/dashboard/profile", label: "Профайл", icon: User, section: "main" },
   { href: "/dashboard/lead/tasks", label: "Багийн таск", icon: UsersRound, section: "team" },
+  { href: "/dashboard/lead/attendance", label: "Багийн ирц", icon: CalendarCheck, section: "team" },
+  { href: "/dashboard/lead/members", label: "Багийн гишүүд", icon: Users, section: "team" },
   { href: "/dashboard/admin/tasks", label: "Task үүсгэх", icon: PlusSquare, section: "admin" },
   { href: "/dashboard/admin/attendance", label: "Ирц", icon: CalendarCheck, section: "admin" },
   { href: "/dashboard/admin/members", label: "Гишүүд", icon: Users, section: "admin" },

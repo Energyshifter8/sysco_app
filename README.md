@@ -20,8 +20,9 @@ Sysco&Tech is built for university student club administrators, team leads and m
 - **Team filter** — Бүгд / Хөгжүүлэлт / Дотоод үйл ажиллагаа / Дизайн / Сошиал across the leaderboard, member directory, attendance and both task workspaces, persisted in the `?team=` search param
 - **Points leaderboard** — real-time ranking with a top-3 podium; ranks are recomputed inside the active filter
 - **Profile management** — members edit their major, team and course year
-- **Attendance tracking** — admins mark daily attendance (present/late/absent/excused); present members automatically receive +5 points
-- **Member directory** — admin view with search, team filter, task history, attendance history, and role/team assignment
+- **Attendance tracking** — admins mark the whole club and leads their own team (present/late/absent/excused); "present" credits +5 points in a transaction that also writes a `pointsHistory` entry
+- **Member directory** — admins see the whole club and leads their own team, with search, active task counts, latest attendance and full history; role and team assignment stays with admins
+- **Task editing** — admins edit any task and leads their own: title, description, points, deadline and assignees
 - **Responsive layout** — collapsible sidebar on mobile, desktop sidebar on larger screens
 - **Dark theme** — consistent dark UI across all pages
 
@@ -56,17 +57,19 @@ Browser
             ├─ /login, /signup     → Firebase Auth
             └─ /dashboard/*        → Firestore (real-time snapshots)
                  ├─ tasks          → member status transaction
-                 ├─ lead/tasks     → team task creation + review transaction
-                 ├─ admin/tasks    → club-wide task creation + review transaction
-                 ├─ admin/members  → users collection (role / team assignment)
-                 ├─ admin/attendance → attendance collection (+5 points)
+                 ├─ lead/tasks       → team task creation + review transaction
+                 ├─ lead/attendance  → own team's attendance (+5 transaction)
+                 ├─ lead/members     → own team's directory (read only)
+                 ├─ admin/tasks      → club-wide task creation + review transaction
+                 ├─ admin/members    → users collection (role / team assignment)
+                 ├─ admin/attendance → attendance collection (+5 transaction)
                  └─ leaderboard    → users ordered by totalPoints
 ```
 
 - **Firebase Auth** handles identity; `AuthContext` exposes `user` and `userData` (the Firestore profile) to the whole app.
 - **Firestore** stores four collections — `users`, `tasks`, `attendance`, `pointsHistory` — plus the `tasks/{id}/activity` subcollection.
-- **There is no backend.** Every rule that matters is enforced in `firestore.rules`, and `scripts/test-rules.ts` runs 67 cases against it on the emulator — including the full multi-write transactions, not just the individual writes.
-- **Points are awarded in exactly one place** — the review transaction in `src/components/task-workspace.tsx`. It writes the task's `assigneeReview`, increments `users/<uid>.totalPoints` and appends to `pointsHistory` atomically. Members cannot write `totalPoints`, `role`, `assigneeReview` or `pointsHistory` at all.
+- **There is no backend.** Every rule that matters is enforced in `firestore.rules`, and `scripts/test-rules.ts` runs 75 cases against it on the emulator — including the full multi-write transactions, not just the individual writes.
+- **Points are awarded in two transactions, both audited** — the review transaction behind `src/components/review-button.tsx`, and the attendance transaction in `src/components/attendance-workspace.tsx`. Each reads the current state inside the transaction, moves `users/<uid>.totalPoints` and appends to `pointsHistory` atomically, so an admin and a lead filing the same day cannot credit it twice. The review transaction in detail: It writes the task's `assigneeReview`, increments `users/<uid>.totalPoints` and appends to `pointsHistory` atomically. Members cannot write `totalPoints`, `role`, `assigneeReview` or `pointsHistory` at all.
 - **Assignment tokens.** A task's `assignedTo` holds uids, the literal `"all"`, or `"team:<team>"`, so one `array-contains-any` query finds everything assigned to a member. `resolveAssignees()` in `src/lib/tasks.ts` expands the tokens back into people.
 - **`lastReviewedUid`.** Security rules cannot read a key out of a map diff, so a review write also declares which uid it targets. The rules verify that declaration against the real diff, then use it to authorise the write.
 - **Real-time snapshots** live in effects (`useAssignedTasks`, `useAllTasks`, `useLeaderboard`) and mirror into the React Query cache, so the listener is always unsubscribed on unmount. The activity log is the exception: `useTaskActivity` only subscribes while the detail dialog is open, so a list of twenty tasks opens zero extra listeners.
@@ -81,7 +84,8 @@ Browser
 | Edit / delete tasks | — | own tasks only | any task |
 | Review + award points | — | own team, not self | anyone but self |
 | Assign roles and teams | — | — | ✓ |
-| Mark attendance | — | — | ✓ |
+| Mark attendance | — | own team, not self | ✓ |
+| View member directory | — | own team (read only) | whole club |
 
 ## Project Structure
 
@@ -102,14 +106,20 @@ src/
 │       ├── profile/page.tsx        # Member profile — major, team, course
 │       ├── lead/
 │       │   ├── layout.tsx          # Lead guard (lead or admin)
-│       │   └── tasks/page.tsx      # <TaskWorkspace scope="lead" />
+│       │   ├── tasks/page.tsx      # <TaskWorkspace scope="lead" />
+│       │   ├── attendance/page.tsx # <AttendanceWorkspace scope={{ team }} />
+│       │   └── members/page.tsx    # <MembersWorkspace scope={{ team }} />
 │       └── admin/
 │           ├── layout.tsx          # Admin guard
 │           ├── tasks/page.tsx      # <TaskWorkspace scope="admin" />
-│           ├── members/page.tsx    # Member directory, search, role/team assignment
-│           └── attendance/page.tsx # Daily attendance with date picker
+│           ├── members/page.tsx    # <MembersWorkspace scope="all" />
+│           └── attendance/page.tsx # <AttendanceWorkspace scope="all" />
 ├── components/
 │   ├── task-workspace.tsx          # Task creation + oversight, shared by admin and lead
+│   ├── task-edit-dialog.tsx        # Edits an existing task (admin: any, lead: own)
+│   ├── attendance-workspace.tsx    # Daily attendance, scoped to the club or one team
+│   ├── members-workspace.tsx       # Member directory, scoped to the club or one team
+│   ├── deadline-badge.tsx          # "2 өдөр 3 цаг үлдсэн" / "Хоцорсон"
 │   ├── task-card.tsx               # Clickable task card (member list + overview)
 │   ├── task-detail-dialog.tsx      # Shared detail dialog: assignees, milestones, timeline
 │   ├── assignee-list.tsx           # Assignee rows + compact avatar stack
@@ -274,12 +284,13 @@ assignments cannot be reconstructed.
 
 ## Known Limitations
 
-- **A lead's per-uid assignments are only checked client-side**: security rules have no loops, so they can block a lead from using the `"all"` token or another team's `"team:<team>"` token, but cannot verify that every individual uid in `assignedTo` belongs to that lead's team. `src/components/task-workspace.tsx` enforces it before writing; the trade-off is documented in `firestore.rules`.
-- **Attendance points are not transactional and not logged**: the attendance page awards +5 for "present" with a batch write plus a read taken outside it, and writes no `pointsHistory` entry — unlike the review flow, which is atomic and audited.
-- **No task editing in the UI**: the rules permit admins (and leads, on their own tasks) to update and delete tasks, but no screen offers it yet.
+- **A lead's per-uid assignments are only checked client-side**: security rules have no loops, so they can block a lead from using the `"all"` token or another team's `"team:<team>"` token, but cannot verify that every individual uid in `assignedTo` belongs to that lead's team. `src/components/task-workspace.tsx` and `src/components/task-edit-dialog.tsx` enforce it before writing; the trade-off is documented in `firestore.rules`.
+- **No task deletion in the UI**: the rules permit admins (and leads, on their own tasks) to delete a task, but no screen offers it — editing is available, deleting is not.
 - **No email verification** and **no password reset flow**.
 - **Sign-up rollback is best-effort**: if the profile write is rejected the Auth account is deleted again, but if that delete also fails the account is left without a profile. `AuthContext` re-creates it on the next sign-in.
-- **No pagination**: member lists, task lists and the leaderboard load every document at once.
+- **A lead cannot mark their own attendance**: a "present" mark is worth points, so the rule that stops anyone scoring their own work applies here too. An admin files a lead's day.
+- **The roster's "last attendance" column looks back 90 days**: a member whose most recent marked day is older than that reads as "—" in the list, though their full history is still in the detail dialog.
+- **No pagination**: member lists, task lists and the leaderboard load every document at once. The task workspace shows the first five assignees per card and sends the rest to the detail dialog, which keeps a club-sized directory from rendering thousands of rows.
 - **UI language**: all labels are in Mongolian; no i18n or language switching is implemented.
 
 ## License

@@ -51,20 +51,24 @@ export function ReviewButton({ task, assignee, viewer }: ReviewButtonProps) {
         ҮНЭЛЭХ
       </button>
 
-      <ReviewDialog
-        task={task}
-        assignee={assignee}
-        open={open}
-        onOpenChange={(next) => {
-          if (!next && submitting) return;
-          setOpen(next);
-        }}
-        submitting={submitting}
-        onSubmit={async (score, comment) => {
-          const ok = await reviewAssignee(task, assignee, score, comment);
-          if (ok) setOpen(false);
-        }}
-      />
+      {/* Mounted only while open: a workspace listing every assignee of every
+          task would otherwise hold a thousand idle dialogs in the tree. */}
+      {open && (
+        <ReviewDialog
+          task={task}
+          assignee={assignee}
+          open={open}
+          onOpenChange={(next) => {
+            if (!next && submitting) return;
+            setOpen(next);
+          }}
+          submitting={submitting}
+          onSubmit={async (score, comment) => {
+            const ok = await reviewAssignee(task, assignee, score, comment);
+            if (ok) setOpen(false);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -57,7 +57,12 @@ export function ReviewDialog({
   if (!task || !assignee) return null;
 
   const clamp = (value: number) => Math.min(max, Math.max(0, Math.round(value)));
-  const scoreOptions = Array.from({ length: max + 1 }, (_, index) => index);
+  // Only the segmented control needs a list of every possible score, and it is
+  // only used up to MAX_SEGMENTED_POINTS. Building it unconditionally allocated
+  // an array the size of the task's point value on every render — a task worth
+  // a mistyped 2,000,000 points froze the tab.
+  const scoreOptions =
+    max <= MAX_SEGMENTED_POINTS ? Array.from({ length: max + 1 }, (_, index) => index) : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

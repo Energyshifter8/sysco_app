@@ -1,27 +1,33 @@
 "use client";
 
 import { AssigneeList } from "@/components/assignee-list";
+import { DeadlineBadge } from "@/components/deadline-badge";
 import { PageContainer, PageHeader } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { ReviewButton } from "@/components/review-button";
 import { TaskDetailDialog } from "@/components/task-detail-dialog";
+import { TaskEditDialog } from "@/components/task-edit-dialog";
 import { TeamFilter } from "@/components/team-filter";
 import { useAuth } from "@/context/AuthContext";
 import { useAllTasks } from "@/hooks/useAllTasks";
 import { useMembers } from "@/hooks/useMembers";
 import { useResolvedTask, useSelectedTask } from "@/hooks/useSelectedTask";
 import { ALL_TEAMS, useTeamFilter } from "@/hooks/useTeamFilter";
-import { ASSIGN_ALL, TEAM_LABELS, type Team, teamToken } from "@/lib/constants";
+import { ASSIGN_ALL, MAX_TASK_POINTS, TEAM_LABELS, type Team, teamToken } from "@/lib/constants";
 import { db } from "@/lib/firebase";
+import { canEditTask } from "@/lib/permissions";
 import { deriveTaskSummary, resolveAssignees } from "@/lib/tasks";
-import { formatDateTime, getInitials } from "@/lib/utils";
-import { User } from "@/types";
+import { getInitials } from "@/lib/utils";
+import { Task, User } from "@/types";
 import { addDoc, collection } from "firebase/firestore";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Loader2, Pencil, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export type WorkspaceScope = "admin" | "lead";
+
+/** Assignee rows drawn per task card before the rest collapse into a count. */
+const ROWS_PER_CARD = 5;
 
 function toDateTimeLocalValue(date: Date): string {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
@@ -87,6 +93,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
   const [deadline, setDeadline] = useState(defaultDeadlineValue);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState<Task | null>(null);
 
   const myTeam = userData?.team;
   // A lead lands on their own team; an admin on everyone.
@@ -102,18 +109,30 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
     [members, scope, myTeam],
   );
 
+  /**
+   * The tasks on screen, each paired with the people it resolves to.
+   *
+   * `resolveAssignees` walks the whole directory per task, so it runs exactly
+   * once here and the result is carried through to the rows — it used to be
+   * recomputed a second time inside the render loop.
+   */
   const visibleTasks = useMemo(() => {
+    const withAssignees = tasks.map((task) => ({
+      task,
+      assignees: resolveAssignees(task, members),
+    }));
+
     // A lead only sees tasks one of their team-mates is on, including tasks an
     // admin created. The team filter then narrows that further.
     const base =
       scope === "admin"
-        ? tasks
+        ? withAssignees
         : myTeam
-          ? tasks.filter((task) => resolveAssignees(task, members).some((a) => a.team === myTeam))
+          ? withAssignees.filter((t) => t.assignees.some((a) => a.team === myTeam))
           : [];
 
     if (team === ALL_TEAMS) return base;
-    return base.filter((task) => resolveAssignees(task, members).some((a) => a.team === team));
+    return base.filter((t) => t.assignees.some((a) => a.team === team));
   }, [tasks, members, scope, myTeam, team]);
 
   function toggleMember(uid: string) {
@@ -150,8 +169,8 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
     }
 
     const pointValue = Number(points);
-    if (!Number.isInteger(pointValue) || pointValue < 0) {
-      toast.error("Оноог 0-ээс их бүхэл тоогоор оруулна уу");
+    if (!Number.isInteger(pointValue) || pointValue < 0 || pointValue > MAX_TASK_POINTS) {
+      toast.error(`Оноог 0–${MAX_TASK_POINTS} хооронд бүхэл тоогоор оруулна уу`);
       return;
     }
 
@@ -282,6 +301,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                 id="task-points"
                 type="number"
                 min={0}
+                max={MAX_TASK_POINTS}
                 step={1}
                 value={points}
                 onChange={(e) => setPoints(e.target.value)}
@@ -508,8 +528,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
           </p>
         )}
 
-        {visibleTasks.map((task) => {
-          const assignees = resolveAssignees(task, members);
+        {visibleTasks.map(({ task, assignees }) => {
           // The headline counts every assignee; the rows show the filtered team.
           const rows = team === ALL_TEAMS ? assignees : assignees.filter((a) => a.team === team);
           const summary = deriveTaskSummary(task, assignees);
@@ -560,15 +579,7 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                     >
                       {summary.label} · {summary.reviewed}/{summary.total} үнэлэгдсэн
                     </span>
-                    <span
-                      style={{
-                        color: "#374151",
-                        fontSize: "0.65rem",
-                        fontFamily: "var(--font-jetbrains)",
-                      }}
-                    >
-                      {formatDateTime(task.dueDate, "Хугацаагүй")}
-                    </span>
+                    <DeadlineBadge task={task} />
                   </div>
                   <p
                     style={{
@@ -581,25 +592,47 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                     {task.assignedTo.map((a) => resolveAssignedLabel(a, members)).join(", ")}
                   </p>
                 </div>
-                <div
-                  className="shrink-0"
-                  style={{
-                    background: "rgba(34, 197, 94, 0.094)",
-                    border: "1px solid rgba(34, 197, 94, 0.25)",
-                    borderRadius: "3px",
-                    padding: "4px 8px",
-                  }}
-                >
-                  <span
+                <div className="flex shrink-0 items-center gap-2">
+                  {canEditTask(userData, task) && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        // The card itself opens the detail dialog on click.
+                        event.stopPropagation();
+                        setEditing(task);
+                      }}
+                      aria-label="Даалгавар засах"
+                      className="flex items-center gap-1 rounded-sm border border-white/10 px-2 py-1 text-[#9CA3AF] transition-colors hover:border-[#8B5CF6]/60 hover:text-[#C4B5FD]"
+                      style={{
+                        fontFamily: "var(--font-jetbrains)",
+                        fontSize: "0.6rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      <Pencil size={11} />
+                      ЗАСАХ
+                    </button>
+                  )}
+                  <div
                     style={{
-                      fontFamily: "var(--font-jetbrains)",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      color: "#22C55E",
+                      background: "rgba(34, 197, 94, 0.094)",
+                      border: "1px solid rgba(34, 197, 94, 0.25)",
+                      borderRadius: "3px",
+                      padding: "4px 8px",
                     }}
                   >
-                    {task.points} pts
-                  </span>
+                    <span
+                      style={{
+                        fontFamily: "var(--font-jetbrains)",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        color: "#22C55E",
+                      }}
+                    >
+                      {task.points} pts
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -607,6 +640,8 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                 task={task}
                 assignees={rows}
                 viewer={userData}
+                max={ROWS_PER_CARD}
+                onShowAll={() => open(task.id)}
                 renderAction={(assignee) => (
                   <ReviewButton task={task} assignee={assignee} viewer={userData} />
                 )}
@@ -615,6 +650,17 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
           );
         })}
       </div>
+
+      <TaskEditDialog
+        task={editing}
+        assignable={assignable}
+        scope={scope}
+        team={myTeam}
+        open={editing !== null}
+        onOpenChange={(next) => {
+          if (!next) setEditing(null);
+        }}
+      />
 
       <TaskDetailDialog
         task={selectedTask}

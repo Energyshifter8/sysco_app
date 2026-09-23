@@ -47,3 +47,16 @@ export function canAssignTo(actor?: Principal | null, target?: Principal | null)
   if (isAdmin(actor)) return true;
   return isLead(actor) && !!actor.team && actor.team === target.team;
 }
+
+/**
+ * Can `actor` edit `task`? Admins edit anything; a lead only the tasks they
+ * created themselves, which is exactly what the security rules allow.
+ */
+export function canEditTask(
+  actor?: Principal | null,
+  task?: { createdBy: string } | null,
+): boolean {
+  if (!actor || !task) return false;
+  if (isAdmin(actor)) return true;
+  return isLead(actor) && task.createdBy === actor.uid;
+}

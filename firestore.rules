@@ -227,7 +227,18 @@ service cloud.firestore {
     // ── Attendance ─────────────────────────────────────────────
     match /attendance/{docId} {
       allow read: if isAuth();
-      allow create, update: if isAdmin();
+
+      // An admin files any day.  A lead files their own team-mates only — and
+      // never themselves: a "present" mark is worth points, so the same line
+      // that stops anyone reviewing their own work applies here.  The status
+      // allowlist keeps a made-up value out of the ledger maths.
+      allow create, update: if (isAdmin()
+          || (isLead()
+              && request.resource.data.uid != request.auth.uid
+              && isMyTeammate(request.resource.data.uid)))
+        && request.resource.data.markedBy == request.auth.uid
+        && request.resource.data.status in ['present', 'late', 'absent', 'excused'];
+
       allow delete: if false;
     }
   }

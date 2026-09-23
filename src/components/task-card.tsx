@@ -1,11 +1,12 @@
 "use client";
 
 import { AssigneeAvatars } from "@/components/assignee-list";
+import { DeadlineBadge } from "@/components/deadline-badge";
 import { ASSIGNEE_STATUS_COLORS, ASSIGNEE_STATUS_LABELS } from "@/lib/constants";
 import { getAssigneeReview, getAssigneeStatus, isTaskOverdue } from "@/lib/tasks";
-import { formatDateTime } from "@/lib/utils";
 import { Task, User } from "@/types";
 import { CheckCircle2, Clock } from "lucide-react";
+import { memo } from "react";
 
 /** How the given member's own position on a task should read. */
 export function statusMeta(task: Task, uid: string) {
@@ -44,7 +45,7 @@ export interface TaskCardProps {
  * One task, as it appears in a list. The whole card opens the detail dialog —
  * by click, or by Enter/Space for keyboard users.
  */
-export function TaskCard({ task, uid, assignees, onOpen, variant = "plain" }: TaskCardProps) {
+function TaskCardImpl({ task, uid, assignees, onOpen, variant = "plain" }: TaskCardProps) {
   const { color, label, Icon } = statusMeta(task, uid);
   const isSurface = variant === "surface";
 
@@ -116,15 +117,7 @@ export function TaskCard({ task, uid, assignees, onOpen, variant = "plain" }: Ta
               <Icon size={12} />
               {label}
             </span>
-            <span
-              style={{
-                color: "#374151",
-                fontSize: "0.65rem",
-                fontFamily: "var(--font-jetbrains)",
-              }}
-            >
-              {formatDateTime(task.dueDate, "Хугацаагүй")}
-            </span>
+            <DeadlineBadge task={task} compact />
             <AssigneeAvatars task={task} assignees={assignees} highlightUid={uid} />
           </div>
         </div>
@@ -152,3 +145,9 @@ export function TaskCard({ task, uid, assignees, onOpen, variant = "plain" }: Ta
     </div>
   );
 }
+
+/**
+ * Memoised: the task lists re-render on every snapshot from the whole tasks
+ * collection, and a card only changes when its own task or assignees do.
+ */
+export const TaskCard = memo(TaskCardImpl);

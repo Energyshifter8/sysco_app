@@ -1,5 +1,6 @@
 "use client";
 
+import { DeadlineBadge } from "@/components/deadline-badge";
 import { ReviewButton } from "@/components/review-button";
 import { StatusPicker } from "@/components/status-picker";
 import {
@@ -25,9 +26,9 @@ import {
 } from "@/lib/constants";
 import { canReview } from "@/lib/permissions";
 import { getAssigneeReview, getAssigneeStatus, isTaskOverdue, resolveAssignees } from "@/lib/tasks";
-import { asDate, formatDateTime, getInitials } from "@/lib/utils";
+import { formatDateTime, getInitials } from "@/lib/utils";
 import { Task, TaskActivity, User } from "@/types";
-import { AlertTriangle, Clock, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const labelStyle: React.CSSProperties = {
   fontFamily: "var(--font-jetbrains)",
@@ -64,20 +65,6 @@ function assignmentLabel(task: Task): string {
   }
   if (teams.length > 0) return "Баг ба тодорхой гишүүд";
   return "Тодорхой гишүүд";
-}
-
-/** "3 хоног 4 цаг үлдсэн", or null once the deadline has passed. */
-function remainingLabel(due: Date | null): string | null {
-  if (!due) return null;
-  const ms = due.getTime() - Date.now();
-  if (ms <= 0) return null;
-
-  const minutes = Math.floor(ms / 60_000);
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  if (days > 0) return `${days} хоног ${hours} цаг үлдсэн`;
-  if (hours > 0) return `${hours} цаг ${minutes % 60} минут үлдсэн`;
-  return `${minutes} минут үлдсэн`;
 }
 
 function shortTime(date: Date): string {
@@ -215,9 +202,7 @@ function TaskDetailBody({
   onStatusChange: (next: AssigneeStatus) => void;
 }) {
   const assignees = resolveAssignees(task, members);
-  const due = asDate(task.dueDate);
   const overdue = isTaskOverdue(task);
-  const remaining = remainingLabel(due);
 
   const viewerUid = viewer?.uid;
   const viewerIsAssignee = !!viewerUid && assignees.some((a) => a.uid === viewerUid);
@@ -260,13 +245,7 @@ function TaskDetailBody({
             letterSpacing: "0.04em",
           }}
         >
-          <span
-            className="inline-flex items-center gap-1.5"
-            style={{ color: overdue ? "#EF4444" : "#3B82F6" }}
-          >
-            {overdue ? <AlertTriangle size={12} /> : <Clock size={12} />}
-            {overdue ? "Хоцорсон" : (remaining ?? "Хугацаагүй")}
-          </span>
+          <DeadlineBadge task={task} />
           <span style={{ color: "#4B5563" }}>{formatDateTime(task.dueDate)}</span>
         </DialogDescription>
       </DialogHeader>

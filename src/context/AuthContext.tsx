@@ -4,7 +4,7 @@ import { auth, db } from "@/lib/firebase";
 import { User } from "@/types";
 import { User as FirebaseUser, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 interface AuthContextValue {
   user: FirebaseUser | null;
@@ -104,9 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const profileIncomplete = userData !== null && (!userData.team || !userData.major);
 
-  return (
-    <AuthContext.Provider value={{ user, userData, loading, error, profileIncomplete }}>
-      {children}
-    </AuthContext.Provider>
+  // Every screen reads this context, so a fresh object each render would push a
+  // re-render through the whole tree for nothing.
+  const value = useMemo(
+    () => ({ user, userData, loading, error, profileIncomplete }),
+    [user, userData, loading, error, profileIncomplete],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
