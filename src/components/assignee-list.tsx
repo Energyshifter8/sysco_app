@@ -1,5 +1,7 @@
 "use client";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { VIEWER_PALETTE, avatarPalette } from "@/lib/avatar";
 import { ASSIGNEE_STATUS_COLORS, ASSIGNEE_STATUS_LABELS, TEAM_SHORT_LABELS } from "@/lib/constants";
 import { canReview } from "@/lib/permissions";
 import { getAssigneeReview, getAssigneeStatus } from "@/lib/tasks";
@@ -60,12 +62,13 @@ export function AssigneeList({
             className="flex items-center gap-2.5 rounded-md border border-white/6 bg-white/[0.02] px-2.5 py-2"
           >
             <span
-              className="flex size-7 shrink-0 items-center justify-center rounded-md border border-[#A78BFA]/30 bg-[#8B5CF6]/15"
+              className="flex size-7 shrink-0 items-center justify-center rounded-md border"
               style={{
                 fontFamily: "var(--font-jetbrains)",
                 fontSize: "0.55rem",
                 fontWeight: 700,
-                color: "#A78BFA",
+                ...avatarPalette(assignee.uid),
+                borderColor: avatarPalette(assignee.uid).border,
               }}
             >
               {getInitials(assignee.name)}
@@ -138,10 +141,12 @@ export function AssigneeList({
  * would crowd everything else out.
  */
 export function AssigneeAvatars({
+  task,
   assignees,
   max = 5,
   highlightUid,
 }: {
+  task?: Task;
   assignees: User[];
   max?: number;
   highlightUid?: string;
@@ -155,22 +160,32 @@ export function AssigneeAvatars({
     <div className="flex items-center gap-1">
       {shown.map((assignee) => {
         const isViewer = assignee.uid === highlightUid;
+        // Colour, not initials, is what separates two people who both read
+        // as "ТБ"; the viewer keeps a fixed colour so "me" stays obvious.
+        const palette = isViewer ? VIEWER_PALETTE : avatarPalette(assignee.uid);
+        const status = task ? ASSIGNEE_STATUS_LABELS[getAssigneeStatus(task, assignee.uid)] : null;
+        const hint = status ? `${assignee.name} · ${status}` : assignee.name;
+
         return (
-          <span
-            key={assignee.uid}
-            title={assignee.name}
-            className="flex size-5 shrink-0 items-center justify-center rounded-full border"
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.48rem",
-              fontWeight: 700,
-              color: isViewer ? "#C4B5FD" : "#9CA3AF",
-              background: isViewer ? "rgba(139, 92, 246, 0.2)" : "rgba(255, 255, 255, 0.05)",
-              borderColor: isViewer ? "rgba(167, 139, 250, 0.4)" : "rgba(255, 255, 255, 0.1)",
-            }}
-          >
-            {getInitials(assignee.name)}
-          </span>
+          <Tooltip key={assignee.uid}>
+            <TooltipTrigger asChild>
+              <span
+                title={hint}
+                className="flex size-5 shrink-0 items-center justify-center rounded-full border"
+                style={{
+                  fontFamily: "var(--font-jetbrains)",
+                  fontSize: "0.48rem",
+                  fontWeight: 700,
+                  color: palette.color,
+                  background: palette.background,
+                  borderColor: palette.border,
+                }}
+              >
+                {getInitials(assignee.name)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{hint}</TooltipContent>
+          </Tooltip>
         );
       })}
       {overflow > 0 && (

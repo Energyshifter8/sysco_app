@@ -60,7 +60,7 @@ async function seed() {
   console.log(`✓ Seeded member (totalPoints=0) and task (points=${TASK_POINTS})`);
 }
 
-/** Mirrors handleStatusChange in src/app/dashboard/tasks/page.tsx. */
+/** Mirrors setStatus in src/hooks/useTaskActions.ts. */
 async function setStatus(next: string) {
   await db.runTransaction(async (tx) => {
     const taskRef = db.collection("tasks").doc(TASK_ID);
@@ -71,11 +71,20 @@ async function setStatus(next: string) {
     if (data.assigneeReview?.[MEMBER_UID]) {
       throw new Error("Үнэлгээ хийгдсэн тул статус солих боломжгүй");
     }
+    const from = data.assigneeStatus?.[MEMBER_UID] ?? "pending";
     tx.set(taskRef, { assigneeStatus: { [MEMBER_UID]: next } }, { merge: true });
+    tx.set(db.collection("tasks").doc(TASK_ID).collection("activity").doc(), {
+      uid: MEMBER_UID,
+      actorUid: MEMBER_UID,
+      type: "status",
+      from,
+      to: next,
+      at: FieldValue.serverTimestamp(),
+    });
   });
 }
 
-/** Mirrors handleReview in src/components/task-workspace.tsx. */
+/** Mirrors reviewAssignee in src/hooks/useTaskActions.ts. */
 async function review(score: number) {
   await db.runTransaction(async (tx) => {
     const taskRef = db.collection("tasks").doc(TASK_ID);
@@ -112,6 +121,13 @@ async function review(score: number) {
       reviewedBy: LEAD_UID,
       createdAt: FieldValue.serverTimestamp(),
     });
+    tx.set(db.collection("tasks").doc(TASK_ID).collection("activity").doc(), {
+      uid: MEMBER_UID,
+      actorUid: LEAD_UID,
+      type: "review",
+      score,
+      at: FieldValue.serverTimestamp(),
+    });
   });
 }
 
@@ -132,9 +148,16 @@ async function points(): Promise<number> {
   return snap.data()!.totalPoints;
 }
 
+async function activity() {
+  const snap = await db.collection("tasks").doc(TASK_ID).collection("activity").orderBy("at").get();
+  return snap.docs.map((d) => d.data());
+}
+
 async function cleanup() {
   await db.collection("users").doc(MEMBER_UID).delete();
   await db.collection("users").doc(LEAD_UID).delete();
+  const acts = await db.collection("tasks").doc(TASK_ID).collection("activity").get();
+  for (const d of acts.docs) await d.ref.delete();
   await db.collection("tasks").doc(TASK_ID).delete();
   const history = await db.collection("pointsHistory").where("uid", "==", MEMBER_UID).get();
   for (const d of history.docs) await d.ref.delete();
@@ -157,6 +180,19 @@ async function main() {
   console.log("✓ Member moved pending → in_progress → done (no points yet)");
   if ((await points()) !== 0) throw new Error("FAIL: status changes must not award points");
 
+  const statusLog = await activity();
+  console.log(`✓ activity entries after status changes: ${statusLog.length} (expected 2)`);
+  if (statusLog.length !== 2) throw new Error(`FAIL: expected 2 activity docs, got ${statusLog.length}`);
+  if (statusLog[0].from !== "pending" || statusLog[0].to !== "in_progress") {
+    throw new Error(`FAIL: first entry is ${statusLog[0].from} → ${statusLog[0].to}`);
+  }
+  if (statusLog[1].from !== "in_progress" || statusLog[1].to !== "done") {
+    throw new Error(`FAIL: second entry is ${statusLog[1].from} → ${statusLog[1].to}`);
+  }
+  if (statusLog.some((a) => a.actorUid !== MEMBER_UID || a.type !== "status")) {
+    throw new Error("FAIL: status entries have the wrong actor or type");
+  }
+
   await expectThrows("Score above task.points is rejected", () => review(TASK_POINTS + 1), "хооронд");
   await expectThrows("Negative score is rejected", () => review(-1), "хооронд");
   await expectThrows("Fractional score is rejected", () => review(2.5), "хооронд");
@@ -172,6 +208,20 @@ async function main() {
   if (history.size !== 1) throw new Error(`FAIL: expected 1 ledger entry, got ${history.size}`);
   if (history.docs[0].data().reviewedBy !== LEAD_UID) {
     throw new Error("FAIL: ledger entry does not record the reviewer");
+  }
+
+  const afterReview = await activity();
+  const reviewEntry = afterReview.at(-1);
+  console.log(`✓ activity entries after review: ${afterReview.length} (expected 3)`);
+  if (afterReview.length !== 3) throw new Error(`FAIL: expected 3 activity docs, got ${afterReview.length}`);
+  if (reviewEntry?.type !== "review" || reviewEntry.score !== 4) {
+    throw new Error("FAIL: review entry missing or has the wrong score");
+  }
+  if (reviewEntry.actorUid !== LEAD_UID || reviewEntry.uid !== MEMBER_UID) {
+    throw new Error("FAIL: review entry records the wrong people");
+  }
+  if ("comment" in reviewEntry) {
+    throw new Error("FAIL: the review comment must not reach the world-readable log");
   }
 
   await expectThrows("Second review is rejected", () => review(5), "Аль хэдийн баталгаажсан");

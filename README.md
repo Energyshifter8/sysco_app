@@ -14,7 +14,9 @@ Sysco&Tech is built for university student club administrators, team leads and m
 - **Task management** — admins create tasks for anyone; a lead creates tasks for their own team only. Tasks carry a title, description, maximum point value and acceptance deadline, and can be assigned to individuals, a whole team, or every member
 - **Self-reported status** — each assignee moves their own work through *Хүлээгдэж буй → Хийж байгаа → Дууссан*. Setting a status never awards points and is frozen once the work has been reviewed
 - **Lead review** — a lead (or an admin) scores each finished assignee from 0 to the task's point value, with an optional comment. One Firestore transaction writes the review, credits `totalPoints` and appends to the `pointsHistory` ledger; a second review of the same person is rejected. Nobody reviews themselves
-- **Assignee visibility** — every task shows who it is assigned to, with avatar, team, status and score. `all` and `team:<team>` assignments are expanded to real people from a single cached directory read
+- **Assignee visibility** — every task shows who it is assigned to, with avatar, team, status and score. `all` and `team:<team>` assignments are expanded to real people from a single cached directory read. Avatars are coloured by a hash of the uid, so two people whose initials both read "ТБ" stay distinguishable, and each one carries a tooltip with the full name and current status
+- **Task detail dialog** — clicking any task card (member list, overview, admin and lead workspaces) opens one shared dialog: description, who created it and when, the assignment type, a per-assignee table with start/finish times and scores, and the full activity timeline. The open task lives in `?task=<id>`, so the view survives a refresh and can be shared as a link; the browser Back button closes it
+- **Activity log** — every status change and every review appends to `tasks/{id}/activity` inside the same transaction as the change itself, so the log can never drift from the task. It is append-only: no updates, no deletes, and `at` is pinned to the server clock by the rules
 - **Team filter** — Бүгд / Хөгжүүлэлт / Дотоод үйл ажиллагаа / Дизайн / Сошиал across the leaderboard, member directory, attendance and both task workspaces, persisted in the `?team=` search param
 - **Points leaderboard** — real-time ranking with a top-3 podium; ranks are recomputed inside the active filter
 - **Profile management** — members edit their major, team and course year
@@ -62,12 +64,13 @@ Browser
 ```
 
 - **Firebase Auth** handles identity; `AuthContext` exposes `user` and `userData` (the Firestore profile) to the whole app.
-- **Firestore** stores four collections: `users`, `tasks`, `attendance`, `pointsHistory`.
-- **There is no backend.** Every rule that matters is enforced in `firestore.rules`, and `scripts/test-rules.ts` runs 43 cases against it on the emulator.
+- **Firestore** stores four collections — `users`, `tasks`, `attendance`, `pointsHistory` — plus the `tasks/{id}/activity` subcollection.
+- **There is no backend.** Every rule that matters is enforced in `firestore.rules`, and `scripts/test-rules.ts` runs 67 cases against it on the emulator — including the full multi-write transactions, not just the individual writes.
 - **Points are awarded in exactly one place** — the review transaction in `src/components/task-workspace.tsx`. It writes the task's `assigneeReview`, increments `users/<uid>.totalPoints` and appends to `pointsHistory` atomically. Members cannot write `totalPoints`, `role`, `assigneeReview` or `pointsHistory` at all.
 - **Assignment tokens.** A task's `assignedTo` holds uids, the literal `"all"`, or `"team:<team>"`, so one `array-contains-any` query finds everything assigned to a member. `resolveAssignees()` in `src/lib/tasks.ts` expands the tokens back into people.
 - **`lastReviewedUid`.** Security rules cannot read a key out of a map diff, so a review write also declares which uid it targets. The rules verify that declaration against the real diff, then use it to authorise the write.
-- **Real-time snapshots** live in effects (`useAssignedTasks`, `useAllTasks`, `useLeaderboard`) and mirror into the React Query cache, so the listener is always unsubscribed on unmount.
+- **Real-time snapshots** live in effects (`useAssignedTasks`, `useAllTasks`, `useLeaderboard`) and mirror into the React Query cache, so the listener is always unsubscribed on unmount. The activity log is the exception: `useTaskActivity` only subscribes while the detail dialog is open, so a list of twenty tasks opens zero extra listeners.
+- **Both write paths live in one hook.** `useTaskActions` owns the status transaction and the review transaction; the task list, the detail dialog and the review button all call it, so there is one implementation of each write and one place the activity entry is added.
 
 ### Roles
 
@@ -107,7 +110,10 @@ src/
 │           └── attendance/page.tsx # Daily attendance with date picker
 ├── components/
 │   ├── task-workspace.tsx          # Task creation + oversight, shared by admin and lead
+│   ├── task-card.tsx               # Clickable task card (member list + overview)
+│   ├── task-detail-dialog.tsx      # Shared detail dialog: assignees, milestones, timeline
 │   ├── assignee-list.tsx           # Assignee rows + compact avatar stack
+│   ├── review-button.tsx           # Eligibility gate + review dialog + transaction
 │   ├── review-dialog.tsx           # Score 0..task.points with an optional comment
 │   ├── status-picker.tsx           # Member's three-state progress control
 │   ├── team-filter.tsx             # Shared team segmented filter
@@ -123,16 +129,20 @@ src/
 │   ├── useAllTasks.ts              # Real-time full task collection (admin / lead)
 │   ├── useMembers.ts               # Cached uid → User directory
 │   ├── useLeaderboard.ts           # Real-time leaderboard
+│   ├── useTaskActions.ts           # The status and review transactions
+│   ├── useTaskActivity.ts          # Activity log, subscribed only while open
+│   ├── useSelectedTask.ts          # `?task=` deep link + getDoc fallback
 │   └── useTeamFilter.ts            # `?team=` search-param filter
 ├── lib/
 │   ├── firebase.ts                 # Firebase app, auth, Firestore initialization
+│   ├── avatar.ts                   # Stable per-uid avatar colours
 │   ├── constants.ts                # Single source for majors, teams, roles, statuses
 │   ├── permissions.ts              # isAdmin / isLead / canManageMember / canReview
 │   ├── tasks.ts                    # resolveAssignees, status + review helpers
 │   ├── queryClient.ts              # React Query client singleton
 │   └── utils.ts                    # cn(), getInitials(), asDate(), formatDateTime()
 └── types/
-    └── index.ts                    # User, Task, TaskReview, AttendanceRecord
+    └── index.ts                    # User, Task, TaskReview, TaskActivity, AttendanceRecord
 scripts/
 ├── migrate-task-status.ts          # Legacy → status/review migration (dry-run by default)
 ├── test-rules.ts                   # Security-rules tests (emulator)
@@ -214,8 +224,8 @@ firebase emulators:start --only firestore,auth
 ```
 
 ```bash
-pnpm test:rules    # 48 cases: who may set a status, review, award points, create tasks, sign up
-pnpm test:review   # the status → review → point-crediting transaction, including double-review
+pnpm test:rules    # 67 cases: status, review, points, task creation, sign-up, activity log
+pnpm test:review   # the status → review → point-crediting transaction, and its activity entries
 pnpm test:signup   # sign-up, rollback on a rejected profile write, and the self-heal
 ```
 

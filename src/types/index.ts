@@ -1,9 +1,9 @@
-import type { AssigneeStatus, Role, Team } from "@/lib/constants";
+import type { AssigneeStatus, Role, TaskActivityType, Team } from "@/lib/constants";
 
 // Re-exported so existing `@/types` imports keep working; `@/lib/constants` is
 // the single source for these values.
 export { ASSIGNEE_STATUS_LABELS, ROLE_LABELS, TEAM_LABELS } from "@/lib/constants";
-export type { AssigneeStatus, Role, Team } from "@/lib/constants";
+export type { AssigneeStatus, Role, TaskActivityType, Team } from "@/lib/constants";
 
 export interface User {
   uid: string;
@@ -46,6 +46,24 @@ export interface Task {
   status?: string;
   assigneeProgress?: Record<string, number>;
   assigneeCompleted?: Record<string, boolean>;
+}
+
+/**
+ * One entry in `tasks/{taskId}/activity` — an append-only log of who moved what,
+ * and when. Review comments deliberately stay out of it: activity is readable by
+ * every signed-in user, while a comment is only for the assignee and reviewers.
+ */
+export interface TaskActivity {
+  id: string;
+  /** Whose progress this entry is about. */
+  uid: string;
+  /** Who performed the change — the member themselves, or a lead/admin. */
+  actorUid: string;
+  type: TaskActivityType;
+  from?: AssigneeStatus;
+  to?: AssigneeStatus;
+  score?: number;
+  at: Date;
 }
 
 export interface TaskReview {

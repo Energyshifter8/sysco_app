@@ -2,32 +2,21 @@
 
 import { AssigneeList } from "@/components/assignee-list";
 import { PageSpinner } from "@/components/page-spinner";
-import { ReviewDialog } from "@/components/review-dialog";
+import { ReviewButton } from "@/components/review-button";
+import { TaskDetailDialog } from "@/components/task-detail-dialog";
 import { TeamFilter } from "@/components/team-filter";
 import { useAuth } from "@/context/AuthContext";
 import { useAllTasks } from "@/hooks/useAllTasks";
 import { useMembers } from "@/hooks/useMembers";
+import { useResolvedTask, useSelectedTask } from "@/hooks/useSelectedTask";
 import { ALL_TEAMS, useTeamFilter } from "@/hooks/useTeamFilter";
 import { ASSIGN_ALL, TEAM_LABELS, type Team, teamToken } from "@/lib/constants";
 import { db } from "@/lib/firebase";
-import { canReview } from "@/lib/permissions";
-import {
-  deriveTaskSummary,
-  getAssigneeReview,
-  getAssigneeStatus,
-  resolveAssignees,
-} from "@/lib/tasks";
+import { deriveTaskSummary, resolveAssignees } from "@/lib/tasks";
 import { formatDateTime, getInitials } from "@/lib/utils";
-import { Task, User } from "@/types";
-import {
-  addDoc,
-  collection,
-  doc,
-  increment,
-  runTransaction,
-  serverTimestamp,
-} from "firebase/firestore";
-import { Check, Loader2, Star, X } from "lucide-react";
+import { User } from "@/types";
+import { addDoc, collection } from "firebase/firestore";
+import { Check, Loader2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -97,12 +86,12 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
   const [deadline, setDeadline] = useState(defaultDeadlineValue);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const [reviewing, setReviewing] = useState<{ task: Task; assignee: User } | null>(null);
-  const [submittingReview, setSubmittingReview] = useState(false);
 
   const myTeam = userData?.team;
   // A lead lands on their own team; an admin on everyone.
   const [team, setTeam] = useTeamFilter(scope === "lead" ? (myTeam ?? ALL_TEAMS) : ALL_TEAMS);
+  const { taskId, open, close } = useSelectedTask();
+  const { task: selectedTask, loading: selectedLoading } = useResolvedTask(taskId, tasks);
 
   const assignable = useMemo(
     () =>
@@ -198,83 +187,6 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
       toast.error("Task үүсгэхэд алдаа гарлаа");
     } finally {
       setSaving(false);
-    }
-  }
-
-  /**
-   * Scoring a member is the one place points are awarded. Everything that must
-   * agree — the task's review map, the member's total, and the audit ledger —
-   * is written in one transaction, and the re-read inside it is what stops the
-   * same member being credited twice.
-   */
-  async function handleReview(score: number, comment: string) {
-    if (!reviewing || !userData) return;
-    const { task, assignee } = reviewing;
-
-    if (!canReview(userData, assignee)) {
-      toast.error("Танд энэ гишүүнийг үнэлэх эрх байхгүй");
-      return;
-    }
-    if (!Number.isInteger(score) || score < 0 || score > task.points) {
-      toast.error(`Оноо 0-ээс ${task.points} хооронд бүхэл тоо байх ёстой`);
-      return;
-    }
-
-    setSubmittingReview(true);
-    try {
-      await runTransaction(db, async (transaction) => {
-        const taskRef = doc(db, "tasks", task.id);
-        const taskSnap = await transaction.get(taskRef);
-        if (!taskSnap.exists()) throw new Error("Task олдсонгүй");
-
-        const data = taskSnap.data() as Task;
-        if (data.assigneeReview?.[assignee.uid]) {
-          throw new Error("Аль хэдийн баталгаажсан");
-        }
-        if ((data.assigneeStatus?.[assignee.uid] ?? "pending") !== "done") {
-          throw new Error("Гишүүн даалгаврыг дуусгаагүй байна");
-        }
-        if (score > data.points) {
-          throw new Error(`Оноо ${data.points}-аас их байж болохгүй`);
-        }
-
-        transaction.set(
-          taskRef,
-          {
-            assigneeReview: {
-              [assignee.uid]: {
-                score,
-                reviewedBy: userData.uid,
-                reviewedAt: new Date(),
-                ...(comment ? { comment } : {}),
-              },
-            },
-            lastReviewedUid: assignee.uid,
-          },
-          { merge: true },
-        );
-
-        transaction.update(doc(db, "users", assignee.uid), {
-          totalPoints: increment(score),
-        });
-
-        transaction.set(doc(collection(db, "pointsHistory")), {
-          uid: assignee.uid,
-          taskId: task.id,
-          points: score,
-          reason: task.title,
-          reviewedBy: userData.uid,
-          createdAt: serverTimestamp(),
-        });
-      });
-
-      toast.success(`${assignee.name}-д ${score} оноо олголоо`);
-      setReviewing(null);
-    } catch (err) {
-      console.error("Үнэлгээ хийхэд алдаа гарлаа", err);
-      toast.error(err instanceof Error ? err.message : "Үнэлгээ хийхэд алдаа гарлаа");
-    } finally {
-      setSubmittingReview(false);
     }
   }
 
@@ -623,7 +535,16 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
           return (
             <div
               key={task.id}
-              className="border"
+              role="button"
+              tabIndex={0}
+              onClick={() => open(task.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  open(task.id);
+                }
+              }}
+              className="cursor-pointer border transition-colors hover:border-[#8B5CF6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/50"
               style={{
                 background: "#141414",
                 borderColor: "rgba(255, 255, 255, 0.07)",
@@ -704,43 +625,24 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
                 task={task}
                 assignees={rows}
                 viewer={userData}
-                renderAction={(assignee) => {
-                  const alreadyReviewed = getAssigneeReview(task, assignee.uid) !== undefined;
-                  if (alreadyReviewed || !canReview(userData, assignee)) return null;
-                  if (getAssigneeStatus(task, assignee.uid) !== "done") return null;
-
-                  return (
-                    <button
-                      type="button"
-                      onClick={() => setReviewing({ task, assignee })}
-                      className="flex shrink-0 items-center gap-1 rounded-sm border border-[#8B5CF6]/30 bg-[#8B5CF6]/12 px-2 py-1 text-[#A78BFA] transition-colors hover:border-[#8B5CF6]/60 hover:bg-[#8B5CF6]/20"
-                      style={{
-                        fontFamily: "var(--font-jetbrains)",
-                        fontSize: "0.6rem",
-                        fontWeight: 700,
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      <Star size={11} />
-                      ҮНЭЛЭХ
-                    </button>
-                  );
-                }}
+                renderAction={(assignee) => (
+                  <ReviewButton task={task} assignee={assignee} viewer={userData} />
+                )}
               />
             </div>
           );
         })}
       </div>
 
-      <ReviewDialog
-        task={reviewing?.task ?? null}
-        assignee={reviewing?.assignee ?? null}
-        open={reviewing !== null}
-        onOpenChange={(open) => {
-          if (!open && !submittingReview) setReviewing(null);
+      <TaskDetailDialog
+        task={selectedTask}
+        loadingTask={selectedLoading}
+        members={members}
+        viewer={userData}
+        open={taskId !== null}
+        onOpenChange={(next) => {
+          if (!next) close();
         }}
-        submitting={submittingReview}
-        onSubmit={handleReview}
       />
     </div>
   );

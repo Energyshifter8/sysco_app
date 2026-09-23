@@ -83,6 +83,12 @@ export function isAssigneeStatus(value: unknown): value is AssigneeStatus {
   return ASSIGNEE_STATUSES.some((s) => s.value === value);
 }
 
+/* ─── Task activity ─── */
+
+export const ACTIVITY_TYPES = ["status", "review"] as const;
+
+export type TaskActivityType = (typeof ACTIVITY_TYPES)[number];
+
 /* ─── Assignment tokens ─── */
 
 /** `assignedTo` entry that targets every member. */

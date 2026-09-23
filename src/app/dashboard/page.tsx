@@ -1,16 +1,18 @@
 "use client";
 
-import { AssigneeAvatars } from "@/components/assignee-list";
+import { PageSpinner } from "@/components/page-spinner";
+import { TaskCard } from "@/components/task-card";
+import { TaskDetailDialog } from "@/components/task-detail-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { useAssignedTasks } from "@/hooks/useAssignedTasks";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { useMembers } from "@/hooks/useMembers";
-import { ASSIGNEE_STATUS_COLORS, ASSIGNEE_STATUS_LABELS } from "@/lib/constants";
-import { getAssigneeReview, getAssigneeStatus, isTaskOverdue, resolveAssignees } from "@/lib/tasks";
-import { formatDateTime, getInitials } from "@/lib/utils";
-import { Task, User } from "@/types";
+import { useResolvedTask, useSelectedTask } from "@/hooks/useSelectedTask";
+import { getAssigneeReview, resolveAssignees } from "@/lib/tasks";
+import { getInitials } from "@/lib/utils";
 import { CheckCircle2, Clock, Loader2, Sparkles, Star, Trophy } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 function StatCard({
   label,
@@ -68,106 +70,6 @@ function StatCard({
   );
 }
 
-function TaskCard({ task, uid, assignees }: { task: Task; uid: string; assignees: User[] }) {
-  const review = getAssigneeReview(task, uid);
-  const status = getAssigneeStatus(task, uid);
-  const isOverdue = status !== "done" && isTaskOverdue(task);
-
-  const statusColor = review ? "#22C55E" : isOverdue ? "#EF4444" : ASSIGNEE_STATUS_COLORS[status];
-  const statusLabel = review
-    ? `Баталгаажсан · ${review.score}/${task.points}`
-    : isOverdue
-      ? "Хоцорсон"
-      : status === "done"
-        ? "Үнэлгээ хүлээж буй"
-        : ASSIGNEE_STATUS_LABELS[status];
-  const StatusIcon = review || status === "done" ? CheckCircle2 : Clock;
-
-  return (
-    <div
-      className="surface-card rounded-xl"
-      style={{
-        padding: "14px 16px",
-        borderLeft: `3px solid ${statusColor}`,
-        transition: "background 180ms ease, border-color 180ms ease, transform 180ms ease",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = "#1A1A1A";
-        e.currentTarget.style.borderColor = `${statusColor}55`;
-        e.currentTarget.style.transform = "translateX(3px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = "";
-        e.currentTarget.style.borderColor = "";
-        e.currentTarget.style.transform = "";
-      }}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <p
-            style={{
-              fontFamily: "var(--font-barlow)",
-              fontWeight: 700,
-              fontSize: "0.9rem",
-              color: "#E8E8E8",
-              marginBottom: "6px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {task.title}
-          </p>
-          <div className="flex items-center gap-3">
-            <span
-              className="inline-flex items-center gap-1"
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.65rem",
-                color: statusColor,
-                letterSpacing: "0.06em",
-              }}
-            >
-              <StatusIcon size={12} />
-              {statusLabel}
-            </span>
-            <span
-              style={{
-                color: "#374151",
-                fontSize: "0.65rem",
-                fontFamily: "var(--font-jetbrains)",
-              }}
-            >
-              {formatDateTime(task.dueDate, "Хугацаагүй")}
-            </span>
-            <AssigneeAvatars assignees={assignees} highlightUid={uid} />
-          </div>
-        </div>
-        <div
-          className="shrink-0"
-          style={{
-            background: "rgba(34, 197, 94, 0.094)",
-            border: "1px solid rgba(34, 197, 94, 0.25)",
-            borderRadius: "3px",
-            padding: "4px 8px",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              color: "#22C55E",
-            }}
-          >
-            {task.points} pts
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function rankMedal(i: number) {
   if (i === 0) return { color: "#FBBF24", label: "#1" };
   if (i === 1) return { color: "#9CA3AF", label: "#2" };
@@ -186,12 +88,14 @@ function getMajorLabel(major?: string | null): string {
   return map[major] || major;
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user, userData, loading: authLoading } = useAuth();
   const { entries, loading: leaderboardLoading } = useLeaderboard();
 
   const { tasks, loading: tasksLoading } = useAssignedTasks();
   const { members } = useMembers();
+  const { taskId, open, close } = useSelectedTask();
+  const { task: selectedTask, loading: selectedLoading } = useResolvedTask(taskId, tasks);
 
   if (authLoading || !user || !userData) {
     return (
@@ -377,6 +281,8 @@ export default function DashboardPage() {
                   task={t}
                   uid={user.uid}
                   assignees={resolveAssignees(t, members)}
+                  variant="surface"
+                  onOpen={() => open(t.id)}
                 />
               ))
             )}
@@ -488,6 +394,24 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      <TaskDetailDialog
+        task={selectedTask}
+        loadingTask={selectedLoading}
+        members={members}
+        viewer={userData}
+        open={taskId !== null}
+        onOpenChange={(next) => {
+          if (!next) close();
+        }}
+      />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<PageSpinner />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

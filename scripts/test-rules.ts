@@ -11,7 +11,19 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, getDoc, setDoc, setLogLevel, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  increment,
+  getDoc,
+  serverTimestamp,
+  runTransaction,
+  setDoc,
+  setLogLevel,
+  updateDoc,
+} from "firebase/firestore";
 import { readFileSync } from "node:fs";
 
 const HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -147,6 +159,27 @@ function reviewWrite(uid: string, reviewer: string, score: number) {
     assigneeReview: { [uid]: { score, reviewedBy: reviewer, reviewedAt: new Date() } },
     lastReviewedUid: uid,
   };
+}
+
+/** What useTaskActions writes into tasks/{id}/activity. */
+function statusActivity(uid: string, overrides: Record<string, unknown> = {}) {
+  return {
+    uid,
+    actorUid: uid,
+    type: "status",
+    from: "pending",
+    to: "in_progress",
+    at: serverTimestamp(),
+    ...overrides,
+  };
+}
+
+function reviewActivity(uid: string, actorUid: string, overrides: Record<string, unknown> = {}) {
+  return { uid, actorUid, type: "review", score: 4, at: serverTimestamp(), ...overrides };
+}
+
+function activityCol(uid: string, taskId: string) {
+  return collection(db(uid), "tasks", taskId, "activity");
 }
 
 async function main() {
@@ -547,6 +580,223 @@ async function main() {
       });
     });
     await assertSucceeds(deleteDoc(doc(db(LEAD_DEV), "tasks", "lead-owned")));
+  });
+
+  describe("Task activity");
+
+  await seed();
+  await it("гишүүн өөрийн статусын activity бичиж чадна", async () => {
+    await assertSucceeds(addDoc(activityCol(MEMBER_DEV, "task-uid"), statusActivity(MEMBER_DEV)));
+  });
+
+  await seed();
+  await it("гишүүн бусдын нэрээр activity бичиж чадахгүй", async () => {
+    await assertFails(addDoc(activityCol(MEMBER_DEV, "task-uid"), statusActivity(MEMBER_DEV_2)));
+  });
+
+  await seed();
+  await it("actorUid нь бичиж буй хүн биш бол унана", async () => {
+    await assertFails(
+      addDoc(
+        activityCol(MEMBER_DEV, "task-uid"),
+        statusActivity(MEMBER_DEV, { actorUid: LEAD_DEV }),
+      ),
+    );
+  });
+
+  await seed();
+  await it("at-ийг хуурамчаар өгвөл унана", async () => {
+    await assertFails(
+      addDoc(
+        activityCol(MEMBER_DEV, "task-uid"),
+        statusActivity(MEMBER_DEV, { at: new Date("2020-01-01") }),
+      ),
+    );
+  });
+
+  await seed();
+  await it("зөвшөөрөгдөөгүй `to` утга унана", async () => {
+    await assertFails(
+      addDoc(activityCol(MEMBER_DEV, "task-uid"), statusActivity(MEMBER_DEV, { to: "approved" })),
+    );
+  });
+
+  await seed();
+  await it("нэмэлт талбартай activity унана", async () => {
+    await assertFails(
+      addDoc(activityCol(MEMBER_DEV, "task-uid"), statusActivity(MEMBER_DEV, { note: "hack" })),
+    );
+  });
+
+  await seed();
+  await it("assignee биш хүн статусын activity бичиж чадахгүй", async () => {
+    await assertFails(addDoc(activityCol(MEMBER_OPS, "task-uid"), statusActivity(MEMBER_OPS)));
+  });
+
+  await seed();
+  await it('"team:dev" task дээр dev гишүүн activity бичиж чадна', async () => {
+    await assertSucceeds(addDoc(activityCol(MEMBER_DEV, "task-team"), statusActivity(MEMBER_DEV)));
+  });
+
+  await seed();
+  await it('"team:dev" task дээр ops гишүүн activity бичиж чадахгүй', async () => {
+    await assertFails(addDoc(activityCol(MEMBER_OPS, "task-team"), statusActivity(MEMBER_OPS)));
+  });
+
+  await seed();
+  await it('"all" task дээр дурын гишүүн activity бичиж чадна', async () => {
+    await assertSucceeds(addDoc(activityCol(MEMBER_OPS, "task-all"), statusActivity(MEMBER_OPS)));
+  });
+
+  await seed();
+  await it("lead өөрийн багийнхны review activity бичиж чадна", async () => {
+    await assertSucceeds(
+      addDoc(activityCol(LEAD_DEV, "task-done"), reviewActivity(MEMBER_DEV, LEAD_DEV)),
+    );
+  });
+
+  await seed();
+  await it("lead өөр багийнхны review activity бичиж чадахгүй", async () => {
+    await assertFails(
+      addDoc(activityCol(LEAD_DEV, "task-done"), reviewActivity(MEMBER_OPS, LEAD_DEV)),
+    );
+  });
+
+  await seed();
+  await it("lead өөрийнхөө review activity бичиж чадахгүй", async () => {
+    await assertFails(
+      addDoc(activityCol(LEAD_DEV, "task-lead-done"), reviewActivity(LEAD_DEV, LEAD_DEV)),
+    );
+  });
+
+  await seed();
+  await it("гишүүн review activity бичиж чадахгүй", async () => {
+    await assertFails(
+      addDoc(activityCol(MEMBER_DEV, "task-done"), reviewActivity(MEMBER_DEV_2, MEMBER_DEV)),
+    );
+  });
+
+  await seed();
+  await it("activity-г засах боломжгүй", async () => {
+    let id = "";
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const ref = await addDoc(collection(ctx.firestore(), "tasks", "task-uid", "activity"), {
+        uid: MEMBER_DEV,
+        actorUid: MEMBER_DEV,
+        type: "status",
+        to: "done",
+        at: new Date(),
+      });
+      id = ref.id;
+    });
+    await assertFails(
+      updateDoc(doc(db(MEMBER_DEV), "tasks", "task-uid", "activity", id), { to: "pending" }),
+    );
+    await assertFails(deleteDoc(doc(db(ADMIN), "tasks", "task-uid", "activity", id)));
+  });
+
+  await seed();
+  await it("нэвтэрсэн хүн activity уншиж чадна", async () => {
+    let id = "";
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const ref = await addDoc(collection(ctx.firestore(), "tasks", "task-uid", "activity"), {
+        uid: MEMBER_DEV,
+        actorUid: MEMBER_DEV,
+        type: "status",
+        to: "done",
+        at: new Date(),
+      });
+      id = ref.id;
+    });
+    await assertSucceeds(getDoc(doc(db(MEMBER_OPS), "tasks", "task-uid", "activity", id)));
+  });
+
+  describe("Full transactions under rules");
+
+  await seed();
+  await it("гишүүний статусын transaction (task + activity) бүтнээрээ давна", async () => {
+    const memberDb = db(MEMBER_DEV);
+    await assertSucceeds(
+      runTransaction(memberDb, async (tx) => {
+        const taskRef = doc(memberDb, "tasks", "task-uid");
+        await tx.get(taskRef);
+        tx.set(taskRef, { assigneeStatus: { [MEMBER_DEV]: "done" } }, { merge: true });
+        tx.set(doc(collection(memberDb, "tasks", "task-uid", "activity")), {
+          uid: MEMBER_DEV,
+          actorUid: MEMBER_DEV,
+          type: "status",
+          from: "pending",
+          to: "done",
+          at: serverTimestamp(),
+        });
+      }),
+    );
+  });
+
+  await seed();
+  await it("lead-ийн үнэлгээний transaction (4 бичилт) бүтнээрээ давна", async () => {
+    const leadDb = db(LEAD_DEV);
+    await assertSucceeds(
+      runTransaction(leadDb, async (tx) => {
+        const taskRef = doc(leadDb, "tasks", "task-done");
+        await tx.get(taskRef);
+        tx.set(
+          taskRef,
+          {
+            assigneeReview: {
+              [MEMBER_DEV]: { score: 4, reviewedBy: LEAD_DEV, reviewedAt: new Date() },
+            },
+            lastReviewedUid: MEMBER_DEV,
+          },
+          { merge: true },
+        );
+        tx.update(doc(leadDb, "users", MEMBER_DEV), { totalPoints: increment(4) });
+        tx.set(doc(collection(leadDb, "pointsHistory")), {
+          uid: MEMBER_DEV,
+          taskId: "task-done",
+          points: 4,
+          reason: "Test task",
+          reviewedBy: LEAD_DEV,
+          createdAt: serverTimestamp(),
+        });
+        tx.set(doc(collection(leadDb, "tasks", "task-done", "activity")), {
+          uid: MEMBER_DEV,
+          actorUid: LEAD_DEV,
+          type: "review",
+          score: 4,
+          at: serverTimestamp(),
+        });
+      }),
+    );
+  });
+
+  await seed();
+  await it("өөр багийн гишүүнийг үнэлэх transaction бүхэлдээ унана", async () => {
+    const leadDb = db(LEAD_DEV);
+    await assertFails(
+      runTransaction(leadDb, async (tx) => {
+        const taskRef = doc(leadDb, "tasks", "task-done");
+        await tx.get(taskRef);
+        tx.set(
+          taskRef,
+          {
+            assigneeReview: {
+              [MEMBER_OPS]: { score: 4, reviewedBy: LEAD_DEV, reviewedAt: new Date() },
+            },
+            lastReviewedUid: MEMBER_OPS,
+          },
+          { merge: true },
+        );
+        tx.update(doc(leadDb, "users", MEMBER_OPS), { totalPoints: increment(4) });
+        tx.set(doc(collection(leadDb, "tasks", "task-done", "activity")), {
+          uid: MEMBER_OPS,
+          actorUid: LEAD_DEV,
+          type: "review",
+          score: 4,
+          at: serverTimestamp(),
+        });
+      }),
+    );
   });
 
   describe("Sign-up");
