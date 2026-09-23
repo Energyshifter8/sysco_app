@@ -1,7 +1,7 @@
 "use client";
 
 import { RadioGroupSegment, RadioGroupSegments } from "@/components/ui/radio-group";
-import { ALL_TEAMS, type TeamFilterValue } from "@/hooks/useTeamFilter";
+import { ALL_TEAMS, NO_TEAM, type TeamFilterValue } from "@/hooks/useTeamFilter";
 import { TEAMS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -9,10 +9,15 @@ export interface TeamFilterProps {
   value: TeamFilterValue;
   onChange: (next: TeamFilterValue) => void;
   className?: string;
+  /**
+   * Adds a "Баггүй" segment. Only for lists that actually contain people with
+   * no team — the attendance roster, where the admins live.
+   */
+  showNoTeam?: boolean;
 }
 
 /** Shared "Бүгд / <team>" segmented filter used across the list pages. */
-export function TeamFilter({ value, onChange, className }: TeamFilterProps) {
+export function TeamFilter({ value, onChange, className, showNoTeam }: TeamFilterProps) {
   return (
     <RadioGroupSegments
       value={value}
@@ -26,6 +31,7 @@ export function TeamFilter({ value, onChange, className }: TeamFilterProps) {
           {team.short}
         </RadioGroupSegment>
       ))}
+      {showNoTeam && <RadioGroupSegment value={NO_TEAM}>Баггүй</RadioGroupSegment>}
     </RadioGroupSegments>
   );
 }

@@ -228,14 +228,14 @@ service cloud.firestore {
     match /attendance/{docId} {
       allow read: if isAuth();
 
-      // An admin files any day.  A lead files their own team-mates only — and
-      // never themselves: a "present" mark is worth points, so the same line
-      // that stops anyone reviewing their own work applies here.  The status
-      // allowlist keeps a made-up value out of the ledger maths.
-      allow create, update: if (isAdmin()
-          || (isLead()
-              && request.resource.data.uid != request.auth.uid
-              && isMyTeammate(request.resource.data.uid)))
+      // Nobody files their own day, whatever their role: a "present" mark is
+      // worth points, so the same line that stops anyone reviewing their own
+      // work applies here — an admin's own attendance is filed by another
+      // admin.  Beyond that, an admin files anyone and a lead files their own
+      // team-mates, which now includes the lead and any admin on that team.
+      // The status allowlist keeps a made-up value out of the ledger maths.
+      allow create, update: if request.resource.data.uid != request.auth.uid
+        && (isAdmin() || (isLead() && isMyTeammate(request.resource.data.uid)))
         && request.resource.data.markedBy == request.auth.uid
         && request.resource.data.status in ['present', 'late', 'absent', 'excused'];
 

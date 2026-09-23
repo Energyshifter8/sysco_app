@@ -4,9 +4,15 @@ import { type Team, isTeam } from "@/lib/constants";
 import { useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
-export type TeamFilterValue = Team | "all";
+export const ALL_TEAMS = "all";
 
-export const ALL_TEAMS: TeamFilterValue = "all";
+/**
+ * People with no team of their own — in practice the admins, who belong to the
+ * attendance roster without belonging to any one team.
+ */
+export const NO_TEAM = "none";
+
+export type TeamFilterValue = Team | typeof ALL_TEAMS | typeof NO_TEAM;
 
 /**
  * Team filter backed by the `?team=` search param, so a filtered view survives
@@ -20,7 +26,8 @@ export const ALL_TEAMS: TeamFilterValue = "all";
 export function useTeamFilter(fallback: TeamFilterValue = ALL_TEAMS) {
   const searchParams = useSearchParams();
   const raw = searchParams.get("team");
-  const value: TeamFilterValue = raw === ALL_TEAMS ? ALL_TEAMS : isTeam(raw) ? raw : fallback;
+  const value: TeamFilterValue =
+    raw === ALL_TEAMS || raw === NO_TEAM ? raw : isTeam(raw) ? raw : fallback;
 
   const setValue = useCallback((next: TeamFilterValue) => {
     const params = new URLSearchParams(window.location.search);
@@ -31,7 +38,9 @@ export function useTeamFilter(fallback: TeamFilterValue = ALL_TEAMS) {
   return [value, setValue] as const;
 }
 
-/** Narrows any list of people to the selected team. */
+/** Narrows any list of people to the selected team, or to those without one. */
 export function filterByTeam<T extends { team?: Team }>(items: T[], team: TeamFilterValue): T[] {
-  return team === ALL_TEAMS ? items : items.filter((item) => item.team === team);
+  if (team === ALL_TEAMS) return items;
+  if (team === NO_TEAM) return items.filter((item) => !item.team);
+  return items.filter((item) => item.team === team);
 }

@@ -30,7 +30,13 @@ const HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
 const [host, port] = HOST.split(":");
 
 const ADMIN = "uid-admin";
+/** A second admin, with no team — the shape an admin usually has. */
+const ADMIN_2 = "uid-admin-2";
+/** An admin attached to the dev team, so its lead can file their attendance. */
+const ADMIN_DEV = "uid-admin-dev";
 const LEAD_DEV = "uid-lead-dev";
+/** A second dev lead, so one lead filing another can be tested. */
+const LEAD_DEV_2 = "uid-lead-dev-2";
 const LEAD_OPS = "uid-lead-ops";
 const MEMBER_DEV = "uid-member-dev";
 const MEMBER_DEV_2 = "uid-member-dev-2";
@@ -68,6 +74,35 @@ async function seed() {
       role: "admin",
       course: "4",
       major: "computer_science",
+      totalPoints: 0,
+    });
+    await setDoc(doc(db, "users", ADMIN_2), {
+      uid: ADMIN_2,
+      name: "Admin Two",
+      email: "admin2@test.mn",
+      role: "admin",
+      course: "4",
+      major: "computer_science",
+      totalPoints: 0,
+    });
+    await setDoc(doc(db, "users", ADMIN_DEV), {
+      uid: ADMIN_DEV,
+      name: "Dev Admin",
+      email: "devadmin@test.mn",
+      role: "admin",
+      team: "dev",
+      course: "4",
+      major: "computer_science",
+      totalPoints: 0,
+    });
+    await setDoc(doc(db, "users", LEAD_DEV_2), {
+      uid: LEAD_DEV_2,
+      name: "Dev Lead 2",
+      email: "devlead2@test.mn",
+      role: "lead",
+      team: "dev",
+      course: "3",
+      major: "software_engineering",
       totalPoints: 0,
     });
     await setDoc(doc(db, "users", LEAD_DEV), {
@@ -930,6 +965,90 @@ async function main() {
   });
 
   await seed();
+  await it("admin өөрийн ирцээ бичиж чадахгүй", async () => {
+    await assertFails(
+      setDoc(doc(db(ADMIN), "attendance", `2026-01-01_${ADMIN}`), {
+        id: `2026-01-01_${ADMIN}`,
+        uid: ADMIN,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: ADMIN,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("admin өөр admin-ы ирцийг бичиж чадна", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(ADMIN), "attendance", `2026-01-01_${ADMIN_2}`), {
+        id: `2026-01-01_${ADMIN_2}`,
+        uid: ADMIN_2,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: ADMIN,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("admin lead-ийн ирцийг бичиж чадна", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(ADMIN), "attendance", `2026-01-01_${LEAD_DEV}`), {
+        id: `2026-01-01_${LEAD_DEV}`,
+        uid: LEAD_DEV,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: ADMIN,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("lead багийнхаа нөгөө lead-ийн ирцийг бичиж чадна", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(LEAD_DEV), "attendance", `2026-01-01_${LEAD_DEV_2}`), {
+        id: `2026-01-01_${LEAD_DEV_2}`,
+        uid: LEAD_DEV_2,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: LEAD_DEV,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("lead багтаа харьяалагдах admin-ы ирцийг бичиж чадна", async () => {
+    await assertSucceeds(
+      setDoc(doc(db(LEAD_DEV), "attendance", `2026-01-01_${ADMIN_DEV}`), {
+        id: `2026-01-01_${ADMIN_DEV}`,
+        uid: ADMIN_DEV,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: LEAD_DEV,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
+  await it("lead баггүй admin-ы ирц бичиж чадахгүй", async () => {
+    await assertFails(
+      setDoc(doc(db(LEAD_DEV), "attendance", `2026-01-01_${ADMIN_2}`), {
+        id: `2026-01-01_${ADMIN_2}`,
+        uid: ADMIN_2,
+        date: "2026-01-01",
+        status: "present",
+        markedBy: LEAD_DEV,
+        note: "",
+      }),
+    );
+  });
+
+  await seed();
   await it("гишүүн ирц бичиж чадахгүй", async () => {
     await assertFails(
       setDoc(doc(db(MEMBER_DEV), "attendance", `2026-01-01_${MEMBER_DEV}`), {
@@ -1036,6 +1155,62 @@ async function main() {
           reason: "Ирц: 2026-01-02",
           source: "attendance",
           reviewedBy: LEAD_DEV,
+          createdAt: serverTimestamp(),
+        });
+      }),
+    );
+  });
+
+  await seed();
+  await it("admin өөр admin-д ирцийн оноо бичиж чадна (transaction)", async () => {
+    const adminDb = db(ADMIN);
+    await assertSucceeds(
+      runTransaction(adminDb, async (tx) => {
+        const attRef = doc(adminDb, "attendance", `2026-01-02_${ADMIN_2}`);
+        await tx.get(attRef);
+        tx.set(attRef, {
+          id: `2026-01-02_${ADMIN_2}`,
+          uid: ADMIN_2,
+          date: "2026-01-02",
+          status: "present",
+          markedBy: ADMIN,
+          note: "",
+        });
+        tx.update(doc(adminDb, "users", ADMIN_2), { totalPoints: increment(5) });
+        tx.set(doc(collection(adminDb, "pointsHistory")), {
+          uid: ADMIN_2,
+          points: 5,
+          reason: "Ирц: 2026-01-02",
+          source: "attendance",
+          reviewedBy: ADMIN,
+          createdAt: serverTimestamp(),
+        });
+      }),
+    );
+  });
+
+  await seed();
+  await it("admin өөртөө ирцийн оноо бичих transaction бүхэлдээ унана", async () => {
+    const adminDb = db(ADMIN);
+    await assertFails(
+      runTransaction(adminDb, async (tx) => {
+        const attRef = doc(adminDb, "attendance", `2026-01-02_${ADMIN}`);
+        await tx.get(attRef);
+        tx.set(attRef, {
+          id: `2026-01-02_${ADMIN}`,
+          uid: ADMIN,
+          date: "2026-01-02",
+          status: "present",
+          markedBy: ADMIN,
+          note: "",
+        });
+        tx.update(doc(adminDb, "users", ADMIN), { totalPoints: increment(5) });
+        tx.set(doc(collection(adminDb, "pointsHistory")), {
+          uid: ADMIN,
+          points: 5,
+          reason: "Ирц: 2026-01-02",
+          source: "attendance",
+          reviewedBy: ADMIN,
           createdAt: serverTimestamp(),
         });
       }),
