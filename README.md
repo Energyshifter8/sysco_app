@@ -200,21 +200,51 @@ The emulator runs on `127.0.0.1:8080` by default (configured in `firebase.json`)
 | `pnpm format` | Format `src/` with Biome |
 | `pnpm check` | Lint + type-check (`tsc --noEmit`) + production build |
 | `pnpm test:rules` | Security-rules tests against the Firestore emulator |
+| `pnpm test:signup` | Sign-up / rollback / self-heal test against the Auth + Firestore emulators |
 | `pnpm test:review` | Status → review → points transaction test against the emulator |
 | `pnpm migrate:status` | Legacy task migration (dry run; add `-- --apply` to write) |
+| `pnpm backfill:users` | Create missing `users/{uid}` profiles (dry run; add `-- --apply`) |
 
 ### Tests
 
-Both suites need the Firestore emulator running:
+All three suites need the emulators running:
 
 ```bash
-firebase emulators:start --only firestore
+firebase emulators:start --only firestore,auth
 ```
 
 ```bash
-pnpm test:rules    # 43 cases: who may set a status, review, award points, create tasks, sign up
+pnpm test:rules    # 48 cases: who may set a status, review, award points, create tasks, sign up
 pnpm test:review   # the status → review → point-crediting transaction, including double-review
+pnpm test:signup   # sign-up, rollback on a rejected profile write, and the self-heal
 ```
+
+### Backfilling missing profiles
+
+Sign-up used to create the Firebase Auth account and then have its `users/{uid}` write rejected,
+because the create rule was `allow create: if false`. Those accounts can sign in but have no
+profile. Two things fix them:
+
+- `AuthContext` re-creates a missing profile on the next sign-in, so anyone who logs in heals
+  themselves.
+- `scripts/backfill-users.ts` heals everyone at once, without waiting for them to log in.
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+export FIREBASE_PROJECT_ID=your-project-id
+
+pnpm backfill:users              # dry run — lists exactly who would be created
+pnpm backfill:users -- --apply   # create the profiles
+```
+
+New profiles get `role: "member"`, `totalPoints: 0`, an empty `course`/`major`, no team, and
+`createdAt` taken from the Auth account's `metadata.creationTime`. The name falls back to the Auth
+display name, then to the part of the email before the `@`. **Existing documents are never
+overwritten** — the script writes with `create()`, which fails rather than clobbers.
+
+> Deploy the rules *before* running this, and keep the service account key outside the repo.
+> `.gitignore` already excludes `*service-account*.json`, `*serviceAccount*.json` and
+> `firebase-adminsdk-*.json`.
 
 ### Migration
 
@@ -238,6 +268,7 @@ assignments cannot be reconstructed.
 - **Attendance points are not transactional and not logged**: the attendance page awards +5 for "present" with a batch write plus a read taken outside it, and writes no `pointsHistory` entry — unlike the review flow, which is atomic and audited.
 - **No task editing in the UI**: the rules permit admins (and leads, on their own tasks) to update and delete tasks, but no screen offers it yet.
 - **No email verification** and **no password reset flow**.
+- **Sign-up rollback is best-effort**: if the profile write is rejected the Auth account is deleted again, but if that delete also fails the account is left without a profile. `AuthContext` re-creates it on the next sign-in.
 - **No pagination**: member lists, task lists and the leaderboard load every document at once.
 - **UI language**: all labels are in Mongolian; no i18n or language switching is implemented.
 

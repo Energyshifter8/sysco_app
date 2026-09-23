@@ -121,7 +121,24 @@ async function seed() {
 }
 
 function db(uid: string) {
-  return testEnv.authenticatedContext(uid).firestore();
+  // The users create rule compares the written email against the token, so the
+  // test contexts carry the same email the seeded profiles use.
+  return testEnv.authenticatedContext(uid, { email: `${uid}@test.mn` }).firestore();
+}
+
+/** Exactly the document useAuthActions.signup() writes. */
+function signupDoc(uid: string, overrides: Record<string, unknown> = {}) {
+  return {
+    uid,
+    name: "Шинэ хэрэглэгч",
+    email: `${uid}@test.mn`,
+    role: "member",
+    course: "",
+    major: "",
+    totalPoints: 0,
+    createdAt: new Date(),
+    ...overrides,
+  };
 }
 
 /** The write a reviewer makes: the review map entry plus the declared target. */
@@ -536,78 +553,79 @@ async function main() {
 
   await seed();
   await it("шинэ хэрэглэгч member-ээр бүртгүүлж чадна", async () => {
-    await assertSucceeds(
-      setDoc(doc(db("uid-new"), "users", "uid-new"), {
-        uid: "uid-new",
-        name: "New",
-        email: "new@test.mn",
-        role: "member",
-        course: "",
-        major: "",
-        totalPoints: 0,
-      }),
-    );
+    await assertSucceeds(setDoc(doc(db("uid-new"), "users", "uid-new"), signupDoc("uid-new")));
   });
 
   await seed();
   await it("шинэ хэрэглэгч admin-аар бүртгүүлж чадахгүй", async () => {
     await assertFails(
-      setDoc(doc(db("uid-new"), "users", "uid-new"), {
-        uid: "uid-new",
-        name: "New",
-        email: "new@test.mn",
-        role: "admin",
-        course: "",
-        major: "",
-        totalPoints: 0,
-      }),
+      setDoc(doc(db("uid-new"), "users", "uid-new"), signupDoc("uid-new", { role: "admin" })),
     );
   });
 
   await seed();
   await it("шинэ хэрэглэгч lead-ээр бүртгүүлж чадахгүй", async () => {
     await assertFails(
-      setDoc(doc(db("uid-new"), "users", "uid-new"), {
-        uid: "uid-new",
-        name: "New",
-        email: "new@test.mn",
-        role: "lead",
-        team: "dev",
-        course: "",
-        major: "",
-        totalPoints: 0,
-      }),
+      setDoc(
+        doc(db("uid-new"), "users", "uid-new"),
+        signupDoc("uid-new", { role: "lead", team: "dev" }),
+      ),
     );
   });
 
   await seed();
   await it("шинэ хэрэглэгч оноотой бүртгүүлж чадахгүй", async () => {
     await assertFails(
-      setDoc(doc(db("uid-new"), "users", "uid-new"), {
-        uid: "uid-new",
-        name: "New",
-        email: "new@test.mn",
-        role: "member",
-        course: "",
-        major: "",
-        totalPoints: 500,
-      }),
+      setDoc(doc(db("uid-new"), "users", "uid-new"), signupDoc("uid-new", { totalPoints: 500 })),
     );
   });
 
   await seed();
   await it("хэрэглэгч өөр хүний баримт үүсгэж чадахгүй", async () => {
     await assertFails(
-      setDoc(doc(db("uid-new"), "users", "uid-other"), {
-        uid: "uid-other",
-        name: "Other",
-        email: "other@test.mn",
-        role: "member",
-        course: "",
-        major: "",
-        totalPoints: 0,
-      }),
+      setDoc(doc(db("uid-new"), "users", "uid-other"), signupDoc("uid-other")),
     );
+  });
+
+  await seed();
+  await it("өөр имэйлээр бүртгүүлж чадахгүй", async () => {
+    await assertFails(
+      setDoc(
+        doc(db("uid-new"), "users", "uid-new"),
+        signupDoc("uid-new", { email: "someone-else@test.mn" }),
+      ),
+    );
+  });
+
+  await seed();
+  await it("зөвшөөрөгдөөгүй талбартай бол унана", async () => {
+    await assertFails(
+      setDoc(
+        doc(db("uid-new"), "users", "uid-new"),
+        signupDoc("uid-new", { isSuperUser: true }),
+      ),
+    );
+  });
+
+  await seed();
+  await it("team-гүйгээр бүртгүүлж чадна", async () => {
+    const { team, ...withoutTeam } = signupDoc("uid-new") as Record<string, unknown>;
+    void team;
+    await assertSucceeds(setDoc(doc(db("uid-new"), "users", "uid-new"), withoutTeam));
+  });
+
+  await seed();
+  await it("баримтгүй Auth хэрэглэгч нэвтрэхэд профайлаа үүсгэж чадна (self-heal)", async () => {
+    // AuthContext writes the same shape when getDoc comes back empty.
+    await assertSucceeds(
+      setDoc(doc(db("uid-orphan"), "users", "uid-orphan"), signupDoc("uid-orphan")),
+    );
+  });
+
+  await seed();
+  await it("бүртгүүлсний дараа role-оо өөрчилж чадахгүй", async () => {
+    await assertSucceeds(setDoc(doc(db("uid-new"), "users", "uid-new"), signupDoc("uid-new")));
+    await assertFails(updateDoc(doc(db("uid-new"), "users", "uid-new"), { role: "admin" }));
   });
 
   describe("Attendance");

@@ -2,16 +2,33 @@
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useAuth } from "@/context/AuthContext";
-import { Menu, Sparkles, Zap } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, Menu, Sparkles, Zap } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userData, loading } = useAuth();
+  const { userData, loading, error, profileIncomplete } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const nudgedRef = useRef(false);
+
+  // Members whose profile was back-filled (or who skipped it at sign-up) land
+  // here with no team or major. Point them at the profile page once per visit,
+  // and never while they are already on it.
+  useEffect(() => {
+    if (loading || !profileIncomplete || nudgedRef.current) return;
+    if (pathname === "/dashboard/profile") return;
+
+    nudgedRef.current = true;
+    toast.info("Профайлаа бөглөнө үү — баг болон чиглэлээ сонгоно уу");
+    router.push("/dashboard/profile");
+  }, [loading, profileIncomplete, pathname, router]);
 
   return (
     <div
@@ -121,6 +138,23 @@ export default function DashboardLayout({
           style={{ flex: 1, overflow: "auto" }}
           className="mx-auto w-full max-w-[1500px] px-4 py-5 md:px-7 md:py-7"
         >
+          {error && (
+            <div
+              className="mb-5 flex items-center gap-2.5 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 px-3.5 py-3"
+              role="alert"
+            >
+              <AlertTriangle size={16} className="shrink-0 text-[#EF4444]" />
+              <span
+                style={{
+                  fontFamily: "var(--font-barlow)",
+                  fontSize: "0.85rem",
+                  color: "#FCA5A5",
+                }}
+              >
+                {error}
+              </span>
+            </div>
+          )}
           {children}
         </main>
       </div>

@@ -79,12 +79,20 @@ service cloud.firestore {
       // and resolving 'all' / 'team:<team>' assignments to real people).
       allow read: if isAuth();
 
-      // Sign-up creates the caller's own profile.  A new account can only ever
-      // be a member starting from zero points — role escalation is blocked here.
+      // Sign-up creates the caller's own profile, and the self-heal in
+      // AuthContext re-creates it if it ever went missing.  A new account can
+      // only ever be its own owner, its own verified email address, a member,
+      // and worth zero points — role escalation and pre-loaded points are both
+      // blocked here.  The key allowlist keeps anything unexpected out of the
+      // document; every field in it is optional, so omitting `team` is fine.
       allow create: if isOwner(uid)
-        && request.resource.data.uid == uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
         && request.resource.data.role == 'member'
-        && request.resource.data.totalPoints == 0;
+        && request.resource.data.totalPoints == 0
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'name', 'email', 'role', 'course', 'major', 'team', 'totalPoints',
+              'createdAt']);
 
       // A member edits their own profile only.  totalPoints and role are NOT in
       // this list: points are now awarded exclusively through a review, so the

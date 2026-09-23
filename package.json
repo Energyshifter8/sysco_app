@@ -12,7 +12,9 @@
     "check": "biome check src/ && tsc --noEmit && next build",
     "test:rules": "tsx scripts/test-rules.ts",
     "test:review": "tsx scripts/test-review-flow.ts",
-    "migrate:status": "tsx scripts/migrate-task-status.ts"
+    "migrate:status": "tsx scripts/migrate-task-status.ts",
+    "backfill:users": "tsx scripts/backfill-users.ts",
+    "test:signup": "tsx scripts/test-signup-flow.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
