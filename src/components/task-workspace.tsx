@@ -1,6 +1,7 @@
 "use client";
 
 import { AssigneeList } from "@/components/assignee-list";
+import { PageContainer, PageHeader } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { ReviewButton } from "@/components/review-button";
 import { TaskDetailDialog } from "@/components/task-detail-dialog";
@@ -225,32 +226,13 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
   }
 
   return (
-    <div style={{ maxWidth: "900px" }}>
-      <div className="mb-8">
-        <h1
-          style={{
-            fontFamily: "var(--font-jetbrains)",
-            fontSize: "1.3rem",
-            fontWeight: 800,
-            color: "#E8E8E8",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          ДААЛГАВАР ҮҮСГЭХ
-        </h1>
-        <p
-          style={{
-            color: "#6B7280",
-            fontSize: "0.75rem",
-            fontFamily: "var(--font-jetbrains)",
-            marginTop: "4px",
-          }}
-        >
-          {scope === "admin"
-            ? "ADMIN PANEL"
-            : `БАГИЙН АЖЛЫН ТАЛБАР · ${TEAM_LABELS[myTeam as Team]}`}
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="ДААЛГАВАР ҮҮСГЭХ"
+        description={
+          scope === "admin" ? "ADMIN PANEL" : `БАГИЙН АЖЛЫН ТАЛБАР · ${TEAM_LABELS[myTeam as Team]}`
+        }
+      />
 
       <div
         className="border"
@@ -644,6 +626,6 @@ export function TaskWorkspace({ scope }: TaskWorkspaceProps) {
           if (!next) close();
         }}
       />
-    </div>
+    </PageContainer>
   );
 }

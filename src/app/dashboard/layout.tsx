@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { PageContainer } from "@/components/page-container";
 import { useAuth } from "@/context/AuthContext";
 import { AlertTriangle, Menu, Sparkles, Zap } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,10 +43,8 @@ export default function DashboardLayout({
           flexShrink: 0,
           background: "#111111",
           borderRight: "1px solid rgba(255, 255, 255, 0.07)",
-          display: "flex",
-          flexDirection: "column",
         }}
-        className="dashboard-sidebar-surface hidden md:flex"
+        className="dashboard-sidebar-surface hidden shrink-0 flex-col md:flex"
       >
         <DashboardSidebar />
       </aside>
@@ -72,13 +71,11 @@ export default function DashboardLayout({
           width: "220px",
           background: "#111111",
           borderRight: "1px solid rgba(255, 255, 255, 0.07)",
-          display: "flex",
-          flexDirection: "column",
           zIndex: 50,
           transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.2s ease",
         }}
-        className="dashboard-sidebar-surface md:hidden"
+        className="dashboard-sidebar-surface flex flex-col md:hidden"
       >
         <DashboardSidebar onLinkClick={() => setMobileOpen(false)} />
       </aside>
@@ -91,15 +88,11 @@ export default function DashboardLayout({
             position: "sticky",
             top: 0,
             zIndex: 30,
-            display: "flex",
-            alignItems: "center",
-            gap: "16px",
             borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
             background: "rgba(10, 10, 10, 0.82)",
             backdropFilter: "blur(16px)",
-            padding: "12px 16px",
           }}
-          className="md:hidden"
+          className="flex items-center gap-4 px-4 py-3 md:hidden"
         >
           <button
             onClick={() => setMobileOpen(true)}
@@ -134,26 +127,25 @@ export default function DashboardLayout({
           )}
         </header>
 
-        <main
-          style={{ flex: 1, overflow: "auto" }}
-          className="mx-auto w-full max-w-[1500px] px-4 py-5 md:px-7 md:py-7"
-        >
+        <main className="w-full">
           {error && (
-            <div
-              className="mb-5 flex items-center gap-2.5 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 px-3.5 py-3"
-              role="alert"
-            >
-              <AlertTriangle size={16} className="shrink-0 text-[#EF4444]" />
-              <span
-                style={{
-                  fontFamily: "var(--font-barlow)",
-                  fontSize: "0.85rem",
-                  color: "#FCA5A5",
-                }}
+            <PageContainer className="pb-0">
+              <div
+                className="flex items-center gap-2.5 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 px-3.5 py-3"
+                role="alert"
               >
-                {error}
-              </span>
-            </div>
+                <AlertTriangle size={16} className="shrink-0 text-[#EF4444]" />
+                <span
+                  style={{
+                    fontFamily: "var(--font-barlow)",
+                    fontSize: "0.85rem",
+                    color: "#FCA5A5",
+                  }}
+                >
+                  {error}
+                </span>
+              </div>
+            </PageContainer>
           )}
           {children}
         </main>

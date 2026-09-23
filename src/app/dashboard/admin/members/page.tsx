@@ -1,6 +1,7 @@
 "use client";
 
 import { MemberRoleEditor } from "@/components/member-role-editor";
+import { PageContainer, PageHeader } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { TeamFilter } from "@/components/team-filter";
 import { filterByTeam, useTeamFilter } from "@/hooks/useTeamFilter";
@@ -135,61 +136,42 @@ function MembersContent() {
   const totalPoints = filtered.reduce((sum, m) => sum + m.totalPoints, 0);
 
   return (
-    <div style={{ maxWidth: "1000px" }}>
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-        <div>
-          <h1
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "1.3rem",
-              fontWeight: 800,
-              color: "#E8E8E8",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            ГИШҮҮДИЙН ТОЙМ
-          </h1>
-          <p
-            style={{
-              color: "#6B7280",
-              fontSize: "0.75rem",
-              fontFamily: "var(--font-jetbrains)",
-              marginTop: "4px",
-            }}
-          >
-            {members.length} ГИШҮҮН — SYSCO&TECH CLUB
-          </p>
-        </div>
-        {/* Search */}
-        <div style={{ position: "relative" }}>
-          <Search
-            size={14}
-            style={{
-              position: "absolute",
-              left: "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#6B7280",
-            }}
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Хайх..."
-            style={{
-              background: "#1A1A1A",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "3px",
-              padding: "8px 12px 8px 30px",
-              color: "#E8E8E8",
-              fontFamily: "var(--font-barlow)",
-              fontSize: "0.85rem",
-              outline: "none",
-              width: "200px",
-            }}
-          />
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="ГИШҮҮДИЙН ТОЙМ"
+        description={`${members.length} ГИШҮҮН — SYSCO&TECH CLUB`}
+        actions={
+          /* Search */
+          <div style={{ position: "relative" }}>
+            <Search
+              size={14}
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "#6B7280",
+              }}
+            />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Хайх..."
+              style={{
+                background: "#1A1A1A",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "3px",
+                padding: "8px 12px 8px 30px",
+                color: "#E8E8E8",
+                fontFamily: "var(--font-barlow)",
+                fontSize: "0.85rem",
+                outline: "none",
+                width: "200px",
+              }}
+            />
+          </div>
+        }
+      />
 
       {/* Summary cards */}
       <div className="flex gap-4 mb-6 flex-wrap">
@@ -593,7 +575,7 @@ function MembersContent() {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }
 

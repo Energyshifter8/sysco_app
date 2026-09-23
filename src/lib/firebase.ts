@@ -21,7 +21,9 @@ const firebaseConfig = {
 const app =
   getApps().length === 0
     ? initializeApp(
-        USE_EMULATOR ? { ...firebaseConfig, projectId: "demo-test", apiKey: "demo-key" } : firebaseConfig,
+        USE_EMULATOR
+          ? { ...firebaseConfig, projectId: "demo-test", apiKey: "demo-key" }
+          : firebaseConfig,
       )
     : getApps()[0];
 

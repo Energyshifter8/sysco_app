@@ -1,5 +1,6 @@
 "use client";
 
+import { PageContainer } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { TaskCard } from "@/components/task-card";
 import { TaskDetailDialog } from "@/components/task-detail-dialog";
@@ -112,7 +113,7 @@ function DashboardContent() {
   const topThree = entries.slice(0, 3);
 
   return (
-    <div>
+    <PageContainer>
       {/* Header */}
       <div className="surface-card relative mb-6 overflow-hidden rounded-2xl px-5 py-6 sm:px-7">
         <div
@@ -404,7 +405,7 @@ function DashboardContent() {
           if (!next) close();
         }}
       />
-    </div>
+    </PageContainer>
   );
 }
 

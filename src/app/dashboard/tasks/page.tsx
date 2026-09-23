@@ -1,5 +1,6 @@
 "use client";
 
+import { PageContainer, PageHeader } from "@/components/page-container";
 import { PageSpinner } from "@/components/page-spinner";
 import { TaskCard } from "@/components/task-card";
 import { TaskDetailDialog } from "@/components/task-detail-dialog";
@@ -47,32 +48,8 @@ function MemberTasksContent() {
         });
 
   return (
-    <div style={{ width: "100%" }}>
-      <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
-        <div>
-          <h1
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "1.3rem",
-              fontWeight: 800,
-              color: "#E8E8E8",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            ДААЛГАВРЫН ЖАГСААЛТ
-          </h1>
-          <p
-            style={{
-              color: "#6B7280",
-              fontSize: "0.75rem",
-              fontFamily: "var(--font-jetbrains)",
-              marginTop: "4px",
-            }}
-          >
-            {filtered.length} ДААЛГАВАР
-          </p>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader title="ДААЛГАВРЫН ЖАГСААЛТ" description={`${filtered.length} ДААЛГАВАР`} />
 
       {/* Tabs */}
       <div
@@ -180,7 +157,7 @@ function MemberTasksContent() {
           if (!next) close();
         }}
       />
-    </div>
+    </PageContainer>
   );
 }
 
