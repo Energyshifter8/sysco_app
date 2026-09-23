@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { ROLE_LABELS } from "@/lib/constants";
 import { auth } from "@/lib/firebase";
+import { isAdmin, isLead } from "@/lib/permissions";
 import { getInitials } from "@/lib/utils";
 import { signOut } from "firebase/auth";
 import {
@@ -15,28 +17,40 @@ import {
   Trophy,
   User,
   Users,
+  UsersRound,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 
+type NavSection = "main" | "team" | "admin";
+
 interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ size?: number }>;
-  admin?: boolean;
+  section: NavSection;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: "Хяналт", icon: LayoutDashboard },
-  { href: "/dashboard/tasks", label: "Task", icon: ClipboardList },
-  { href: "/dashboard/leaderboard", label: "Эрэмбэ", icon: Trophy },
-  { href: "/dashboard/profile", label: "Профайл", icon: User },
-  { href: "/dashboard/admin/tasks", label: "Task үүсгэх", icon: PlusSquare, admin: true },
-  { href: "/dashboard/admin/attendance", label: "Ирц", icon: CalendarCheck, admin: true },
-  { href: "/dashboard/admin/members", label: "Гишүүд", icon: Users, admin: true },
+  { href: "/dashboard", label: "Хяналт", icon: LayoutDashboard, section: "main" },
+  { href: "/dashboard/tasks", label: "Task", icon: ClipboardList, section: "main" },
+  { href: "/dashboard/leaderboard", label: "Эрэмбэ", icon: Trophy, section: "main" },
+  { href: "/dashboard/profile", label: "Профайл", icon: User, section: "main" },
+  { href: "/dashboard/lead/tasks", label: "Багийн таск", icon: UsersRound, section: "team" },
+  { href: "/dashboard/admin/tasks", label: "Task үүсгэх", icon: PlusSquare, section: "admin" },
+  { href: "/dashboard/admin/attendance", label: "Ирц", icon: CalendarCheck, section: "admin" },
+  { href: "/dashboard/admin/members", label: "Гишүүд", icon: Users, section: "admin" },
 ];
+
+const sectionHeadingStyle: React.CSSProperties = {
+  fontFamily: "var(--font-jetbrains)",
+  fontSize: "0.55rem",
+  color: "#374151",
+  letterSpacing: "0.12em",
+  padding: "16px 10px 4px",
+};
 
 function NavItemButton({
   href,
@@ -82,8 +96,9 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
   const { userData, loading } = useAuth();
   const router = useRouter();
 
-  const memberItems = NAV_ITEMS.filter((n) => !n.admin);
-  const adminItems = NAV_ITEMS.filter((n) => n.admin);
+  const memberItems = NAV_ITEMS.filter((n) => n.section === "main");
+  const teamItems = NAV_ITEMS.filter((n) => n.section === "team");
+  const adminItems = NAV_ITEMS.filter((n) => n.section === "admin");
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -117,7 +132,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
               width={32}
               height={32}
               quality={100}
-              priority
+              preload
               className="rounded-lg"
             />
           </div>
@@ -172,19 +187,25 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
           />
         ))}
 
-        {!loading && userData?.role === "admin" && (
+        {!loading && isLead(userData) && (
           <>
-            <div
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.55rem",
-                color: "#374151",
-                letterSpacing: "0.12em",
-                padding: "16px 10px 4px",
-              }}
-            >
-              ADMIN
-            </div>
+            <div style={sectionHeadingStyle}>БАГ</div>
+            {teamItems.map(({ href, label, icon }) => (
+              <NavItemButton
+                key={href}
+                href={href}
+                label={label}
+                icon={icon}
+                active={isActive(href)}
+                onClick={onLinkClick}
+              />
+            ))}
+          </>
+        )}
+
+        {!loading && isAdmin(userData) && (
+          <>
+            <div style={sectionHeadingStyle}>ADMIN</div>
             {adminItems.map(({ href, label, icon }) => (
               <NavItemButton
                 key={href}
@@ -219,7 +240,8 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
               style={{
                 width: "30px",
                 height: "30px",
-                background: "linear-gradient(135deg, rgba(139, 92, 246, 0.32), rgba(139, 92, 246, 0.1))",
+                background:
+                  "linear-gradient(135deg, rgba(139, 92, 246, 0.32), rgba(139, 92, 246, 0.1))",
                 border: "1px solid rgba(167, 139, 250, 0.32)",
                 borderRadius: "8px",
                 display: "flex",
@@ -255,7 +277,7 @@ export function DashboardSidebar({ onLinkClick }: { onLinkClick?: () => void }) 
                   fontFamily: "var(--font-jetbrains)",
                 }}
               >
-                {userData?.role ?? "member"}
+                {ROLE_LABELS[userData?.role ?? "member"]}
               </p>
             </div>
             <button

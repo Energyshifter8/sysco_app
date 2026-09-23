@@ -4,20 +4,22 @@ A web-based management system for the Sysco&Tech student club — handling membe
 
 ## Overview
 
-Sysco&Tech is built for university student club administrators and members (UI in Mongolian). Admins create tasks and mark attendance; members self-report task progress and earn points. A real-time leaderboard ranks all members by total points. The app is deployed on Vercel with Firebase as the backend.
+Sysco&Tech is built for university student club administrators, team leads and members (UI in Mongolian). Admins and team leads create tasks and mark attendance; members set their own three-state progress on a task, and a lead or admin then scores the finished work — that review is the only thing that awards points. A real-time leaderboard ranks all members by total points. The app is deployed on Vercel with Firebase as the backend.
 
 ## Features
 
-- **Authentication** — email/password sign-up and login via Firebase Auth
-- **Role-based access** — admin and member roles; admin-only pages are guarded both client-side and via Firestore security rules
-- **Dashboard** — overview of total points, completed/active tasks, and top leaderboard members
-- **Task management** — admins create tasks with titles, descriptions, point values, and assign them to individual members, entire teams, or all members
-- **Self-reported progress** — members update a progress slider (0-100%) and mark tasks complete; a Firestore transaction atomically awards points and logs to an append-only `pointsHistory` ledger
-- **Points leaderboard** — real-time ranking of all members with a top-3 podium view
-- **Team organization** — members belong to one of four teams: Development, Operations, Design, or Social
-- **Profile management** — members edit their major, team, and course year
-- **Attendance tracking** — admins mark daily attendance (present/late/absent); present members automatically receive +5 points
-- **Member directory** — admin view of all members with search, task history, and attendance history
+- **Authentication** — email/password sign-up and login via Firebase Auth, with a show/hide password toggle
+- **Three roles** — `admin`, `lead` (team lead) and `member`; admin-only and lead-only pages are guarded both client-side and by Firestore security rules
+- **Dashboard** — overview of total points, reviewed/active tasks, and top leaderboard members
+- **Task management** — admins create tasks for anyone; a lead creates tasks for their own team only. Tasks carry a title, description, maximum point value and acceptance deadline, and can be assigned to individuals, a whole team, or every member
+- **Self-reported status** — each assignee moves their own work through *Хүлээгдэж буй → Хийж байгаа → Дууссан*. Setting a status never awards points and is frozen once the work has been reviewed
+- **Lead review** — a lead (or an admin) scores each finished assignee from 0 to the task's point value, with an optional comment. One Firestore transaction writes the review, credits `totalPoints` and appends to the `pointsHistory` ledger; a second review of the same person is rejected. Nobody reviews themselves
+- **Assignee visibility** — every task shows who it is assigned to, with avatar, team, status and score. `all` and `team:<team>` assignments are expanded to real people from a single cached directory read
+- **Team filter** — Бүгд / Хөгжүүлэлт / Дотоод үйл ажиллагаа / Дизайн / Сошиал across the leaderboard, member directory, attendance and both task workspaces, persisted in the `?team=` search param
+- **Points leaderboard** — real-time ranking with a top-3 podium; ranks are recomputed inside the active filter
+- **Profile management** — members edit their major, team and course year
+- **Attendance tracking** — admins mark daily attendance (present/late/absent/excused); present members automatically receive +5 points
+- **Member directory** — admin view with search, team filter, task history, attendance history, and role/team assignment
 - **Responsive layout** — collapsible sidebar on mobile, desktop sidebar on larger screens
 - **Dark theme** — consistent dark UI across all pages
 
@@ -46,69 +48,97 @@ Sysco&Tech is built for university student club administrators and members (UI i
 ```
 Browser
   └─ Next.js App (Vercel)
-       ├─ AuthProvider (Firebase Auth state)
+       ├─ AuthProvider (Firebase Auth state + Firestore profile)
        ├─ QueryClientProvider (React Query)
        └─ Pages / Components
-            ├─ /login, /signup  → Firebase Auth
-            └─ /dashboard/*     → Firestore (real-time snapshots)
-                 ├─ members page  → users collection
-                 ├─ tasks page    → tasks collection
-                 ├─ leaderboard   → users collection (ordered by totalPoints)
-                 └─ attendance    → attendance collection + users (increment points)
+            ├─ /login, /signup     → Firebase Auth
+            └─ /dashboard/*        → Firestore (real-time snapshots)
+                 ├─ tasks          → member status transaction
+                 ├─ lead/tasks     → team task creation + review transaction
+                 ├─ admin/tasks    → club-wide task creation + review transaction
+                 ├─ admin/members  → users collection (role / team assignment)
+                 ├─ admin/attendance → attendance collection (+5 points)
+                 └─ leaderboard    → users ordered by totalPoints
 ```
 
-- **Firebase Auth** handles user identity; `AuthContext` exposes `user` and `userData` (Firestore profile) to the entire app.
+- **Firebase Auth** handles identity; `AuthContext` exposes `user` and `userData` (the Firestore profile) to the whole app.
 - **Firestore** stores four collections: `users`, `tasks`, `attendance`, `pointsHistory`.
-- **Firestore security rules** enforce that members can only update their own profile fields and task progress; admins can manage tasks, attendance, and any user.
-- **Points are awarded via Firestore transactions** — task completion and attendance both use atomic transactions that update `totalPoints` and write an audit entry to `pointsHistory`.
-- **React Query** manages server state; real-time Firestore snapshots are wrapped in query functions for cache integration.
+- **There is no backend.** Every rule that matters is enforced in `firestore.rules`, and `scripts/test-rules.ts` runs 43 cases against it on the emulator.
+- **Points are awarded in exactly one place** — the review transaction in `src/components/task-workspace.tsx`. It writes the task's `assigneeReview`, increments `users/<uid>.totalPoints` and appends to `pointsHistory` atomically. Members cannot write `totalPoints`, `role`, `assigneeReview` or `pointsHistory` at all.
+- **Assignment tokens.** A task's `assignedTo` holds uids, the literal `"all"`, or `"team:<team>"`, so one `array-contains-any` query finds everything assigned to a member. `resolveAssignees()` in `src/lib/tasks.ts` expands the tokens back into people.
+- **`lastReviewedUid`.** Security rules cannot read a key out of a map diff, so a review write also declares which uid it targets. The rules verify that declaration against the real diff, then use it to authorise the write.
+- **Real-time snapshots** live in effects (`useAssignedTasks`, `useAllTasks`, `useLeaderboard`) and mirror into the React Query cache, so the listener is always unsubscribed on unmount.
+
+### Roles
+
+| | member | lead | admin |
+|---|---|---|---|
+| Set own task status | ✓ | ✓ | ✓ |
+| Create tasks | — | own team only | anyone |
+| Edit / delete tasks | — | own tasks only | any task |
+| Review + award points | — | own team, not self | anyone but self |
+| Assign roles and teams | — | — | ✓ |
+| Mark attendance | — | — | ✓ |
 
 ## Project Structure
 
 ```
 src/
 ├── app/
-│   ├── layout.tsx              # Root layout — fonts, Providers, metadata
-│   ├── page.tsx                # Root page — redirects to /dashboard or /login
-│   ├── providers.tsx           # QueryClientProvider + AuthProvider + Toaster
-│   ├── login/page.tsx          # Login form (email + password)
-│   ├── signup/page.tsx         # Registration form (name + email + password)
-│   ├── globals.css             # Tailwind directives + CSS variables
+│   ├── layout.tsx                  # Root layout — fonts, Providers, metadata
+│   ├── page.tsx                    # Redirects to /dashboard or /login
+│   ├── providers.tsx               # QueryClientProvider + AuthProvider + Toaster
+│   ├── login/page.tsx              # Login form
+│   ├── signup/page.tsx             # Registration form
+│   ├── globals.css                 # Tailwind directives + CSS variables
 │   └── dashboard/
-│       ├── layout.tsx          # Dashboard shell — sidebar + mobile header
-│       ├── page.tsx            # Overview — stats, recent tasks, leaderboard preview
-│       ├── tasks/page.tsx      # Member task list with detail dialog + progress slider
-│       ├── leaderboard/page.tsx # Full leaderboard with top-3 podium
-│       ├── profile/page.tsx    # Member profile — edit major, team, course
+│       ├── layout.tsx              # Dashboard shell — sidebar + mobile header
+│       ├── page.tsx                # Overview — stats, recent tasks, leaderboard preview
+│       ├── tasks/page.tsx          # Member task list, detail dialog, status picker
+│       ├── leaderboard/page.tsx    # Leaderboard with top-3 podium + team filter
+│       ├── profile/page.tsx        # Member profile — major, team, course
+│       ├── lead/
+│       │   ├── layout.tsx          # Lead guard (lead or admin)
+│       │   └── tasks/page.tsx      # <TaskWorkspace scope="lead" />
 │       └── admin/
-│           ├── layout.tsx      # Admin guard — redirects non-admins
-│           ├── tasks/page.tsx  # Create tasks, view/approve existing tasks
-│           ├── members/page.tsx # Member directory with search + detail modal
+│           ├── layout.tsx          # Admin guard
+│           ├── tasks/page.tsx      # <TaskWorkspace scope="admin" />
+│           ├── members/page.tsx    # Member directory, search, role/team assignment
 │           └── attendance/page.tsx # Daily attendance with date picker
 ├── components/
-│   ├── dashboard-sidebar.tsx   # Sidebar navigation (member + admin sections)
-│   └── ui/                     # shadcn/ui primitives (button, card, dialog, etc.)
+│   ├── task-workspace.tsx          # Task creation + oversight, shared by admin and lead
+│   ├── assignee-list.tsx           # Assignee rows + compact avatar stack
+│   ├── review-dialog.tsx           # Score 0..task.points with an optional comment
+│   ├── status-picker.tsx           # Member's three-state progress control
+│   ├── team-filter.tsx             # Shared team segmented filter
+│   ├── member-role-editor.tsx      # Admin role/team selects
+│   ├── dashboard-sidebar.tsx       # Sidebar navigation (main / team / admin sections)
+│   ├── page-spinner.tsx            # Shared page loading state
+│   └── ui/                         # shadcn/ui primitives
 ├── context/
-│   └── AuthContext.tsx          # React Context for Firebase Auth + Firestore user data
+│   └── AuthContext.tsx             # Firebase Auth + Firestore user data
 ├── hooks/
-│   ├── useAuthActions.ts        # login, signup, logout wrappers
-│   └── useLeaderboard.ts        # Real-time leaderboard from Firestore
+│   ├── useAuthActions.ts           # login, signup, logout + Mongolian error mapping
+│   ├── useAssignedTasks.ts         # Real-time tasks assigned to the signed-in user
+│   ├── useAllTasks.ts              # Real-time full task collection (admin / lead)
+│   ├── useMembers.ts               # Cached uid → User directory
+│   ├── useLeaderboard.ts           # Real-time leaderboard
+│   └── useTeamFilter.ts            # `?team=` search-param filter
 ├── lib/
-│   ├── firebase.ts              # Firebase app, auth, and Firestore initialization
-│   ├── constants.ts             # Major/specialty options (Mongolian labels)
-│   ├── queryClient.ts           # React Query client singleton
-│   └── utils.ts                 # cn() for Tailwind merging, getInitials()
+│   ├── firebase.ts                 # Firebase app, auth, Firestore initialization
+│   ├── constants.ts                # Single source for majors, teams, roles, statuses
+│   ├── permissions.ts              # isAdmin / isLead / canManageMember / canReview
+│   ├── tasks.ts                    # resolveAssignees, status + review helpers
+│   ├── queryClient.ts              # React Query client singleton
+│   └── utils.ts                    # cn(), getInitials(), asDate(), formatDateTime()
 └── types/
-    └── index.ts                 # User, Task, AttendanceRecord, Team types
+    └── index.ts                    # User, Task, TaskReview, AttendanceRecord
 scripts/
-└── test-progress-transaction.ts # E2E test for the task-completion → point-awarding transaction
-firebase.json                    # Firebase project config (emulator port 8080)
-firestore.rules                  # Firestore security rules
-firestore.indexes.json           # Firestore composite indexes
-biome.json                       # Biome linter + formatter config
-next.config.ts                   # Next.js config
-postcss.config.mjs               # PostCSS config (Tailwind plugin)
-components.json                  # shadcn/ui config
+├── migrate-task-status.ts          # Legacy → status/review migration (dry-run by default)
+├── test-rules.ts                   # Security-rules tests (emulator)
+└── test-review-flow.ts             # Status → review → points transaction test (emulator)
+firestore.rules                     # Firestore security rules
+firestore.indexes.json              # Firestore composite indexes
 ```
 
 ## Getting Started
@@ -169,27 +199,47 @@ The emulator runs on `127.0.0.1:8080` by default (configured in `firebase.json`)
 | `pnpm lint:fix` | Lint + auto-fix `src/` with Biome |
 | `pnpm format` | Format `src/` with Biome |
 | `pnpm check` | Lint + type-check (`tsc --noEmit`) + production build |
+| `pnpm test:rules` | Security-rules tests against the Firestore emulator |
+| `pnpm test:review` | Status → review → points transaction test against the emulator |
+| `pnpm migrate:status` | Legacy task migration (dry run; add `-- --apply` to write) |
 
-### E2E Test
+### Tests
 
-The progress transaction can be tested against the Firestore emulator:
+Both suites need the Firestore emulator running:
 
 ```bash
-npx tsx scripts/test-progress-transaction.ts
+firebase emulators:start --only firestore
 ```
 
-This seeds a test user and task, runs the completion transaction, verifies point awarding, tests idempotency (double-credit prevention), and cleans up.
+```bash
+pnpm test:rules    # 43 cases: who may set a status, review, award points, create tasks, sign up
+pnpm test:review   # the status → review → point-crediting transaction, including double-review
+```
+
+### Migration
+
+Existing tasks written under the old "member marks complete, points land immediately" flow need
+converting once, after the new rules are deployed:
+
+```bash
+pnpm migrate:status                      # dry run — prints exactly what would change
+pnpm migrate:status -- --apply           # write assigneeStatus + legacy assigneeReview
+pnpm migrate:status -- --apply --cleanup # once verified, drop the legacy fields
+```
+
+`assigneeCompleted[uid] === true` becomes `assigneeStatus[uid] = "done"` plus a back-filled review
+(`reviewedBy: "legacy"`, full marks) that records the points already granted. **The script never
+changes `totalPoints`.** Tasks the old admin "approve" emptied out are reported at the end — their
+assignments cannot be reconstructed.
 
 ## Known Limitations
 
-- **Points are client-writable**: The Firestore rules allow members to update their own `totalPoints`. A server-side Cloud Function would be the proper enforcement point, but no function infrastructure exists yet. The `pointsHistory` append-only ledger serves as an audit mechanism to detect anomalies (noted in `firestore.rules:5-9`).
-- **No email verification**: Newly registered users are not required to verify their email address.
-- **No password reset flow**: There is no "forgot password" functionality.
-- **No task deletion by admins**: Admins can create and update tasks but the UI does not provide a delete action.
-- **Attendance auto-points are not transactional**: The attendance page awards +5 points for "present" status using a batch write + `getDoc` read, which is not atomic (unlike the task completion flow which uses `runTransaction`).
-- **No pagination**: Member lists, task lists, and leaderboard load all documents at once — no pagination or infinite scroll.
-- **Limited error handling**: Some Firestore operations use bare `catch` blocks that do not surface detailed error messages to the user.
-- **UI language**: All labels are in Mongolian; no i18n or language switching is implemented.
+- **A lead's per-uid assignments are only checked client-side**: security rules have no loops, so they can block a lead from using the `"all"` token or another team's `"team:<team>"` token, but cannot verify that every individual uid in `assignedTo` belongs to that lead's team. `src/components/task-workspace.tsx` enforces it before writing; the trade-off is documented in `firestore.rules`.
+- **Attendance points are not transactional and not logged**: the attendance page awards +5 for "present" with a batch write plus a read taken outside it, and writes no `pointsHistory` entry — unlike the review flow, which is atomic and audited.
+- **No task editing in the UI**: the rules permit admins (and leads, on their own tasks) to update and delete tasks, but no screen offers it yet.
+- **No email verification** and **no password reset flow**.
+- **No pagination**: member lists, task lists and the leaderboard load every document at once.
+- **UI language**: all labels are in Mongolian; no i18n or language switching is implemented.
 
 ## License
 

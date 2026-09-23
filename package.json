@@ -9,7 +9,10 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "check": "biome check src/ && tsc --noEmit && next build"
+    "check": "biome check src/ && tsc --noEmit && next build",
+    "test:rules": "tsx scripts/test-rules.ts",
+    "test:review": "tsx scripts/test-review-flow.ts",
+    "migrate:status": "tsx scripts/migrate-task-status.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
@@ -31,12 +34,14 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "firebase-admin": "^14.1.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

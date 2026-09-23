@@ -103,7 +103,8 @@ export default function ProfilePage() {
       setSaved(true);
       toast.success("Профайл амжилттай шинэчлэгдлээ");
       setTimeout(() => setSaved(false), 2000);
-    } catch {
+    } catch (err) {
+      console.error("Профайлыг шинэчлэхэд алдаа гарлаа", err);
       toast.error("Профайлыг шинэчлэхэд алдаа гарлаа");
     } finally {
       setSaving(false);
@@ -119,7 +120,8 @@ export default function ProfilePage() {
       setTeamSaved(true);
       toast.success("Баг амжилттай шинэчлэгдлээ");
       setTimeout(() => setTeamSaved(false), 2000);
-    } catch {
+    } catch (err) {
+      console.error("Багийг шинэчлэхэд алдаа гарлаа", err);
       toast.error("Багийг шинэчлэхэд алдаа гарлаа");
     } finally {
       setTeamSaving(false);
@@ -135,7 +137,8 @@ export default function ProfilePage() {
       setCourseSaved(true);
       toast.success("Курс амжилттай шинэчлэгдлээ");
       setTimeout(() => setCourseSaved(false), 2000);
-    } catch {
+    } catch (err) {
+      console.error("Курсыг шинэчлэхэд алдаа гарлаа", err);
       toast.error("Курсыг шинэчлэхэд алдаа гарлаа");
     } finally {
       setCourseSaving(false);

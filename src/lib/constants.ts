@@ -18,3 +18,84 @@ export function getMajorLabel(value?: string | null): string {
   const match = MAJORS.find((m) => m.value === value);
   return match ? match.label : value;
 }
+
+/* ─── Teams ─── */
+
+export const TEAMS = [
+  { value: "dev", label: "Хөгжүүлэлтийн баг", short: "Хөгжүүлэлт" },
+  { value: "ops", label: "Дотоод үйл ажиллагааны баг", short: "Дотоод үйл ажиллагаа" },
+  { value: "design", label: "Дизайн баг", short: "Дизайн" },
+  { value: "social", label: "Сошиал баг", short: "Сошиал" },
+] as const;
+
+export type Team = (typeof TEAMS)[number]["value"];
+
+export const TEAM_LABELS = Object.fromEntries(TEAMS.map((t) => [t.value, t.label])) as Record<
+  Team,
+  string
+>;
+
+export const TEAM_SHORT_LABELS = Object.fromEntries(TEAMS.map((t) => [t.value, t.short])) as Record<
+  Team,
+  string
+>;
+
+export function isTeam(value: unknown): value is Team {
+  return TEAMS.some((t) => t.value === value);
+}
+
+/* ─── Roles ─── */
+
+export const ROLES = [
+  { value: "admin", label: "Админ" },
+  { value: "lead", label: "Ахлагч" },
+  { value: "member", label: "Гишүүн" },
+] as const;
+
+export type Role = (typeof ROLES)[number]["value"];
+
+export const ROLE_LABELS = Object.fromEntries(ROLES.map((r) => [r.value, r.label])) as Record<
+  Role,
+  string
+>;
+
+/* ─── Per-assignee task status ─── */
+
+export const ASSIGNEE_STATUSES = [
+  { value: "pending", label: "Хүлээгдэж буй", color: "#FBBF24" },
+  { value: "in_progress", label: "Хийж байгаа", color: "#3B82F6" },
+  { value: "done", label: "Дууссан", color: "#22C55E" },
+] as const;
+
+export type AssigneeStatus = (typeof ASSIGNEE_STATUSES)[number]["value"];
+
+export const DEFAULT_ASSIGNEE_STATUS: AssigneeStatus = "pending";
+
+export const ASSIGNEE_STATUS_LABELS = Object.fromEntries(
+  ASSIGNEE_STATUSES.map((s) => [s.value, s.label]),
+) as Record<AssigneeStatus, string>;
+
+export const ASSIGNEE_STATUS_COLORS = Object.fromEntries(
+  ASSIGNEE_STATUSES.map((s) => [s.value, s.color]),
+) as Record<AssigneeStatus, string>;
+
+export function isAssigneeStatus(value: unknown): value is AssigneeStatus {
+  return ASSIGNEE_STATUSES.some((s) => s.value === value);
+}
+
+/* ─── Assignment tokens ─── */
+
+/** `assignedTo` entry that targets every member. */
+export const ASSIGN_ALL = "all";
+
+/** `assignedTo` entry that targets one whole team. */
+export function teamToken(team: Team): string {
+  return `team:${team}`;
+}
+
+/** Reads a `team:<team>` entry back, or null when the entry is not a team token. */
+export function parseTeamToken(entry: string): Team | null {
+  if (!entry.startsWith("team:")) return null;
+  const value = entry.slice(5);
+  return isTeam(value) ? value : null;
+}

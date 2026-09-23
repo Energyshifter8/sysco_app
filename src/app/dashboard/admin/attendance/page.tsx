@@ -1,11 +1,15 @@
 "use client";
 
+import { PageSpinner } from "@/components/page-spinner";
+import { TeamFilter } from "@/components/team-filter";
 import { useAuth } from "@/context/AuthContext";
+import { filterByTeam, useTeamFilter } from "@/hooks/useTeamFilter";
+import type { Team } from "@/lib/constants";
 import { db } from "@/lib/firebase";
 import { getInitials } from "@/lib/utils";
 import { collection, doc, getDocs, increment, query, where, writeBatch } from "firebase/firestore";
 import { CalendarOff, Check, Loader2, Minus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const attendanceStatuses = ["present", "late", "absent", "excused"] as const;
@@ -21,20 +25,30 @@ const attendanceMeta = {
 interface MemberAttendance {
   uid: string;
   name: string;
+  team?: Team;
   status: AttendanceStatus;
   note: string;
 }
 
+/**
+ * The attendance day key, in the admin's own timezone. `toISOString()` would
+ * convert to UTC first, which in UTC+8 files the early hours of a day under the
+ * previous date.
+ */
 function formatDateKey(date: Date): string {
-  return date.toISOString().split("T")[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
-export default function AttendancePage() {
+function AttendanceContent() {
   const { userData, loading: authLoading } = useAuth();
   const [date, setDate] = useState<Date>(new Date());
   const [members, setMembers] = useState<MemberAttendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [team, setTeam] = useTeamFilter();
 
   useEffect(() => {
     async function fetchMembers() {
@@ -43,6 +57,7 @@ export default function AttendancePage() {
       const data = snap.docs.map((d) => ({
         uid: d.data().uid,
         name: d.data().name,
+        team: d.data().team as Team | undefined,
         status: "" as AttendanceStatus,
         note: "",
       }));
@@ -117,7 +132,8 @@ export default function AttendancePage() {
 
       await batch.commit();
       toast.success("Ирц амжилттай хадгалагдлаа");
-    } catch {
+    } catch (err) {
+      console.error("Ирцыг хадгалахад алдаа гарлаа", err);
       toast.error("Ирцыг хадгалахад алдаа гарлаа");
     } finally {
       setSaving(false);
@@ -125,18 +141,16 @@ export default function AttendancePage() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
+  // Only the listed members are counted, so the totals match what is on screen.
+  const visible = filterByTeam(members, team);
   const counts = {
-    present: members.filter((m) => m.status === "present").length,
-    late: members.filter((m) => m.status === "late").length,
-    absent: members.filter((m) => m.status === "absent").length,
-    excused: members.filter((m) => m.status === "excused").length,
+    present: visible.filter((m) => m.status === "present").length,
+    late: visible.filter((m) => m.status === "late").length,
+    absent: visible.filter((m) => m.status === "absent").length,
+    excused: visible.filter((m) => m.status === "excused").length,
   };
 
   return (
@@ -281,6 +295,10 @@ export default function AttendancePage() {
         />
       </div>
 
+      <div style={{ marginBottom: "16px", maxWidth: "520px" }}>
+        <TeamFilter value={team} onChange={setTeam} />
+      </div>
+
       {/* Members list */}
       <div
         className="border"
@@ -292,7 +310,7 @@ export default function AttendancePage() {
           marginBottom: "16px",
         }}
       >
-        {members.map((m, i) => {
+        {visible.map((m, i) => {
           const status = m.status;
           return (
             <div
@@ -410,5 +428,13 @@ export default function AttendancePage() {
         {saving ? "ХАДГАЛЖ БАЙНА..." : "ИРЦИЙГ ХАДГАЛАХ →"}
       </button>
     </div>
+  );
+}
+
+export default function AttendancePage() {
+  return (
+    <Suspense fallback={<PageSpinner />}>
+      <AttendanceContent />
+    </Suspense>
   );
 }

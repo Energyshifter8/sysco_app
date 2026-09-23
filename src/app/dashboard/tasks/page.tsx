@@ -1,5 +1,7 @@
 "use client";
 
+import { AssigneeAvatars, AssigneeList } from "@/components/assignee-list";
+import { StatusPicker } from "@/components/status-picker";
 import {
   Dialog,
   DialogContent,
@@ -8,64 +10,63 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { asDate, formatDateTime } from "@/lib/utils";
-import { Task } from "@/types";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { isPast } from "date-fns";
+import { useAssignedTasks } from "@/hooks/useAssignedTasks";
+import { useMembers } from "@/hooks/useMembers";
 import {
-  collection,
-  doc,
-  increment,
-  onSnapshot,
-  query,
-  runTransaction,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
-import { Check, CheckCircle2, Clock, Loader2 } from "lucide-react";
+  ASSIGNEE_STATUS_COLORS,
+  ASSIGNEE_STATUS_LABELS,
+  type AssigneeStatus,
+} from "@/lib/constants";
+import { db } from "@/lib/firebase";
+import { getAssigneeReview, getAssigneeStatus, isTaskOverdue, resolveAssignees } from "@/lib/tasks";
+import { asDate, formatDateTime } from "@/lib/utils";
+import { Task, User } from "@/types";
+import { doc, runTransaction } from "firebase/firestore";
+import { CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-type FilterStatus = "all" | "pending" | "done" | "overdue";
+type FilterStatus = "all" | AssigneeStatus | "overdue";
 
-function isTaskOverdue(task: Task): boolean {
-  const deadline = asDate(task.dueDate);
-  return deadline ? isPast(deadline) : false;
+interface StatusMeta {
+  color: string;
+  label: string;
+  Icon: typeof Clock;
 }
 
-function statusMeta(task: Task, uid: string) {
-  const isOverdue = isTaskOverdue(task);
-  const isTaskCompleted = task.status === "completed" || task.status === "approved";
-  const alreadyCompleted = task.assigneeCompleted?.[uid] === true;
+/** How the signed-in member's own position on a task should read. */
+function statusMeta(task: Task, uid: string): StatusMeta {
+  const review = getAssigneeReview(task, uid);
+  if (review) {
+    return {
+      color: "#22C55E",
+      label: `Баталгаажсан · ${review.score}/${task.points} оноо`,
+      Icon: CheckCircle2,
+    };
+  }
 
-  const color = isTaskCompleted
-    ? "#22C55E"
-    : isOverdue
-      ? "#EF4444"
-      : alreadyCompleted
-        ? "#22C55E"
-        : "#FBBF24";
-  const label = isTaskCompleted
-    ? "Дууссан"
-    : alreadyCompleted
-      ? "Дууссан ✓"
-      : isOverdue
-        ? "Хоцорсон"
-        : "Хүлээгдэж буй";
-  const Icon = isTaskCompleted || alreadyCompleted ? CheckCircle2 : Clock;
+  const status = getAssigneeStatus(task, uid);
+  if (status !== "done" && isTaskOverdue(task)) {
+    return { color: "#EF4444", label: "Хоцорсон", Icon: Clock };
+  }
 
-  return { color, label, Icon };
+  return {
+    color: ASSIGNEE_STATUS_COLORS[status],
+    label: status === "done" ? "Үнэлгээ хүлээж буй" : ASSIGNEE_STATUS_LABELS[status],
+    Icon: status === "done" ? CheckCircle2 : Clock,
+  };
 }
 
-/* ─── Compact card (clickable, no progress controls) ─── */
+/* ─── Compact card (clickable) ─── */
 function TaskCard({
   task,
   uid,
+  assignees,
   onClick,
 }: {
   task: Task;
   uid: string;
+  assignees: User[];
   onClick: () => void;
 }) {
   const { color, label, Icon } = statusMeta(task, uid);
@@ -92,7 +93,7 @@ function TaskCard({
       onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "#141414")}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p
             style={{
               fontFamily: "var(--font-barlow)",
@@ -129,6 +130,7 @@ function TaskCard({
             >
               {formatDateTime(task.dueDate, "Хугацаагүй")}
             </span>
+            <AssigneeAvatars assignees={assignees} highlightUid={uid} />
           </div>
         </div>
         <div
@@ -148,7 +150,7 @@ function TaskCard({
               color: "#22C55E",
             }}
           >
-            +{task.points}
+            {task.points} pts
           </span>
         </div>
       </div>
@@ -156,360 +158,34 @@ function TaskCard({
   );
 }
 
-/* ─── Detail dialog ─── */
-function TaskDetailDialog({
-  task,
-  uid,
-  open,
-  onOpenChange,
-  progress,
-  onProgressChange,
-  onComplete,
-  completing,
-}: {
-  task: Task | null;
-  uid: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  progress: number;
-  onProgressChange: (taskId: string, value: number) => void;
-  onComplete: (task: Task) => void;
-  completing: string | null;
-}) {
-  if (!task) return null;
-
-  const { color, label, Icon } = statusMeta(task, uid);
-  const isTaskCompleted = task.status === "completed" || task.status === "approved";
-  const alreadyCompleted = task.assigneeCompleted?.[uid] === true;
-  const isCompleting = completing === task.id;
-  const canManageTask = !isTaskCompleted && task.assignedTo.includes(uid);
-  const isOverdue = isTaskOverdue(task);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-md"
-        style={{
-          background: "#141414",
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRadius: "6px",
-          padding: "24px",
-          gap: "20px",
-        }}
-      >
-        {/* Header */}
-        <DialogHeader style={{ gap: "8px" }}>
-          <DialogTitle
-            style={{
-              fontFamily: "var(--font-barlow)",
-              fontWeight: 700,
-              fontSize: "1.1rem",
-              color: "#E8E8E8",
-              lineHeight: 1.3,
-            }}
-          >
-            {task.title}
-          </DialogTitle>
-          <DialogDescription
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.7rem",
-              color,
-              letterSpacing: "0.06em",
-            }}
-            className="flex items-center gap-1.5"
-          >
-            <Icon size={13} />
-            {label}
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Meta row */}
-        <div className="flex items-center gap-4 flex-wrap" style={{ fontSize: "0.75rem" }}>
-          <div className="flex flex-col gap-1">
-            <span
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.6rem",
-                color: "#6B7280",
-                letterSpacing: "0.08em",
-              }}
-            >
-              ОНОО
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                color: "#22C55E",
-              }}
-            >
-              +{task.points}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.6rem",
-                color: "#6B7280",
-                letterSpacing: "0.08em",
-              }}
-            >
-              ХҮЛЭЭН АВАХ ХУГАЦАА
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                color: "#E8E8E8",
-              }}
-            >
-              {formatDateTime(task.dueDate)}
-            </span>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div>
-          <span
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "0.6rem",
-              color: "#6B7280",
-              letterSpacing: "0.08em",
-              display: "block",
-              marginBottom: "6px",
-            }}
-          >
-            ТОЙМ
-          </span>
-          <p
-            style={{
-              fontFamily: "var(--font-barlow)",
-              fontSize: "0.85rem",
-              color: "#9CA3AF",
-              lineHeight: 1.55,
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {task.description || "Тайлбар байхгүй"}
-          </p>
-        </div>
-
-        {/* Assigned users */}
-        {task.assignedTo.length > 0 && (
-          <div>
-            <span
-              style={{
-                fontFamily: "var(--font-jetbrains)",
-                fontSize: "0.6rem",
-                color: "#6B7280",
-                letterSpacing: "0.08em",
-                display: "block",
-                marginBottom: "6px",
-              }}
-            >
-              ХАРААГДСАН ({task.assignedTo.length})
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {task.assignedTo.map((a) => (
-                <span
-                  key={a}
-                  style={{
-                    fontFamily: "var(--font-jetbrains)",
-                    fontSize: "0.65rem",
-                    color: a === uid ? "#8B5CF6" : "#9CA3AF",
-                    background: a === uid ? "rgba(139,92,246,0.12)" : "rgba(255,255,255,0.04)",
-                    border: `1px solid ${a === uid ? "rgba(139,92,246,0.25)" : "rgba(255,255,255,0.07)"}`,
-                    borderRadius: "3px",
-                    padding: "2px 8px",
-                  }}
-                >
-                  {a === uid ? "Та" : a.slice(0, 8)}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Progress section — only for non-completed tasks assigned to current user */}
-        {canManageTask && (
-          <div
-            style={{
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-              paddingTop: "16px",
-            }}
-          >
-            {isOverdue ? (
-              <span
-                style={{
-                  fontFamily: "var(--font-jetbrains)",
-                  fontSize: "0.7rem",
-                  color: "#EF4444",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                ХҮЛЭЭН АВАХ ХУГАЦАА ДУУССАН
-              </span>
-            ) : alreadyCompleted ? (
-              <div className="flex items-center gap-2">
-                <span
-                  style={{
-                    fontFamily: "var(--font-jetbrains)",
-                    fontSize: "0.7rem",
-                    color: "#22C55E",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  Дууссан ✓ — +{task.points} оноо
-                </span>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-2">
-                  <span
-                    style={{
-                      fontFamily: "var(--font-jetbrains)",
-                      fontSize: "0.6rem",
-                      color: "#6B7280",
-                      letterSpacing: "0.08em",
-                    }}
-                  >
-                    АХИЦЛАЛ
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-jetbrains)",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      color: progress === 100 ? "#22C55E" : "#8B5CF6",
-                    }}
-                  >
-                    {progress}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={progress}
-                  onChange={(e) => onProgressChange(task.id, Number(e.target.value))}
-                  disabled={isCompleting}
-                  style={{
-                    width: "100%",
-                    height: "4px",
-                    appearance: "none",
-                    WebkitAppearance: "none",
-                    background: `linear-gradient(to right, #8B5CF6 ${progress}%, #1F2937 ${progress}%)`,
-                    borderRadius: "2px",
-                    outline: "none",
-                    cursor: isCompleting ? "not-allowed" : "pointer",
-                    accentColor: "#8B5CF6",
-                  }}
-                />
-                <div className="flex items-center justify-between mt-3">
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={progress}
-                    onChange={(e) => {
-                      const v = Math.min(100, Math.max(0, Number(e.target.value) || 0));
-                      onProgressChange(task.id, v);
-                    }}
-                    disabled={isCompleting}
-                    style={{
-                      width: "56px",
-                      background: "#1A1A1A",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      borderRadius: "3px",
-                      padding: "4px 6px",
-                      color: "#E8E8E8",
-                      fontFamily: "var(--font-jetbrains)",
-                      fontSize: "0.7rem",
-                      textAlign: "center",
-                      outline: "none",
-                    }}
-                  />
-                  <button
-                    onClick={() => onComplete(task)}
-                    disabled={progress < 100 || isCompleting}
-                    style={{
-                      background: progress === 100 && !isCompleting ? "#22C55E" : "#1F2937",
-                      color: progress === 100 && !isCompleting ? "#fff" : "#4B5563",
-                      border: "none",
-                      borderRadius: "3px",
-                      padding: "6px 16px",
-                      fontFamily: "var(--font-jetbrains)",
-                      fontSize: "0.65rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.06em",
-                      cursor: progress === 100 && !isCompleting ? "pointer" : "not-allowed",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {isCompleting ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Check size={12} />
-                    )}
-                    Дуусгах
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
+const metaLabelStyle: React.CSSProperties = {
+  fontFamily: "var(--font-jetbrains)",
+  fontSize: "0.6rem",
+  color: "#6B7280",
+  letterSpacing: "0.08em",
+};
 
 /* ─── Page ─── */
 export default function MemberTasksPage() {
   const { user, userData, loading: authLoading } = useAuth();
-  const queryClient = useQueryClient();
+  const { tasks, loading: tasksLoading } = useAssignedTasks();
+  const { members } = useMembers();
+
   const [tab, setTab] = useState<"current" | "history">("current");
   const [filter, setFilter] = useState<FilterStatus>("all");
-  const [completing, setCompleting] = useState<string | null>(null);
-  const [localProgress, setLocalProgress] = useState<Record<string, number>>({});
+  const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ["userTasks", user?.uid, userData?.team],
-    queryFn: () =>
-      new Promise<Task[]>((resolve) => {
-        if (!user || !userData) {
-          resolve([]);
-          return;
-        }
-        const targets: string[] = [user.uid, "all"];
-        if (userData.team) targets.push(`team:${userData.team}`);
-        const q = query(
-          collection(db, "tasks"),
-          where("assignedTo", "array-contains-any", targets),
-        );
-        const unsub = onSnapshot(q, (snap) => {
-          resolve(snap.docs.map((d) => ({ ...d.data(), id: d.id })) as Task[]);
-        });
-        return unsub;
-      }),
-    enabled: !!user?.uid,
-  });
+  const uid = user?.uid ?? "";
 
-  const handleProgressChange = (taskId: string, value: number) => {
-    setLocalProgress((prev) => ({ ...prev, [taskId]: value }));
-  };
-
-  const handleComplete = async (task: Task) => {
+  /**
+   * Members set their own status and nothing else — points are awarded later by
+   * a lead or admin through the review flow. The transaction re-reads the task
+   * so a review landing at the same moment wins over a stale status write.
+   */
+  async function handleStatusChange(task: Task, next: AssigneeStatus) {
     if (!user) return;
-    setCompleting(task.id);
+    setSavingTaskId(task.id);
     try {
       await runTransaction(db, async (transaction) => {
         const taskRef = doc(db, "tasks", task.id);
@@ -517,59 +193,26 @@ export default function MemberTasksPage() {
         if (!taskSnap.exists()) throw new Error("Task олдсонгүй");
 
         const data = taskSnap.data() as Task;
-        const completed = data.assigneeCompleted?.[user.uid] === true;
-        if (completed) throw new Error("Аль хэдийн дууссан байна");
+        if (data.assigneeReview?.[user.uid]) {
+          throw new Error("Үнэлгээ хийгдсэн тул статус солих боломжгүй");
+        }
 
         const deadline = asDate(data.dueDate);
-        if (deadline && deadline <= new Date()) {
+        if (next === "done" && deadline && deadline <= new Date()) {
           throw new Error("Task хүлээн авах хугацаа дууссан байна");
         }
 
-        transaction.set(
-          taskRef,
-          {
-            assigneeProgress: { [user.uid]: 100 },
-            assigneeCompleted: { [user.uid]: true },
-          },
-          { merge: true },
-        );
-
-        const userRef = doc(db, "users", user.uid);
-        transaction.update(userRef, {
-          totalPoints: increment(task.points),
-        });
-
-        const historyRef = doc(collection(db, "pointsHistory"));
-        transaction.set(historyRef, {
-          uid: user.uid,
-          taskId: task.id,
-          points: task.points,
-          reason: task.title,
-          createdAt: serverTimestamp(),
-        });
+        transaction.set(taskRef, { assigneeStatus: { [user.uid]: next } }, { merge: true });
       });
 
-      toast.success(`Task дууслаа! +${task.points} оноо нэмэгдлээ`);
-      setLocalProgress((prev) => {
-        const next = { ...prev };
-        delete next[task.id];
-        return next;
-      });
-      setSelectedTaskId(null);
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["userTasks"] }),
-        queryClient.invalidateQueries({ queryKey: ["userData"] }),
-      ]);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Алдаа гарлаа";
-      if (msg !== "Аль хэдийн дууссан байна") {
-        toast.error(msg);
-      }
+      toast.success(`Статус "${ASSIGNEE_STATUS_LABELS[next]}" боллоо`);
+    } catch (err) {
+      console.error("Статус солиход алдаа гарлаа", err);
+      toast.error(err instanceof Error ? err.message : "Статус солиход алдаа гарлаа");
     } finally {
-      setCompleting(null);
+      setSavingTaskId(null);
     }
-  };
+  }
 
   if (authLoading || tasksLoading) {
     return (
@@ -579,27 +222,26 @@ export default function MemberTasksPage() {
     );
   }
 
-  const activeTasks = tasks.filter((t) => t.status !== "completed" && t.status !== "approved");
-  const historyTasks = tasks.filter((t) => t.status === "completed" || t.status === "approved");
+  // Work moves to history once it has been scored — that is what closes it out.
+  const reviewed = tasks.filter((t) => getAssigneeReview(t, uid) !== undefined);
+  const active = tasks.filter((t) => getAssigneeReview(t, uid) === undefined);
 
-  const currentTasks = tab === "current" ? activeTasks : historyTasks;
+  const currentTasks = tab === "current" ? active : reviewed;
   const filtered =
-    filter === "all"
+    filter === "all" || tab === "history"
       ? currentTasks
       : currentTasks.filter((t) => {
-          if (filter === "done") return t.status === "completed" || t.status === "approved";
-          if (filter === "pending")
-            return t.status !== "completed" && t.status !== "approved" && !isTaskOverdue(t);
-          if (filter === "overdue")
-            return t.status !== "completed" && t.status !== "approved" && isTaskOverdue(t);
-          return true;
+          const status = getAssigneeStatus(t, uid);
+          const overdue = status !== "done" && isTaskOverdue(t);
+          if (filter === "overdue") return overdue;
+          return status === filter && !overdue;
         });
 
   const selectedTask = selectedTaskId ? (tasks.find((t) => t.id === selectedTaskId) ?? null) : null;
 
   return (
     <div style={{ width: "100%" }}>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 mb-8">
+      <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
         <div>
           <h1
             style={{
@@ -627,7 +269,7 @@ export default function MemberTasksPage() {
 
       {/* Tabs */}
       <div
-        className="flex mb-6 overflow-x-auto"
+        className="mb-6 flex overflow-x-auto"
         style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.07)" }}
       >
         {[
@@ -636,6 +278,7 @@ export default function MemberTasksPage() {
         ].map(({ key, label }) => (
           <button
             key={key}
+            type="button"
             onClick={() => {
               setTab(key as "current" | "history");
               setFilter("all");
@@ -662,17 +305,19 @@ export default function MemberTasksPage() {
 
       {/* Filters */}
       {tab === "current" && (
-        <div className="flex gap-2 mb-5 flex-wrap">
+        <div className="mb-5 flex flex-wrap gap-2">
           {(
             [
               { key: "all", label: "Бүгд", color: "#6B7280" },
-              { key: "pending", label: "Хүлээгдэж буй", color: "#FBBF24" },
-              { key: "done", label: "Дууссан", color: "#22C55E" },
+              { key: "pending", label: ASSIGNEE_STATUS_LABELS.pending, color: "#FBBF24" },
+              { key: "in_progress", label: ASSIGNEE_STATUS_LABELS.in_progress, color: "#3B82F6" },
+              { key: "done", label: "Үнэлгээ хүлээж буй", color: "#22C55E" },
               { key: "overdue", label: "Хоцорсон", color: "#EF4444" },
             ] as { key: FilterStatus; label: string; color: string }[]
           ).map(({ key, label, color }) => (
             <button
               key={key}
+              type="button"
               onClick={() => setFilter(key)}
               style={{
                 fontFamily: "var(--font-jetbrains)",
@@ -699,13 +344,14 @@ export default function MemberTasksPage() {
           <TaskCard
             key={t.id}
             task={t}
-            uid={user?.uid ?? ""}
+            uid={uid}
+            assignees={resolveAssignees(t, members)}
             onClick={() => setSelectedTaskId(t.id)}
           />
         ))}
         {filtered.length === 0 && (
           <div
-            className="text-center py-12"
+            className="py-12 text-center"
             style={{
               color: "#374151",
               fontFamily: "var(--font-jetbrains)",
@@ -718,24 +364,159 @@ export default function MemberTasksPage() {
       </div>
 
       {/* Detail dialog */}
-      <TaskDetailDialog
-        task={selectedTask}
-        uid={user?.uid ?? ""}
+      <Dialog
         open={selectedTaskId !== null}
-        onOpenChange={(o) => {
-          if (!o) setSelectedTaskId(null);
+        onOpenChange={(open) => {
+          if (!open) setSelectedTaskId(null);
         }}
-        progress={
-          selectedTask
-            ? (localProgress[selectedTask.id] ??
-              selectedTask.assigneeProgress?.[user?.uid ?? ""] ??
-              0)
-            : 0
-        }
-        onProgressChange={handleProgressChange}
-        onComplete={handleComplete}
-        completing={completing}
-      />
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          style={{
+            background: "#141414",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: "6px",
+            padding: "24px",
+            gap: "20px",
+          }}
+        >
+          {selectedTask &&
+            (() => {
+              const meta = statusMeta(selectedTask, uid);
+              const review = getAssigneeReview(selectedTask, uid);
+              const status = getAssigneeStatus(selectedTask, uid);
+              const overdue = isTaskOverdue(selectedTask);
+              const assignees = resolveAssignees(selectedTask, members);
+
+              return (
+                <>
+                  <DialogHeader style={{ gap: "8px" }}>
+                    <DialogTitle
+                      style={{
+                        fontFamily: "var(--font-barlow)",
+                        fontWeight: 700,
+                        fontSize: "1.1rem",
+                        color: "#E8E8E8",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {selectedTask.title}
+                    </DialogTitle>
+                    <DialogDescription
+                      className="flex items-center gap-1.5"
+                      style={{
+                        fontFamily: "var(--font-jetbrains)",
+                        fontSize: "0.7rem",
+                        color: meta.color,
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      <meta.Icon size={13} />
+                      {meta.label}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div
+                    className="flex flex-wrap items-center gap-4"
+                    style={{ fontSize: "0.75rem" }}
+                  >
+                    <div className="flex flex-col gap-1">
+                      <span style={metaLabelStyle}>ДЭЭД ОНОО</span>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-jetbrains)",
+                          fontSize: "0.85rem",
+                          fontWeight: 700,
+                          color: "#22C55E",
+                        }}
+                      >
+                        {selectedTask.points}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span style={metaLabelStyle}>ХҮЛЭЭН АВАХ ХУГАЦАА</span>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-jetbrains)",
+                          fontSize: "0.85rem",
+                          fontWeight: 700,
+                          color: "#E8E8E8",
+                        }}
+                      >
+                        {formatDateTime(selectedTask.dueDate)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{ ...metaLabelStyle, display: "block", marginBottom: "6px" }}>
+                      ТОЙМ
+                    </span>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-barlow)",
+                        fontSize: "0.85rem",
+                        color: "#9CA3AF",
+                        lineHeight: 1.55,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {selectedTask.description || "Тайлбар байхгүй"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span style={{ ...metaLabelStyle, display: "block", marginBottom: "6px" }}>
+                      ОНООГДСОН ГИШҮҮД ({assignees.length})
+                    </span>
+                    <AssigneeList task={selectedTask} assignees={assignees} viewer={userData} />
+                  </div>
+
+                  <div
+                    style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "16px" }}
+                  >
+                    <span style={{ ...metaLabelStyle, display: "block", marginBottom: "8px" }}>
+                      МИНИЙ СТАТУС
+                    </span>
+                    <StatusPicker
+                      value={status}
+                      onChange={(next) => handleStatusChange(selectedTask, next)}
+                      busy={savingTaskId === selectedTask.id}
+                      disabled={review !== undefined}
+                      blocked={overdue ? ["done"] : []}
+                    />
+                    {review ? (
+                      <p
+                        style={{
+                          fontFamily: "var(--font-jetbrains)",
+                          fontSize: "0.65rem",
+                          color: "#22C55E",
+                          marginTop: "8px",
+                        }}
+                      >
+                        Баталгаажсан · {review.score}/{selectedTask.points} оноо
+                        {review.comment ? ` — ${review.comment}` : ""}
+                      </p>
+                    ) : (
+                      overdue && (
+                        <p
+                          style={{
+                            fontFamily: "var(--font-jetbrains)",
+                            fontSize: "0.65rem",
+                            color: "#EF4444",
+                            marginTop: "8px",
+                          }}
+                        >
+                          ХҮЛЭЭН АВАХ ХУГАЦАА ДУУССАН
+                        </p>
+                      )
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

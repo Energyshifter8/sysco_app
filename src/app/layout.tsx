@@ -23,7 +23,7 @@ const barlowCondensed = Barlow_Condensed({
 
 export const metadata: Metadata = {
   title: "Sysco&Tech",
-  description: "Sysco&Tech оюутны нийгэмлэгийн удирдлагын систем"
+  description: "Sysco&Tech оюутны нийгэмлэгийн удирдлагын систем",
 };
 
 export default function RootLayout({

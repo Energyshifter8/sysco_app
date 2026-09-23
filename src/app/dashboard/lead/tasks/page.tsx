@@ -4,10 +4,10 @@ import { PageSpinner } from "@/components/page-spinner";
 import { TaskWorkspace } from "@/components/task-workspace";
 import { Suspense } from "react";
 
-export default function AdminTasksPage() {
+export default function LeadTasksPage() {
   return (
     <Suspense fallback={<PageSpinner />}>
-      <TaskWorkspace scope="admin" />
+      <TaskWorkspace scope="lead" />
     </Suspense>
   );
 }

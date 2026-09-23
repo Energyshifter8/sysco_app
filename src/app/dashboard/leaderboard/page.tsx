@@ -1,8 +1,12 @@
 "use client";
 
+import { PageSpinner } from "@/components/page-spinner";
+import { TeamFilter } from "@/components/team-filter";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { filterByTeam, useTeamFilter } from "@/hooks/useTeamFilter";
+import { getMajorLabel } from "@/lib/constants";
 import { getInitials } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Suspense } from "react";
 
 function rankMedal(i: number) {
   if (i === 0) return { color: "#FBBF24", label: "#1" };
@@ -11,34 +15,17 @@ function rankMedal(i: number) {
   return { color: "#4B5563", label: `#${i + 1}` };
 }
 
-function getMajorLabel(major?: string | null): string {
-  if (!major) return "";
-  const map: Record<string, string> = {
-    computer_science: "Компьютерын ухаан",
-    software_engineering: "Програм хангамж",
-    artificial_intelligence: "Хиймэл оюун ухаан",
-    data_science: "Өгөгдлийн ухаан",
-    cyber_security: "Кибер аюулгүй байдал",
-    network_engineering: "Мэдээлэл, холбоо сүлжээний инженерчлэл",
-    iot_technology: "IoT технологи",
-    information_technology: "Мэдээллийн технологи",
-    information_systems: "Мэдээллийн систем",
-    multimedia: "Мультимедиа",
-  };
-  return map[major] || major;
-}
-
-export default function LeaderboardPage() {
-  const { entries, loading } = useLeaderboard();
+function LeaderboardContent() {
+  const { entries: allEntries, loading } = useLeaderboard();
+  const [team, setTeam] = useTeamFilter();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
+  // Ranks are recomputed inside the filtered list, so "#1" always means first
+  // in what is on screen.
+  const entries = filterByTeam(allEntries, team);
   const topThree = entries.slice(0, 3);
   const podiumOrders = [1, 0, 2];
   const podiumHeights = ["120px", "96px", "84px"];
@@ -67,6 +54,10 @@ export default function LeaderboardPage() {
         >
           {entries.length} ГИШҮҮН
         </p>
+      </div>
+
+      <div style={{ marginBottom: "24px", maxWidth: "520px" }}>
+        <TeamFilter value={team} onChange={setTeam} />
       </div>
 
       {/* Top 3 podium */}
@@ -285,5 +276,13 @@ export default function LeaderboardPage() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function LeaderboardPage() {
+  return (
+    <Suspense fallback={<PageSpinner />}>
+      <LeaderboardContent />
+    </Suspense>
   );
 }

@@ -14,7 +14,10 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="app-shell flex h-screen overflow-hidden" style={{ fontFamily: "var(--font-barlow)" }}>
+    <div
+      className="app-shell flex h-screen overflow-hidden"
+      style={{ fontFamily: "var(--font-barlow)" }}
+    >
       {/* Desktop sidebar */}
       <aside
         style={{
@@ -101,8 +104,14 @@ export default function DashboardLayout({
           {!loading && (
             <div className="ml-auto flex items-center gap-1.5 rounded-full border border-[#8B5CF6]/20 bg-[#8B5CF6]/10 px-2.5 py-1 text-[#C4B5FD]">
               <Sparkles size={12} />
-              <span style={{ fontSize: "0.65rem", fontFamily: "var(--font-jetbrains)", fontWeight: 700 }}>
-              {userData?.totalPoints ?? 0} оноо
+              <span
+                style={{
+                  fontSize: "0.65rem",
+                  fontFamily: "var(--font-jetbrains)",
+                  fontWeight: 700,
+                }}
+              >
+                {userData?.totalPoints ?? 0} оноо
               </span>
             </div>
           )}

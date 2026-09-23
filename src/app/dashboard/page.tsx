@@ -1,13 +1,14 @@
 "use client";
 
+import { AssigneeAvatars } from "@/components/assignee-list";
 import { useAuth } from "@/context/AuthContext";
+import { useAssignedTasks } from "@/hooks/useAssignedTasks";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
-import { db } from "@/lib/firebase";
-import { asDate, formatDateTime, getInitials } from "@/lib/utils";
-import { Task } from "@/types";
-import { useQuery } from "@tanstack/react-query";
-import { isPast } from "date-fns";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { useMembers } from "@/hooks/useMembers";
+import { ASSIGNEE_STATUS_COLORS, ASSIGNEE_STATUS_LABELS } from "@/lib/constants";
+import { getAssigneeReview, getAssigneeStatus, isTaskOverdue, resolveAssignees } from "@/lib/tasks";
+import { formatDateTime, getInitials } from "@/lib/utils";
+import { Task, User } from "@/types";
 import { CheckCircle2, Clock, Loader2, Sparkles, Star, Trophy } from "lucide-react";
 import Link from "next/link";
 
@@ -30,7 +31,7 @@ function StatCard({
           "--stat-accent": accent,
           "--stat-glow": `${accent}42`,
           "--stat-shadow": `${accent}20`,
-        padding: "18px 20px",
+          padding: "18px 20px",
         } as React.CSSProperties
       }
     >
@@ -67,27 +68,20 @@ function StatCard({
   );
 }
 
-function TaskCard({ task }: { task: Task }) {
-  const deadline = asDate(task.dueDate);
-  const isOverdue = deadline ? isPast(deadline) : false;
-  const statusColor =
-    task.status === "completed" || task.status === "approved"
-      ? "#22C55E"
-      : isOverdue
-        ? "#EF4444"
-        : "#FBBF24";
-  const statusLabel =
-    task.status === "completed" || task.status === "approved"
-      ? "Дууссан"
-      : isOverdue
-        ? "Хоцорсон"
-        : "Хүлээгдэж буй";
-  const StatusIcon =
-    task.status === "completed" || task.status === "approved"
-      ? CheckCircle2
-      : isOverdue
-        ? Clock
-        : Clock;
+function TaskCard({ task, uid, assignees }: { task: Task; uid: string; assignees: User[] }) {
+  const review = getAssigneeReview(task, uid);
+  const status = getAssigneeStatus(task, uid);
+  const isOverdue = status !== "done" && isTaskOverdue(task);
+
+  const statusColor = review ? "#22C55E" : isOverdue ? "#EF4444" : ASSIGNEE_STATUS_COLORS[status];
+  const statusLabel = review
+    ? `Баталгаажсан · ${review.score}/${task.points}`
+    : isOverdue
+      ? "Хоцорсон"
+      : status === "done"
+        ? "Үнэлгээ хүлээж буй"
+        : ASSIGNEE_STATUS_LABELS[status];
+  const StatusIcon = review || status === "done" ? CheckCircle2 : Clock;
 
   return (
     <div
@@ -146,6 +140,7 @@ function TaskCard({ task }: { task: Task }) {
             >
               {formatDateTime(task.dueDate, "Хугацаагүй")}
             </span>
+            <AssigneeAvatars assignees={assignees} highlightUid={uid} />
           </div>
         </div>
         <div
@@ -165,7 +160,7 @@ function TaskCard({ task }: { task: Task }) {
               color: "#22C55E",
             }}
           >
-            +{task.points}
+            {task.points} pts
           </span>
         </div>
       </div>
@@ -195,23 +190,8 @@ export default function DashboardPage() {
   const { user, userData, loading: authLoading } = useAuth();
   const { entries, loading: leaderboardLoading } = useLeaderboard();
 
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ["userTasks", user?.uid],
-    queryFn: () =>
-      new Promise<Task[]>((resolve) => {
-        const targets = [user!.uid, "all"];
-        if (userData?.team) targets.push(`team:${userData.team}`);
-        const q = query(
-          collection(db, "tasks"),
-          where("assignedTo", "array-contains-any", targets),
-        );
-        const unsub = onSnapshot(q, (snap) => {
-          resolve(snap.docs.map((d) => ({ ...d.data(), id: d.id })) as Task[]);
-        });
-        return unsub;
-      }),
-    enabled: !!user?.uid,
-  });
+  const { tasks, loading: tasksLoading } = useAssignedTasks();
+  const { members } = useMembers();
 
   if (authLoading || !user || !userData) {
     return (
@@ -222,8 +202,8 @@ export default function DashboardPage() {
   }
 
   const userRank = entries.find((e) => e.uid === user.uid)?.rank ?? "-";
-  const activeTasks = tasks.filter((t) => t.status !== "completed" && t.status !== "approved");
-  const completedTasks = tasks.filter((t) => t.status === "completed" || t.status === "approved");
+  const activeTasks = tasks.filter((t) => getAssigneeReview(t, user.uid) === undefined);
+  const completedTasks = tasks.filter((t) => getAssigneeReview(t, user.uid) !== undefined);
   const recentTasks = tasks.slice(0, 4);
   const topThree = entries.slice(0, 3);
 
@@ -233,7 +213,9 @@ export default function DashboardPage() {
       <div className="surface-card relative mb-6 overflow-hidden rounded-2xl px-5 py-6 sm:px-7">
         <div
           className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(139, 92, 246, 0.24), transparent 68%)" }}
+          style={{
+            background: "radial-gradient(circle, rgba(139, 92, 246, 0.24), transparent 68%)",
+          }}
         />
         <div className="relative flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
           <div>
@@ -250,30 +232,30 @@ export default function DashboardPage() {
                 ӨНӨӨДӨР
               </span>
             </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-jetbrains)",
-              fontSize: "1.4rem",
-              fontWeight: 800,
-              color: "#E8E8E8",
-              letterSpacing: "-0.02em",
-              marginBottom: "6px",
-            }}
-          >
-            Сайн байна уу, {(userData.name ?? "Хэрэглэгч").split(" ")[0]} 
-          </h1>
+            <h1
+              style={{
+                fontFamily: "var(--font-jetbrains)",
+                fontSize: "1.4rem",
+                fontWeight: 800,
+                color: "#E8E8E8",
+                letterSpacing: "-0.02em",
+                marginBottom: "6px",
+              }}
+            >
+              Сайн байна уу, {(userData.name ?? "Хэрэглэгч").split(" ")[0]}
+            </h1>
             <p
-            style={{
-              color: "#6B7280",
-              fontSize: "0.8rem",
-              fontFamily: "var(--font-jetbrains)",
-            }}
-          >
-            {new Date().toLocaleDateString("mn-MN", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+              style={{
+                color: "#6B7280",
+                fontSize: "0.8rem",
+                fontFamily: "var(--font-jetbrains)",
+              }}
+            >
+              {new Date().toLocaleDateString("mn-MN", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </p>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -341,12 +323,7 @@ export default function DashboardPage() {
           accent="#FBBF24"
           icon={<Clock size={14} />}
         />
-        <StatCard
-          label="Rank"
-          value={userRank}
-          accent="#FBBF24"
-          icon={<Trophy size={14} />}
-        />
+        <StatCard label="Rank" value={userRank} accent="#FBBF24" icon={<Trophy size={14} />} />
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row">
@@ -394,7 +371,14 @@ export default function DashboardPage() {
                 ДААЛГАВАР ОЛДСОНГҮЙ
               </div>
             ) : (
-              recentTasks.map((t) => <TaskCard key={t.id} task={t} />)
+              recentTasks.map((t) => (
+                <TaskCard
+                  key={t.id}
+                  task={t}
+                  uid={user.uid}
+                  assignees={resolveAssignees(t, members)}
+                />
+              ))
             )}
           </div>
         </div>
@@ -425,9 +409,7 @@ export default function DashboardPage() {
               ДЭЛГЭРЭНГҮЙ →
             </Link>
           </div>
-          <div
-            className="border surface-card overflow-hidden rounded-xl"
-          >
+          <div className="border surface-card overflow-hidden rounded-xl">
             {leaderboardLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="size-6 animate-spin text-muted-foreground" />

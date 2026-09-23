@@ -1,7 +1,8 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/password-input";
 import { useAuthActions } from "@/hooks/useAuthActions";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,7 +14,6 @@ export default function LoginPage() {
   const { login, loading } = useAuthActions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,7 +70,11 @@ export default function LoginPage() {
           </div>
           <span
             className="inline-flex rounded-full border border-white/8 bg-white/4 px-3 py-1 text-[#9CA3AF]"
-            style={{ fontFamily: "var(--font-jetbrains)", fontSize: "0.6rem", letterSpacing: "0.1em" }}
+            style={{
+              fontFamily: "var(--font-jetbrains)",
+              fontSize: "0.6rem",
+              letterSpacing: "0.1em",
+            }}
           >
             MEMBER PORTAL
           </span>
@@ -96,9 +100,7 @@ export default function LoginPage() {
                 fontSize: "0.85rem",
                 marginTop: "4px",
               }}
-            >
-              
-            </p>
+            />
           </div>
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
@@ -148,53 +150,12 @@ export default function LoginPage() {
               >
                 НУУЦ ҮГ
               </label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="auth-input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  style={{
-                    width: "100%",
-                    background: "#1A1A1A",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "3px",
-                    padding: "10px 42px 10px 12px",
-                    color: "#E8E8E8",
-                    fontFamily: "var(--font-jetbrains)",
-                    fontSize: "0.9rem",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((visible) => !visible)}
-                  aria-label={showPassword ? "Нууц үг нуух" : "Нууц үг харуулах"}
-                  aria-pressed={showPassword}
-                  title={showPassword ? "Нууц үг нуух" : "Нууц үг харуулах"}
-                  className="group absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md border border-transparent transition-all duration-200 hover:border-white/10 hover:bg-white/10 hover:text-white focus-visible:border-[#8B5CF6] focus-visible:bg-[#8B5CF6]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B5CF6]/30 active:scale-95"
-                  style={{
-                    background: showPassword ? "rgba(139, 92, 246, 0.14)" : "transparent",
-                    color: showPassword ? "#A78BFA" : "#6B7280",
-                    cursor: "pointer",
-                  }}
-                >
-                  {showPassword ? (
-                    <EyeOff
-                      size={17}
-                      className="transition-transform duration-200 group-hover:scale-110"
-                    />
-                  ) : (
-                    <Eye
-                      size={17}
-                      className="transition-transform duration-200 group-hover:scale-110"
-                    />
-                  )}
-                </button>
-              </div>
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
             </div>
             <button
               type="submit"

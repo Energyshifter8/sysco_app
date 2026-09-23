@@ -1,12 +1,38 @@
 "use client";
 
-import { getMajorLabel } from "@/lib/constants";
+import { MemberRoleEditor } from "@/components/member-role-editor";
+import { PageSpinner } from "@/components/page-spinner";
+import { TeamFilter } from "@/components/team-filter";
+import { filterByTeam, useTeamFilter } from "@/hooks/useTeamFilter";
+import {
+  ASSIGNEE_STATUS_COLORS,
+  ASSIGNEE_STATUS_LABELS,
+  ROLE_LABELS,
+  type Role,
+  TEAM_SHORT_LABELS,
+  getMajorLabel,
+} from "@/lib/constants";
 import { db } from "@/lib/firebase";
+import { getAssigneeReview, getAssigneeStatus } from "@/lib/tasks";
 import { getInitials } from "@/lib/utils";
 import { AttendanceRecord, Task, User } from "@/types";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { Loader2, Search, Star, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+
+const ROLE_BADGE: Record<Role, { background: string; color: string; border: string }> = {
+  admin: {
+    background: "rgba(139, 92, 246, 0.125)",
+    color: "#8B5CF6",
+    border: "rgba(139, 92, 246, 0.25)",
+  },
+  lead: {
+    background: "rgba(59, 130, 246, 0.125)",
+    color: "#60A5FA",
+    border: "rgba(59, 130, 246, 0.25)",
+  },
+  member: { background: "#1F1F1F", color: "#6B7280", border: "rgba(255, 255, 255, 0.08)" },
+};
 
 function StatCard({
   label,
@@ -57,10 +83,11 @@ function StatCard({
   );
 }
 
-export default function MembersPage() {
+function MembersContent() {
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [team, setTeam] = useTeamFilter();
   const [selectedMember, setSelectedMember] = useState<User | null>(null);
   const [memberTasks, setMemberTasks] = useState<Task[]>([]);
   const [memberAttendance, setMemberAttendance] = useState<AttendanceRecord[]>([]);
@@ -76,7 +103,7 @@ export default function MembersPage() {
     fetchMembers();
   }, []);
 
-  const filtered = members.filter(
+  const filtered = filterByTeam(members, team).filter(
     (m) =>
       m.name.toLowerCase().includes(search.toLowerCase()) ||
       getMajorLabel(m.major).toLowerCase().includes(search.toLowerCase()),
@@ -95,20 +122,17 @@ export default function MembersPage() {
         ),
       ),
     ]);
-    setMemberTasks(tasksSnap.docs.map((d) => d.data() as Task));
-    setMemberAttendance(attSnap.docs.map((d) => d.data() as AttendanceRecord));
+    setMemberTasks(tasksSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as Task));
+    setMemberAttendance(attSnap.docs.map((d) => ({ ...d.data(), id: d.id }) as AttendanceRecord));
     setDetailLoading(false);
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
-  const totalPoints = members.reduce((s, m) => s + m.totalPoints, 0);
+  // The summary follows the filter, so the numbers always describe what is listed.
+  const totalPoints = filtered.reduce((sum, m) => sum + m.totalPoints, 0);
 
   return (
     <div style={{ maxWidth: "1000px" }}>
@@ -171,16 +195,20 @@ export default function MembersPage() {
       <div className="flex gap-4 mb-6 flex-wrap">
         <StatCard
           label="НИЙТ ГИШҮҮН"
-          value={members.length}
+          value={filtered.length}
           accent="#8B5CF6"
           icon={<Users size={14} />}
         />
         <StatCard
-          label="НИЙТ ОНШ"
+          label="НИЙТ ОНОО"
           value={totalPoints.toLocaleString()}
           accent="#22C55E"
           icon={<Star size={14} />}
         />
+      </div>
+
+      <div style={{ marginBottom: "20px", maxWidth: "520px" }}>
+        <TeamFilter value={team} onChange={setTeam} />
       </div>
 
       {/* Table */}
@@ -196,13 +224,13 @@ export default function MembersPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "32px 1fr 160px 100px 70px",
+            gridTemplateColumns: "32px 1fr 150px 130px 80px 80px",
             padding: "12px 20px",
             background: "#0F0F0F",
             borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
           }}
         >
-          {["#", "НЭР", "ЧИГЛЭЛ", "ОНШ", "ҮҮРЭГ"].map((h) => (
+          {["#", "НЭР", "ЧИГЛЭЛ", "БАГ", "ОНОО", "ҮҮРЭГ"].map((h) => (
             <span
               key={h}
               style={{
@@ -221,7 +249,7 @@ export default function MembersPage() {
             key={m.uid}
             style={{
               display: "grid",
-              gridTemplateColumns: "32px 1fr 160px 100px 70px",
+              gridTemplateColumns: "32px 1fr 150px 130px 80px 80px",
               padding: "12px 20px",
               alignItems: "center",
               borderBottom:
@@ -288,6 +316,18 @@ export default function MembersPage() {
             </span>
             <span
               style={{
+                color: m.team ? "#9CA3AF" : "#374151",
+                fontFamily: "var(--font-barlow)",
+                fontSize: "0.8rem",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {m.team ? TEAM_SHORT_LABELS[m.team] : "—"}
+            </span>
+            <span
+              style={{
                 fontFamily: "var(--font-barlow-condensed)",
                 fontWeight: 800,
                 fontSize: "1rem",
@@ -302,14 +342,14 @@ export default function MembersPage() {
                 fontSize: "0.6rem",
                 padding: "2px 6px",
                 borderRadius: "2px",
-                background: m.role === "admin" ? "rgba(139, 92, 246, 0.125)" : "#1F1F1F",
-                color: m.role === "admin" ? "#8B5CF6" : "#6B7280",
-                border: `1px solid ${m.role === "admin" ? "rgba(139, 92, 246, 0.25)" : "rgba(255, 255, 255, 0.08)"}`,
+                background: ROLE_BADGE[m.role].background,
+                color: ROLE_BADGE[m.role].color,
+                border: `1px solid ${ROLE_BADGE[m.role].border}`,
                 letterSpacing: "0.06em",
                 display: "inline-block",
               }}
             >
-              {m.role === "admin" ? "ADMIN" : "MEMBER"}
+              {ROLE_LABELS[m.role]}
             </span>
           </div>
         ))}
@@ -419,6 +459,16 @@ export default function MembersPage() {
                   ))}
                 </div>
 
+                <MemberRoleEditor
+                  member={selectedMember}
+                  onUpdated={(patch) => {
+                    setSelectedMember((prev) => (prev ? { ...prev, ...patch } : prev));
+                    setMembers((prev) =>
+                      prev.map((m) => (m.uid === selectedMember.uid ? { ...m, ...patch } : m)),
+                    );
+                  }}
+                />
+
                 {memberTasks.length > 0 && (
                   <div>
                     <h3
@@ -433,36 +483,51 @@ export default function MembersPage() {
                       ДААЛГАВРЫН ТҮҮХ
                     </h3>
                     <div className="flex flex-col gap-1">
-                      {memberTasks.map((t) => (
-                        <div
-                          key={t.id}
-                          className="flex items-center justify-between px-3 py-2"
-                          style={{
-                            background: "#0F0F0F",
-                            borderRadius: "3px",
-                          }}
-                        >
-                          <span
+                      {memberTasks.map((t) => {
+                        const review = getAssigneeReview(t, selectedMember.uid);
+                        const status = getAssigneeStatus(t, selectedMember.uid);
+                        return (
+                          <div
+                            key={t.id}
+                            className="flex items-center justify-between gap-3 px-3 py-2"
                             style={{
-                              color: "#E8E8E8",
-                              fontSize: "0.85rem",
-                              fontFamily: "var(--font-barlow)",
+                              background: "#0F0F0F",
+                              borderRadius: "3px",
                             }}
                           >
-                            {t.title}
-                          </span>
-                          <span
-                            style={{
-                              fontFamily: "var(--font-jetbrains)",
-                              fontSize: "0.75rem",
-                              fontWeight: 700,
-                              color: t.status === "completed" ? "#22C55E" : "#FBBF24",
-                            }}
-                          >
-                            {t.points} pts
-                          </span>
-                        </div>
-                      ))}
+                            <span
+                              className="min-w-0 flex-1 truncate"
+                              style={{
+                                color: "#E8E8E8",
+                                fontSize: "0.85rem",
+                                fontFamily: "var(--font-barlow)",
+                              }}
+                            >
+                              {t.title}
+                            </span>
+                            <span
+                              style={{
+                                fontFamily: "var(--font-jetbrains)",
+                                fontSize: "0.6rem",
+                                color: ASSIGNEE_STATUS_COLORS[status],
+                                letterSpacing: "0.04em",
+                              }}
+                            >
+                              {ASSIGNEE_STATUS_LABELS[status]}
+                            </span>
+                            <span
+                              style={{
+                                fontFamily: "var(--font-jetbrains)",
+                                fontSize: "0.75rem",
+                                fontWeight: 700,
+                                color: review ? "#22C55E" : "#4B5563",
+                              }}
+                            >
+                              {review ? `${review.score}/${t.points}` : `—/${t.points}`} pts
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -497,11 +562,7 @@ export default function MembersPage() {
                               fontFamily: "var(--font-jetbrains)",
                             }}
                           >
-                            {typeof a.date === "string"
-                              ? a.date
-                              : a.date instanceof Date
-                                ? a.date.toLocaleDateString()
-                                : String(a.date)}
+                            {a.date}
                           </span>
                           <span
                             style={{
@@ -533,5 +594,13 @@ export default function MembersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={<PageSpinner />}>
+      <MembersContent />
+    </Suspense>
   );
 }

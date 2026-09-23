@@ -1,17 +1,15 @@
-export type Team = "dev" | "ops" | "design" | "social";
+import type { AssigneeStatus, Role, Team } from "@/lib/constants";
 
-export const TEAM_LABELS: Record<Team, string> = {
-  dev: "Хөгжүүлэлтийн баг",
-  ops: "Дотоод үйл ажиллагааны баг",
-  design: "Дизайн баг",
-  social: "Сошиал баг",
-};
+// Re-exported so existing `@/types` imports keep working; `@/lib/constants` is
+// the single source for these values.
+export { ASSIGNEE_STATUS_LABELS, ROLE_LABELS, TEAM_LABELS } from "@/lib/constants";
+export type { AssigneeStatus, Role, Team } from "@/lib/constants";
 
 export interface User {
   uid: string;
   name: string;
   email: string;
-  role: "admin" | "member";
+  role: Role;
   course: string;
   major: string;
   team?: Team;
@@ -25,18 +23,43 @@ export interface Task {
   description: string;
   points: number;
   assignedTo: string[];
-  status: string;
   createdBy: string;
   createdAt: Date;
   dueDate?: Date;
+  /** The team a lead created this task for; unset for admin-created tasks. */
+  team?: Team;
+  /** Role of the creator at creation time. Optional — legacy tasks predate it. */
+  createdByRole?: Role;
+  /** Per-assignee status the member sets themselves. Missing key means "pending". */
+  assigneeStatus?: Record<string, AssigneeStatus>;
+  /** Per-assignee review written by a lead or admin. Presence locks the status. */
+  assigneeReview?: Record<string, TaskReview>;
+  /**
+   * The uid the most recent review write targets. Security rules cannot read a
+   * key out of a map diff, so the writer declares it and the rules verify it
+   * matches the actual diff.
+   */
+  lastReviewedUid?: string;
+
+  /* ─ Legacy fields, written by the pre-review flow. Read only by the
+     migration script; the app no longer writes or reads them. ─ */
+  status?: string;
   assigneeProgress?: Record<string, number>;
   assigneeCompleted?: Record<string, boolean>;
+}
+
+export interface TaskReview {
+  score: number;
+  reviewedBy: string;
+  reviewedAt: Date;
+  comment?: string;
 }
 
 export interface AttendanceRecord {
   id: string;
   uid: string;
-  date: Date;
+  /** Stored as a `YYYY-MM-DD` day key, not a timestamp. */
+  date: string;
   status: string;
   markedBy: string;
   note: string;

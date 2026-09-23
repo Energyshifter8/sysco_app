@@ -2,79 +2,182 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // NOTE: totalPoints is writable by the owning member via client SDK.
-    // This is a deliberate trade-off — a Cloud Function would be the proper
-    // enforcement point but this project has no function infrastructure.
-    // The pointsHistory collection serves as an append-only audit ledger;
-    // any anomalous point awards can be detected there.
-    // See: https://firebase.google.com/docs/firestore/security/rules-conditions
+    // ── Helpers ────────────────────────────────────────────────
 
-    // Helper: is the request authenticated?
     function isAuth() {
       return request.auth != null;
     }
 
-    // Helper: does the UID match the authenticated user?
     function isOwner(uid) {
       return isAuth() && request.auth.uid == uid;
     }
 
-    // Helper: is the user an admin?
+    // The caller's own profile document.
+    function me() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Another user's profile document.
+    function userAt(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
     function isAdmin() {
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuth() && me().role == 'admin';
+    }
+
+    function isLead() {
+      return isAuth() && me().role == 'lead';
+    }
+
+    // The caller's team, or null when they have none.
+    function myTeam() {
+      return me().get('team', null);
+    }
+
+    // Is `uid` on the caller's team?  A lead with no team matches nobody.
+    function isMyTeammate(uid) {
+      return myTeam() != null && userAt(uid).get('team', null) == myTeam();
+    }
+
+    // Can the caller score `uid`'s work?  Nobody reviews themselves — a lead's
+    // own tasks have to be signed off by an admin.
+    function canReview(uid) {
+      return uid != request.auth.uid && (isAdmin() || (isLead() && isMyTeammate(uid)));
+    }
+
+    // Team tokens for every team except the caller's own.
+    function foreignTeamTokens() {
+      return ['team:dev', 'team:ops', 'team:design', 'team:social']
+        .removeAll(['team:' + myTeam()]);
+    }
+
+    // Is the caller an assignee of this task?  A task can target a member three
+    // ways: by uid, by the literal 'all', or by 'team:<team>'.
+    function isAssignee(task) {
+      return isAuth()
+        && (request.auth.uid in task.assignedTo
+            || 'all' in task.assignedTo
+            || (myTeam() != null && ('team:' + myTeam()) in task.assignedTo));
+    }
+
+    // The keys the caller changed inside a map field.  Reading through
+    // get(field, {}) keeps this working when the field does not exist yet.
+    function mapDiffKeys(field) {
+      return request.resource.data.get(field, {})
+        .diff(resource.data.get(field, {}))
+        .affectedKeys();
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
     }
 
     // ── Users ──────────────────────────────────────────────────
     match /users/{uid} {
-      // Anyone authenticated can read any profile (needed for leaderboard, admin views)
+      // Anyone authenticated can read any profile (leaderboard, admin views,
+      // and resolving 'all' / 'team:<team>' assignments to real people).
       allow read: if isAuth();
 
-      // A member can update their OWN doc — profile fields OR totalPoints.
-      // totalPoints is guarded by the pointsHistory audit log; see that section.
-      allow update: if isOwner(uid)
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['name', 'major', 'course', 'team', 'totalPoints']);
+      // Sign-up creates the caller's own profile.  A new account can only ever
+      // be a member starting from zero points — role escalation is blocked here.
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.role == 'member'
+        && request.resource.data.totalPoints == 0;
 
-      // Admins can update any user doc (for role assignment, point corrections, etc.)
+      // A member edits their own profile only.  totalPoints and role are NOT in
+      // this list: points are now awarded exclusively through a review, so the
+      // client no longer needs to write them and the old self-award hole is shut.
+      allow update: if isOwner(uid)
+        && changedKeys().hasOnly(['name', 'major', 'course', 'team']);
+
+      // A lead credits points to their own team-mates, and to nobody else —
+      // this is the users half of the review transaction.
+      allow update: if isLead()
+        && uid != request.auth.uid
+        && isMyTeammate(uid)
+        && changedKeys().hasOnly(['totalPoints']);
+
+      // Admins can update any user doc (role assignment, point corrections,
+      // attendance credit).
       allow update: if isAdmin();
 
-      // Only admins can create or delete user docs
-      allow create: if false;
       allow delete: if false;
     }
 
     // ── Tasks ──────────────────────────────────────────────────
     match /tasks/{taskId} {
-      // Any authenticated user can read tasks
       allow read: if isAuth();
 
-      // Admins can create / update / delete tasks
-      allow create, update, delete: if isAdmin();
+      // KNOWN LIMITATION: rules have no loops, so we cannot verify that every
+      // uid inside a lead's `assignedTo` really belongs to that lead's team.
+      // What is enforced here is the shape: no 'all' token and no other team's
+      // 'team:<team>' token.  Per-uid membership is checked client-side in
+      // src/components/task-workspace.tsx.  The same trade-off is documented
+      // for pointsHistory below.
+      allow create: if isAdmin()
+        || (isLead()
+            && myTeam() != null
+            && request.resource.data.get('team', null) == myTeam()
+            && request.resource.data.createdBy == request.auth.uid
+            && !('all' in request.resource.data.assignedTo)
+            && !request.resource.data.assignedTo.hasAny(foreignTeamTokens()));
 
-      // Members can update ONLY their own progress/completed sub-fields on
-      // tasks that list them in assignedTo.
+      allow delete: if isAdmin()
+        || (isLead() && resource.data.createdBy == request.auth.uid);
+
+      // Admins edit any task; a lead edits only the ones they created.
+      allow update: if isAdmin()
+        || (isLead()
+            && resource.data.createdBy == request.auth.uid
+            && changedKeys().hasOnly(['title', 'description', 'points', 'dueDate', 'assignedTo']));
+
+      // An assignee sets their OWN status, and only until it has been reviewed.
+      // Comparing the map diff (rather than the whole map) keeps this working on
+      // tasks with several assignees — their keys are present but untouched.
+      allow update: if isAssignee(resource.data)
+        && changedKeys().hasOnly(['assigneeStatus'])
+        && mapDiffKeys('assigneeStatus').hasOnly([request.auth.uid])
+        && request.resource.data.assigneeStatus[request.auth.uid]
+             in ['pending', 'in_progress', 'done']
+        && !(request.auth.uid in resource.data.get('assigneeReview', {}));
+
+      // A reviewer scores one assignee.  Rules cannot read a key out of a map
+      // diff, so the writer declares the target in `lastReviewedUid` and we
+      // verify it is exactly the key that changed — a lie fails that check.
       allow update: if isAuth()
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['assigneeProgress', 'assigneeCompleted'])
-        && request.auth.uid in resource.data.assignedTo
-        // Ensure the member can only write to their own uid key
-        && keys(request.resource.data.assigneeProgress).hasOnly([request.auth.uid])
-        && keys(request.resource.data.assigneeCompleted).hasOnly([request.auth.uid]);
+        && changedKeys().hasOnly(['assigneeReview', 'lastReviewedUid'])
+        && mapDiffKeys('assigneeReview').hasOnly([request.resource.data.lastReviewedUid])
+        && !(request.resource.data.lastReviewedUid in resource.data.get('assigneeReview', {}))
+        && resource.data.get('assigneeStatus', {})
+             .get(request.resource.data.lastReviewedUid, 'pending') == 'done'
+        && request.resource.data
+             .assigneeReview[request.resource.data.lastReviewedUid].score is int
+        && request.resource.data
+             .assigneeReview[request.resource.data.lastReviewedUid].score >= 0
+        && request.resource.data
+             .assigneeReview[request.resource.data.lastReviewedUid].score <= resource.data.points
+        && request.resource.data
+             .assigneeReview[request.resource.data.lastReviewedUid].reviewedBy == request.auth.uid
+        && canReview(request.resource.data.lastReviewedUid);
     }
 
     // ── Points History (append-only ledger) ────────────────────
     match /pointsHistory/{entryId} {
-      // The authenticated user can read their own entries; admins can read all
+      // Members read their own entries; leads read their team's; admins read all.
       allow read: if isAuth()
-        && (resource.data.uid == request.auth.uid || isAdmin());
+        && (resource.data.uid == request.auth.uid
+            || isAdmin()
+            || (isLead() && isMyTeammate(resource.data.uid)));
 
-      // Anyone authenticated can create — but only the server-side transaction
-      // should normally write here.  We allow client writes because Firebase
-      // client SDK runs the transaction as the user.
+      // Only a reviewer writes here, as part of the review transaction.  Members
+      // can no longer append to their own ledger.
       allow create: if isAuth()
-        && request.resource.data.uid == request.auth.uid;
+        && request.resource.data.reviewedBy == request.auth.uid
+        && canReview(request.resource.data.uid);
 
-      // No updates or deletes — this is an immutable ledger
+      // Immutable ledger.
       allow update, delete: if false;
     }
 

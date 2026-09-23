@@ -1,5 +1,6 @@
 allowBuilds:
   '@biomejs/biome': true
   '@firebase/util': true
+  esbuild: false
   protobufjs: true
   sharp: true
