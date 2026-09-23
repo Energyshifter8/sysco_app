@@ -1,6 +1,13 @@
 import { getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+
+/**
+ * Set NEXT_PUBLIC_USE_FIREBASE_EMULATOR=1 to point the app at the local
+ * emulators instead of the real project. Used for profiling and manual testing
+ * against seeded data, so neither ever touches production.
+ */
+const USE_EMULATOR = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === "1";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,9 +18,19 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app =
+  getApps().length === 0
+    ? initializeApp(
+        USE_EMULATOR ? { ...firebaseConfig, projectId: "demo-test", apiKey: "demo-key" } : firebaseConfig,
+      )
+    : getApps()[0];
 
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+if (USE_EMULATOR && getApps().length === 1) {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+}
 
 export { app, auth, db };

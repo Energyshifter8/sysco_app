@@ -1,5 +1,6 @@
 "use client";
 
+import { trackListener } from "@/lib/__probe";
 import { db } from "@/lib/firebase";
 import { Task } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,7 +43,11 @@ export function useAllTasks(enabled = true) {
       },
     );
 
-    return () => unsubscribe();
+    const untrack = trackListener("useAllTasks");
+    return () => {
+      untrack();
+      unsubscribe();
+    };
   }, [enabled, queryClient]);
 
   return { tasks, loading };

@@ -1,5 +1,6 @@
 "use client";
 
+import { trackListener } from "@/lib/__probe";
 import { db } from "@/lib/firebase";
 import { User } from "@/types";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
@@ -25,7 +26,11 @@ export function useLeaderboard() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const untrack = trackListener("useLeaderboard");
+    return () => {
+      untrack();
+      unsubscribe();
+    };
   }, []);
 
   return { entries, loading };

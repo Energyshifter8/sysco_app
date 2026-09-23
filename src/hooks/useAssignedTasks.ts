@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { trackListener } from "@/lib/__probe";
 import { db } from "@/lib/firebase";
 import { Task } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
@@ -53,7 +54,11 @@ export function useAssignedTasks() {
       },
     );
 
-    return () => unsubscribe();
+    const untrack = trackListener("useAssignedTasks");
+    return () => {
+      untrack();
+      unsubscribe();
+    };
   }, [uid, team, queryClient]);
 
   return { tasks, loading };

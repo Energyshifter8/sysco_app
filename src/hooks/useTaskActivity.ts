@@ -1,5 +1,6 @@
 "use client";
 
+import { trackListener } from "@/lib/__probe";
 import { db } from "@/lib/firebase";
 import { asDate } from "@/lib/utils";
 import { TaskActivity } from "@/types";
@@ -48,7 +49,11 @@ export function useTaskActivity(taskId: string | null) {
       },
     );
 
-    return () => unsubscribe();
+    const untrack = trackListener("useTaskActivity");
+    return () => {
+      untrack();
+      unsubscribe();
+    };
   }, [taskId]);
 
   return { activity, loading, error };
